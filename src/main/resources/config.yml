@@ -1,0 +1,10 @@
+clearInventoryStart: false
+clearInventoryEnd: true
+moveDuringCountdown: false
+countdownDuration: 5
+lootSpawn: false
+lootSpawnNearPlayers: true
+lootChance: 50
+lootSpawnRadius: 10
+autoLoad: false
+autoLoadTask: river

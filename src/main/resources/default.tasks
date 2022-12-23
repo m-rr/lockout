@@ -1,0 +1,91 @@
+(ns stretch.lockout.loader.task-loader)
+
+(set-score 7)
+;; Tasks
+
+(def ingots {:emerald "emerald" :diamond "diamond" :copper_ingot "copper ingot"})
+(def thing (rand-nth (keys ingots)))
+
+(with-reward '([:enchanted_golden_apple 1 :team_positive "Enchanted golden apple"]) (obtain thing 1 (str "Obtain " (ingots thing)) thing))
+
+(with-reward '([:golden_pickaxe 1 :team_positive "Juicer gold pickaxe" {:dig_speed 5}]) (obtain-any i/signtypes 1 "Obtain sign" :oak_sign))
+
+(with-reward '([:bow 1 :team_positive "Bow"] [:arrow 64 :team_positive "Stack of arrows"])
+(obtain :mossy_stone_brick_wall 1 "Obtain a mossy stone brick wall" :mossy_stone_brick_wall))
+
+(with-reward '([:chorus_fruit 64 :team_positive "Chorus fruit"]) (obtain :goat_horn 1 "Obtain a goat horn" :goat_horn))
+
+(with-reward '([:speed 2 :team_positive "Speed II"]) (eat :honey_bottle 1 "Drink honey" :honey_bottle))
+
+(with-reward '([:diamond_chestplate 1 :positive "Diamond chestplate"]) (kill :piglin_brute 1 "Kill piglin brute" :golden_axe))
+
+(with-reward '([:increase_damage 2 :team_positive "Strength"]) (kill :witch 1 "Kill a witch" :cauldron))
+
+(with-reward '([:tnt 20 :team_positive "20 tnt"]) (kill :ghast 1 "Kill a ghast" :ghast_tear))
+
+(with-reward '([:vexs 1 :enemy_negative "Vexs for enemies"]) (obtain :respawn_anchor 1 "Obtain respawn anchor" :respawn_anchor))
+
+(with-reward '([:shulker_box 1 :team_positive "Shulker box"]) (do-times 5 (kill :villager 1 "Kill 5 villagers" :iron_sword)))
+
+(with-reward '([:saddle 1 :team_positive "Saddle"] [:warped_fungus_on_a_stick 1 :team_positive "Mushroom fishing rod"]) (kill :hoglin 1 "Kill a hoglin" :hoglin_spawn_egg))
+
+(with-reward '([:cooked_beef 25 :team_positive "25 Steak"]) (with-player-predicate (quest "player.PlayerMoveEvent" 1 "Begin to stave" :wither_skeleton_skull) (reify
+  java.util.function.Predicate
+  (test [this player]
+    (zero? (.getFoodLevel player))))))
+
+(with-reward '([:trident 1 :team_positive "Riptide trident" {:riptide 3}]) (with-entity-predicate (kill :drowned 1 "Kill a trident wielding drowned" :trident) (reify
+		java.util.function.Predicate
+		(test [this entity]
+			(in-main-hand? entity :trident)))))
+
+
+(with-reward '([:boom 1 :team_positive "Boom"]) (with-player-predicate (quest "player.PlayerMoveEvent" -1 "Don't stand on coal ore" :coal_ore) (reify
+		java.util.function.Predicate
+		(test [this entity]
+			(on-block? entity :coal_ore)))))
+
+(with-reward '([:levitation 1 :enemy_negative "Levitation for enemies" 1200]) (with-player-predicate (quest "player.PlayerMoveEvent" 1 "Stand on bedrock" :bedrock) (reify
+	java.util.function.Predicate
+	(test [this entity]
+		(on-block? entity :bedrock)))))
+
+;(with-reward '([:speed 2 :team_positive "Speed II"]) (with-player-predicate (quest "player.PlayerMoveEvent" 1 "Walk on amethyst" :amethyst_block) (reify
+;	java.util.function.Predicate
+;	(test [this entity]
+	;	(on-block? entity :amethyst_block)))))
+
+(with-reward '([:fast_digging 1 :team_positive "Haste I"]) (with-player-predicate (quest "player.PlayerMoveEvent" -1 "Don't combust" :lava_bucket) (reify
+	java.util.function.Predicate
+	(test [this human-entity]
+	(on-fire? human-entity)))))
+
+(with-reward '([:boom 1 :team_positive "Boom"]) (pickup :wheat_seeds -1 "Don't pickup wheat seed" :wheat_seeds))
+
+(with-reward '([:ender_pearl 16 :team_positive "Stack of ender pearls"]) (pickup :grass_block 1 "Pickup a grass block" :grass_block))
+
+
+(with-reward '([:saturation 1 :team_positive "Saturation"]) (place :cake 1 "Place a cake" :cake))
+
+(with-reward '([:fire_resistance 1 :team_positive "Fire resistance"]) (acquire :regeneration 1 "Obtain regeneration" :splash_potion))
+
+(with-reward '([:xp 1 :team_positive "30 xp levels"] [:bookshelf 16 :positive "Bookshelves"]) (quest "enchantment.EnchantItemEvent" 1 "Enchant an item" :enchanting_table))
+
+(with-reward '([:totem_of_undying 1 :team_positive "Totem of undying"]) (quest "raid.RaidTriggerEvent" 1 "Start a raid" :crossbow))
+
+(with-reward '([:pumpkin_pie 30 :team_positive "30 pumpkin pie"]) (shear :snowman 1 "Shear a snow golem" :jack_o_lantern))
+
+(with-reward '([:iron_pickaxe 1 :team_positive "Iron pickaxe" {:dig_speed 3 :loot_bonus_blocks 3}]) (obtain :gold_ingot 1 "Obtain gold ingot" :gold_ingot))
+;(ring-bell 1 "Ring a bell" :bell)
+;(smelt :iron_ingot 1 "Smelt an iron ingot" :furnace)
+(with-reward '([:night_vision 1 :team_positive "Night vision"])(bucket :axolotl 1 "Bucket axolotl" :axolotl_bucket))
+;(with-reward '([:fast_digging 3 :team_positive "Haste III"] [:night_vision 1 :team_positive "Night vision"] [:netherite_pickaxe 1 :team_positive "Netherite pickaxe"]) (hit :warden 1 "Hit a warden" :sculk))
+(with-reward '([:jukebox 1 :positive "Jukebox!"] [:diamond_sword 1 :team_positive "Diamond sword"]) (obtain-any i/disctypes 1 "Obtain any disc" :music_disc_wait))
+
+(with-reward '([:leather_boots 1 :team_positive "Feather falling boots" {:protection_fall 4}]) (with-player-predicate (quest "player.PlayerMoveEvent" 1 "Reach build height" :nether_star) (reify
+	     java.util.function.Predicate
+	     (test [this entity]
+	     	   (above-y? entity 320)))))
+
+;; Jank
+;(with-reward '([:iron_axe 1 :team_positive "Iron axe"]) (structure (new PanicBinStructurePredicate) 1 "Build a panic bin" :composter))
