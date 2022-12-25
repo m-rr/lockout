@@ -148,10 +148,6 @@ public final class Lockout extends JavaPlugin {
             return true;
         }
 
-        if (!sender.isOp()) {
-            return true;
-        }
-
         if (sender instanceof Player player && cmd.getName().equalsIgnoreCase("lockout") && args.length >= 1) {
             String command = args[0];
             switch (command) {
@@ -181,10 +177,12 @@ public final class Lockout extends JavaPlugin {
                     playerInv.addItem(taskRaceContext.getGuiCompass());
                 }
                 case "start" -> {
-                    taskRaceContext.setGameState(GameState.STARTING);
-                }
-                case "debug" -> {
-
+                    if (taskRaceContext.getGameState() != GameState.READY) {
+                        consoleLogMessage(player, "The game is already started!");
+                    }
+                    else {
+                        taskRaceContext.setGameState(GameState.STARTING);
+                    }
                 }
                 case "end" -> taskRaceContext.setGameState(GameState.END);
                 default -> {return false;}
@@ -192,24 +190,8 @@ public final class Lockout extends JavaPlugin {
             return true;
         }
 
-        if (cmd.getName().equalsIgnoreCase("lockout") && args.length >= 1) {
-            String command = args[0];
-            switch (command) {
-                case "reset" -> taskRaceContext.setGameState(GameState.END);
-                case "chest" -> taskRaceContext.getLootManager().spawnLootBorder();
-                default -> {}
-            }
-            return true;
-        }
-
         return false;
     }
 
-    private int counter = 0;
-    public String testString(String message) {
-        ChatColor[] colors = { ChatColor.DARK_RED, ChatColor.AQUA, ChatColor.BLACK };
-        counter++;
-        return colors[counter % 3] + message;
-    }
 
 }

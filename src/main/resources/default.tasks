@@ -3,7 +3,7 @@
 (set-score 7)
 ;; Tasks
 
-(def ingots {:emerald "emerald" :diamond "diamond" :copper_ingot "copper ingot"})
+(def ingots {:emerald "emerald" :diamond "diamond" :copper_ingot "copper ingot" :brick "Brick"})
 (def thing (rand-nth (keys ingots)))
 
 (with-reward '([:enchanted_golden_apple 1 :team_positive "Enchanted golden apple"]) (obtain thing 1 (str "Obtain " (ingots thing)) thing))

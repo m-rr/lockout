@@ -6,5 +6,7 @@ lootSpawn: false
 lootSpawnNearPlayers: true
 lootChance: 50
 lootSpawnRadius: 10
-autoLoad: false
-autoLoadTask: river
+autoLoad: true
+autoLoadTask: default
+allowPlayerReady: true
+restoreDefaultConfig: true
