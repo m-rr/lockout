@@ -10,15 +10,14 @@ import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.plugin.java.JavaPlugin;
-import org.bukkit.util.FileUtil;
 import stretch.lockout.game.GameRule;
 import stretch.lockout.game.GameState;
 import stretch.lockout.game.RaceGameContext;
 import stretch.lockout.task.file.TaskList;
 import stretch.lockout.team.TeamManager;
+import stretch.lockout.util.MessageUtil;
 
 import java.io.File;
-import java.nio.file.Path;
 import java.util.List;
 import java.util.Locale;
 import java.util.stream.Stream;
@@ -27,20 +26,21 @@ public final class Lockout extends JavaPlugin {
     private RaceGameContext taskRaceContext;
     private IFn loadScript;
     private final String DEFAULTTASKNAME = "default.tasks";
+    private FileConfiguration config;
 
     @Override
     public void onEnable() {
         // Plugin startup logic
         if (!getDataFolder().exists()) {
             if (!getDataFolder().mkdir()) {
-                consoleLogMessage(ChatColor.RED + "Failed to create plugin directory.");
+                MessageUtil.consoleLog(ChatColor.RED + "Failed to create plugin directory.");
             }
         }
 
         File defaultTasks = new File(getDataFolder(), DEFAULTTASKNAME);
         if (!defaultTasks.exists()) {
             saveResource(DEFAULTTASKNAME, false);
-            consoleLogMessage("Created default task list.");
+            MessageUtil.consoleLog("Create default task list.");
         }
 
 
@@ -66,7 +66,7 @@ public final class Lockout extends JavaPlugin {
     }
 
     private void setConfig(RaceGameContext taskRaceContext) {
-        FileConfiguration config = getConfig();
+        config = getConfig();
         if (config.getBoolean("clearInventoryStart")) {
             taskRaceContext.gameRules().add(GameRule.CLEAR_INV_START);
         }
@@ -91,31 +91,27 @@ public final class Lockout extends JavaPlugin {
         // Tasks
         if (config.getBoolean("autoLoad")) {
             taskRaceContext.gameRules().add(GameRule.AUTO_LOAD);
+        }
 
+        // Reward
+        if (config.getBoolean("enableReward")) {
+            taskRaceContext.gameRules().add(GameRule.ALLOW_REWARD);
         }
     }
 
     public void loadScript(CommandSender sender, TaskList taskList) {
         try {
             loadScript.invoke(Clojure.read(getDataFolderRelativePath() + taskList.taskName() + getTaskFileExtension()));
-            consoleLogMessage(sender, "Tasks from " + taskList.taskName() + " loaded.");
+            MessageUtil.log(sender, "Tasks from " + taskList.taskName() + " loaded.");
         }
         catch (Throwable e) {
-            consoleLogMessage(sender, ChatColor.RED + "Tasks from " + taskList.taskName() + " could not be loaded.");
+            MessageUtil.log(sender, ChatColor.RED + "Tasks from " + taskList.taskName() + " could not be loaded.");
             e.printStackTrace();
         }
     }
 
     public String getTaskFileExtension() {return ".tasks";}
     public String getDataFolderRelativePath() {return "plugins/Lockout/";}
-
-    public void consoleLogMessage(String message) {
-        consoleLogMessage(getServer().getConsoleSender(), message);
-    }
-
-    public void consoleLogMessage(CommandSender sender, String message) {
-        sender.sendMessage(ChatColor.BLACK + "[" + ChatColor.GOLD + this.getName() + ChatColor.BLACK + "] " + ChatColor.DARK_GRAY + message);
-    }
 
     // Should instead return config file which lists boards
     public List<TaskList> getTaskLists() {
@@ -129,11 +125,20 @@ public final class Lockout extends JavaPlugin {
         return taskRaceContext;
     }
 
+    private void noPermissionMessage(CommandSender sender) {
+        MessageUtil.log(sender, ChatColor.RED + "You do not have permission to use that.");
+    }
+
     @Override
     public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
 
         if (sender instanceof Player player && (cmd.getName().equalsIgnoreCase("ready") ||
                 cmd.getName().equalsIgnoreCase("unready"))) {
+            if (!player.hasPermission("lockout.ready") || !config.getBoolean("allowPlayerReady")) {
+                noPermissionMessage(player);
+                return true;
+            }
+
             switch(cmd.getName().toLowerCase(Locale.ROOT)) {
                 case "ready" -> {
                     taskRaceContext.playerReady(player);
@@ -152,16 +157,20 @@ public final class Lockout extends JavaPlugin {
             String command = args[0];
             switch (command) {
                 case "team" -> {
+                    if (!player.hasPermission("lockout.team")) {
+                        noPermissionMessage(player);
+                        return true;
+                    }
+
                     if (args.length == 2) {
                         String teamName = args[1];
                         TeamManager teamManager = taskRaceContext.getTeamManager();
                         if (teamManager.isPlayerOnTeam(player)) {
-                            consoleLogMessage(player, "You are already on a team!");
+                            MessageUtil.sendChat(player, "You are already on a team!");
                             return true;
                         }
                         if (teamManager.createTeam(teamName)) {
-                            Bukkit.getOnlinePlayers().forEach(onlinePlayer -> consoleLogMessage(onlinePlayer, player.getName() +
-                                    " created team " + ChatColor.GOLD + teamName));
+                            MessageUtil.sendAllChat(player.getName() + " created team " + ChatColor.GOLD + teamName);
                         }
                         teamManager.addPlayerToTeam(player, teamName);
                         if (!taskRaceContext.hasGuiCompass(player)) {
@@ -173,18 +182,37 @@ public final class Lockout extends JavaPlugin {
                     }
                 }
                 case "compass" -> {
+                    if (!player.hasPermission("lockout.compass")) {
+                        noPermissionMessage(player);
+                        return true;
+                    }
                     Inventory playerInv = player.getInventory();
                     playerInv.addItem(taskRaceContext.getGuiCompass());
                 }
                 case "start" -> {
+                    if (!player.hasPermission("lockout.start")) {
+                        noPermissionMessage(player);
+                        return true;
+                    }
+
                     if (taskRaceContext.getGameState() != GameState.READY) {
-                        consoleLogMessage(player, "The game is already started!");
+                        MessageUtil.sendChat(player, "The game is already started!");
                     }
                     else {
                         taskRaceContext.setGameState(GameState.STARTING);
                     }
+
                 }
-                case "end" -> taskRaceContext.setGameState(GameState.END);
+                case "end" -> {
+                    if (!player.hasPermission("lockout.end")) {
+                        noPermissionMessage(player);
+                        return true;
+                    }
+                    taskRaceContext.setGameState(GameState.END);
+                }
+                case "debug" -> {
+                    player.setCompassTarget(player.getLocation());
+                }
                 default -> {return false;}
             }
             return true;

@@ -9,21 +9,14 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.player.PlayerInteractEvent;
-import org.bukkit.potion.PotionEffect;
-import org.bukkit.potion.PotionEffectType;
 import stretch.lockout.event.*;
-import stretch.lockout.event.debug.DebugEvent;
 import stretch.lockout.game.GameRule;
 import stretch.lockout.game.GameState;
 import stretch.lockout.game.RaceGameContext;
 import stretch.lockout.loot.LootManager;
-import stretch.lockout.reward.RewardAction;
-import stretch.lockout.reward.RewardComposite;
-import stretch.lockout.reward.RewardPotion;
-import stretch.lockout.reward.RewardType;
-import stretch.lockout.reward.function.RewardBoomLightning;
 import stretch.lockout.team.LockoutTeam;
 import stretch.lockout.team.TeamManager;
+import stretch.lockout.util.MessageUtil;
 
 public class TaskRaceEventHandler implements Listener {
     private final RaceGameContext taskRaceContext;
@@ -38,25 +31,23 @@ public class TaskRaceEventHandler implements Listener {
             return;
         }
 
+        var task = taskCompletedEvent.getTask();
+        var scoredPlayerStat = task.getScoredPlayer();
+
         // update board for all teams
-        //taskRaceContext.updateScoreboard();
         taskRaceContext.getScoreboardManager().update();
         TeamManager teamManager = taskRaceContext.getTeamManager();
 
         // Send message to all players and play sound for all players
         teamManager.doToAllPlayers(player -> {
-            //player.sendRawMessage(
-              //      taskCompletedEvent.getPlayer().getPlayer().getName() + " completed task: " + ChatColor.BLUE + taskCompletedEvent.getTask().getDescription());
-            taskRaceContext.getPlugin().consoleLogMessage(player, taskCompletedEvent.getPlayer().getPlayer().getName() +
-                    " completed task: " + ChatColor.BLUE + taskCompletedEvent.getTask().getDescription());
             player.playSound(player, Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 0.5F, 0.5F);
         });
 
-        var task = taskCompletedEvent.getTask();
-        var scoredPlayerStat = task.getScoredPlayer();
+        MessageUtil.sendAllActionBar(ChatColor.GRAY + scoredPlayerStat.getTeam().getName() + " completed task: "
+                + ChatColor.BLUE + task.getDescription());
 
         // apply rewards
-        if (task.hasReward()) {
+        if (task.hasReward() && taskRaceContext.gameRules().contains(GameRule.ALLOW_REWARD)) {
             var reward = task.getReward();
             reward.applyReward(scoredPlayerStat);
             var rewardEvent = new RewardApplyEvent(scoredPlayerStat, reward);
@@ -109,8 +100,11 @@ public class TaskRaceEventHandler implements Listener {
             }
             //team.sendMessage(nameColor + finalMessagePrefix + ChatColor.LIGHT_PURPLE + reward.getDescription());
             ChatColor finalNameColor = nameColor;
-            team.doToPlayers(player -> taskRaceContext.getPlugin().consoleLogMessage(player, finalNameColor +
-                    finalMessagePrefix + ChatColor.LIGHT_PURPLE + reward.getDescription()));
+            //team.doToPlayers(player -> taskRaceContext.getPlugin().consoleLogMessage(player, finalNameColor +
+              //      finalMessagePrefix + ChatColor.LIGHT_PURPLE + reward.getDescription()));
+            //team.doToPlayers(player -> player.spigot().sendMessage(ChatMessageType.ACTION_BAR, new TextComponent(finalNameColor +
+              //      finalMessagePrefix + ChatColor.LIGHT_PURPLE + reward.getDescription())));
+            //MessageUtil.sendAllChat(finalNameColor + finalMessagePrefix + ChatColor.LIGHT_PURPLE + reward.getDescription());
         });
     }
 
@@ -156,9 +150,7 @@ public class TaskRaceEventHandler implements Listener {
         // set scoreboard for players
         taskRaceContext.getScoreboardManager().addTeam(playerStat.getTeam());
         taskRaceContext.getScoreboardManager().update();
-        taskRaceContext.getTeamManager().doToAllPlayers(player -> {
-            taskRaceContext.getPlugin().consoleLogMessage(player, playerStat.getPlayer().getName() + " joined team " + ChatColor.GOLD + playerStat.getTeam().getName());
-        });
+        MessageUtil.sendAllChat(playerStat.getPlayer().getName() + " joined team " + ChatColor.GOLD + playerStat.getTeam().getName());
     }
 
     @EventHandler
@@ -189,24 +181,4 @@ public class TaskRaceEventHandler implements Listener {
         }
     }
 
-    @EventHandler
-    public void onDebug(DebugEvent debugEvent) {
-        RewardComposite reward = new RewardComposite();
-        RewardPotion blindness = new RewardPotion(new PotionEffect(PotionEffectType.BLINDNESS, 100, 0), RewardType.ENEMY_NEGATIVE, "Blindness");
-        RewardPotion speed = new RewardPotion(new PotionEffect(PotionEffectType.SLOW, 100, 1), RewardType.TEAM_POSITIVE, "Slowness II");
-        RewardAction tnt = new RewardAction(new RewardBoomLightning(), "Boom lightning");
-        //reward.addReward(tnt);
-        reward.addReward(speed);
-        //reward.addReward(blindness);
-
-        TeamManager teamManager = taskRaceContext.getTeamManager();
-
-        teamManager.createTeam("debug");
-        var team = teamManager.getTeamByName("debug");
-
-        Bukkit.getOnlinePlayers().forEach(player -> {
-            player.playSound(player, Sound.ENTITY_PHANTOM_SWOOP, 1F, 1F);
-        });
-
-    }
 }

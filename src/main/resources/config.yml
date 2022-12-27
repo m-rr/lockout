@@ -9,4 +9,5 @@ lootSpawnRadius: 10
 autoLoad: true
 autoLoadTask: default
 allowPlayerReady: true
-restoreDefaultConfig: true
+enableReward: true
+lootWorld: world

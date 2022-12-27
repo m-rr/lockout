@@ -1,0 +1,49 @@
+package stretch.lockout.util;
+
+import net.md_5.bungee.api.ChatMessageType;
+import net.md_5.bungee.api.chat.TextComponent;
+import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
+import org.bukkit.command.CommandSender;
+import org.bukkit.entity.HumanEntity;
+import org.bukkit.entity.Player;
+
+public class MessageUtil {
+    private static void sendAll(ChatMessageType chatMessageType, String message) {
+        TextComponent content = new TextComponent(message);
+        Bukkit.getOnlinePlayers().forEach(player -> player.spigot().sendMessage(chatMessageType, content));
+    }
+
+    public static void sendAllActionBar(String message) {
+        sendAll(ChatMessageType.ACTION_BAR, message);
+    }
+
+    public static void sendAllChat(String message) {
+        sendAll(ChatMessageType.CHAT, fancify(message));
+    }
+
+    private static void send(Player player, ChatMessageType chatMessageType, String message) {
+        TextComponent content = new TextComponent(message);
+        player.spigot().sendMessage(chatMessageType, content);
+    }
+
+    public static void sendChat(Player player, String message) {
+        send(player, ChatMessageType.CHAT, fancify(message));
+    }
+
+    public static void sendActionBar(Player player, String message) {
+        send(player, ChatMessageType.ACTION_BAR, message);
+    }
+
+    public static void consoleLog(String message) {
+        log(Bukkit.getConsoleSender(), message);
+    }
+
+    public static void log(CommandSender sender, String message) {
+        sender.sendMessage(fancify(message));
+    }
+
+    private static String fancify(String message) {
+        return ChatColor.BLACK + "[" + ChatColor.GOLD + "Lockout" + ChatColor.BLACK + "] " + ChatColor.DARK_GRAY + message;
+    }
+}

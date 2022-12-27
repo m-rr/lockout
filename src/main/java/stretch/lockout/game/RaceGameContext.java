@@ -29,6 +29,7 @@ import stretch.lockout.task.TaskManager;
 import stretch.lockout.task.file.TaskList;
 import stretch.lockout.team.PlayerStat;
 import stretch.lockout.team.TeamManager;
+import stretch.lockout.util.MessageUtil;
 import stretch.lockout.view.InventoryTaskView;
 import stretch.lockout.view.TaskSelectionView;
 
@@ -42,17 +43,13 @@ public class RaceGameContext {
     final private Lockout plugin;
     private TeamManager teamManager = new TeamManager();
     private TaskManager taskManager = new TaskManager();
-    private LootManager lootManager = new LootManager();
+    private final LootManager lootManager = new LootManager();
     private ScoreboardHandler scoreboardManager = new ScoreboardHandler();
-    private Scoreboard board;
-    private Objective boardObjective;
     private int maxScore;
-    private final long rewardPotionTicks = 144000;
-    private final int GRACE_INVULNERABLE_TIME = 140;
     private GameState gameState;
     private final Random random = new Random();
     private final Set<HumanEntity> readyPlayers = new HashSet<>();
-    private Set<GameRule> rules = new HashSet<>();
+    private final Set<GameRule> rules = new HashSet<>();
     private int countdownTime = 10;
 
     public void setCountdownTime(int time) {
@@ -110,21 +107,21 @@ public class RaceGameContext {
 
     public void playerReady(final HumanEntity player) {
         if (getGameState() != GameState.READY) {
-            getPlugin().consoleLogMessage(player, ChatColor.RED + "Unable to set you to ready.");
+            MessageUtil.log(player, ChatColor.RED + "Unable to set you to ready");
             return;
         }
 
         if (!taskManager.isTasksLoaded()) {
-            getPlugin().consoleLogMessage(player, ChatColor.RED + "You must select tasks with the compass before ready up.");
+            MessageUtil.log(player, ChatColor.RED + "You must select tasks with the compass before ready up.");
             return;
         }
 
         if (readyPlayers.contains(player)) {
-            getPlugin().consoleLogMessage(player, "You are already set as ready.");
+            MessageUtil.log(player, "You are already set as ready.");
         }
         else {
             readyPlayers.add(player);
-            getPlugin().consoleLogMessage(player, "You have been set to ready.");
+            MessageUtil.log(player, "You have been set to ready.");
         }
 
         if (readyPlayers.size() >= Bukkit.getOnlinePlayers().size()) {
@@ -136,10 +133,10 @@ public class RaceGameContext {
 
         if (readyPlayers.contains(player)) {
             readyPlayers.remove(player);
-            getPlugin().consoleLogMessage(player, "You have been set to unready.");
+            MessageUtil.log(player, "You have been set to unready.");
         }
         else {
-            getPlugin().consoleLogMessage(player, "You are already unready.");
+            MessageUtil.log(player, "You are already unready.");
         }
     }
 
@@ -153,7 +150,7 @@ public class RaceGameContext {
                         loadTaskList(getPlugin().getServer().getConsoleSender(), taskList);
                     }
                     else {
-                        getPlugin().consoleLogMessage(ChatColor.RED + "TaskList " + taskList.taskName() + " was not found.");
+                        MessageUtil.consoleLog(ChatColor.RED + "TaskList " + taskList.taskName() + " was not found.");
                     }
                 }
                 setGameState(GameState.READY);
@@ -163,9 +160,9 @@ public class RaceGameContext {
             }
             case STARTING -> {
                 if (!getTaskManager().isTasksLoaded()) {
-                    String message = "You can not start without loading tasks!";
-                    getPlugin().consoleLogMessage(message);
-                    getTeamManager().doToAllPlayers(player -> getPlugin().consoleLogMessage(player, message));
+                    String message = ChatColor.RED + "You can not start without loading tasks!";
+                    MessageUtil.consoleLog(message);
+                    MessageUtil.sendAllChat(message);
                     setGameState(GameState.READY);
                     break;
                 }
@@ -184,7 +181,7 @@ public class RaceGameContext {
                     player.getInventory().addItem(getGuiCompass());
                 });
 
-                getTeamManager().doToAllPlayers(player -> getPlugin().consoleLogMessage(player, "Game starting!"));
+                MessageUtil.sendAllChat("Game Starting!");
 
                 Bukkit.getScheduler().scheduleSyncDelayedTask(getPlugin(),
                         new CountDown(this, countdownTime,
@@ -198,7 +195,8 @@ public class RaceGameContext {
                 if (gameRules().contains(GameRule.CLEAN_INV_END)) {
                     getTeamManager().clearAllPlayerEffectAndItems();
                 }
-                getTeamManager().doToAllPlayers(player -> getPlugin().consoleLogMessage(player, "Game ending."));
+
+                MessageUtil.sendAllChat("Game ending.");
 
                 Bukkit.getScheduler().cancelTasks(getPlugin());
                 getScoreboardManager().resetScoreboard();
@@ -218,10 +216,12 @@ public class RaceGameContext {
         maxScore = score;
     }
 
-    public long getRewardPotionTicks() {return rewardPotionTicks;}
+    public long getRewardPotionTicks() {
+        long rewardPotionTicks = 144000;
+        return rewardPotionTicks;}
 
     public InventoryTaskView getInventoryTaskView() {
-        var inventoryTaskView = new InventoryTaskView();
+        var inventoryTaskView = new InventoryTaskView(gameRules().contains(GameRule.ALLOW_REWARD));
         HashSet<TaskComponent> guiTaskComponents = new HashSet<>(taskManager.getTasks());
         guiTaskComponents.forEach(inventoryTaskView::addTaskEntry);
 
@@ -264,6 +264,7 @@ public class RaceGameContext {
 
     public void gracePeriod(HumanEntity player) {
         player.setInvulnerable(true);
+        int GRACE_INVULNERABLE_TIME = 140;
         Bukkit.getScheduler().scheduleSyncDelayedTask(getPlugin(), new Runnable() {
             @Override
             public void run() {

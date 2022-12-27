@@ -21,8 +21,11 @@ public class InventoryTaskView extends LockoutView implements InventoryHolder {
     private final ItemStack completedItem;
     private int size = 9;
     private int guiEntries = 0;
+    private final boolean showRewards;
 
-    public InventoryTaskView() {
+    public InventoryTaskView(boolean showRewards) {
+        this.showRewards = showRewards;
+
         this.inventory = Bukkit.createInventory(this, size, "Lockout");
         this.defaultItem = new ItemStack(Material.BARRIER);
         this.completedItem = new ItemStack(Material.GRAY_STAINED_GLASS);
@@ -53,7 +56,7 @@ public class InventoryTaskView extends LockoutView implements InventoryHolder {
             loreList.add(ChatColor.GRAY + "Value: " + ChatColor.GOLD + task.getValue());
         }
 
-        if (task.hasReward()) {
+        if (task.hasReward() && showRewards) {
             RewardComponent reward = task.getReward();
             loreList.add(ChatColor.GRAY + "Reward: "
                     + ChatColor.LIGHT_PURPLE + reward.getDescription());
