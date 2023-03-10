@@ -11,7 +11,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 
-public sealed abstract class TaskComposite implements TaskComponent permits TaskANDComposite, TaskORComposite {
+public sealed abstract class TaskComposite implements TaskComponent permits TaskANDComposite, TaskORComposite, TaskTHENComposite {
     final protected List<TaskComponent> taskComponents = new ArrayList<>();
     final protected HashMap<HumanEntity, HashSet<TaskComponent>> playerCompletedTasks = new HashMap<>();
     final protected int value;

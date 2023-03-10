@@ -6,8 +6,10 @@ lootSpawn: false
 lootSpawnNearPlayers: true
 lootChance: 50
 lootSpawnRadius: 10
-autoLoad: true
+autoLoad: false
 autoLoadTask: default
 allowPlayerReady: true
 enableReward: true
 lootWorld: world
+forcePlayersOnTeam: true
+allowCompassTracking: true

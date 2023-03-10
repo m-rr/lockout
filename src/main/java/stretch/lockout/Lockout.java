@@ -2,14 +2,15 @@ package stretch.lockout;
 
 import clojure.java.api.Clojure;
 import clojure.lang.IFn;
-import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
+import org.bukkit.plugin.PluginDescriptionFile;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.plugin.java.JavaPluginLoader;
 import stretch.lockout.game.GameRule;
 import stretch.lockout.game.GameState;
 import stretch.lockout.game.RaceGameContext;
@@ -18,6 +19,8 @@ import stretch.lockout.team.TeamManager;
 import stretch.lockout.util.MessageUtil;
 
 import java.io.File;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Locale;
 import java.util.stream.Stream;
@@ -25,8 +28,17 @@ import java.util.stream.Stream;
 public final class Lockout extends JavaPlugin {
     private RaceGameContext taskRaceContext;
     private IFn loadScript;
+    private IFn loadString;
     private final String DEFAULTTASKNAME = "default.tasks";
     private FileConfiguration config;
+
+    public Lockout() {
+        super();
+    }
+
+    public Lockout(JavaPluginLoader loader, PluginDescriptionFile descriptionFile, File dataFolder, File file) {
+        super(loader, descriptionFile, dataFolder, file);
+    }
 
     @Override
     public void onEnable() {
@@ -43,7 +55,6 @@ public final class Lockout extends JavaPlugin {
             MessageUtil.consoleLog("Create default task list.");
         }
 
-
         taskRaceContext = new RaceGameContext(this);
 
         saveDefaultConfig();
@@ -52,6 +63,7 @@ public final class Lockout extends JavaPlugin {
         Thread.currentThread().setContextClassLoader(this.getClass().getClassLoader());
         Clojure.var("clojure.core", "require").invoke(Clojure.read("stretch.lockout.loader.task-loader"));
         loadScript = Clojure.var("stretch.lockout.loader.task-loader", "load-script");
+        loadString = Clojure.var("stretch.lockout.loader.task-loader", "load-data");
 
         taskRaceContext.setGameState(GameState.PRE);
 
@@ -59,7 +71,6 @@ public final class Lockout extends JavaPlugin {
 
     @Override
     public void onDisable() {
-        // Plugin shutdown logic
         if (taskRaceContext != null) {
             taskRaceContext.getScoreboardManager().resetScoreboard();
         }
@@ -77,6 +88,12 @@ public final class Lockout extends JavaPlugin {
             taskRaceContext.gameRules().add(GameRule.COUNTDOWN_MOVE);
         }
         taskRaceContext.setCountdownTime(config.getInt("countdownDuration"));
+        if (config.getBoolean("forcePlayersOnTeam")) {
+            taskRaceContext.gameRules().add(GameRule.FORCE_TEAM);
+        }
+        if (config.getBoolean("allowCompassTracking")) {
+            taskRaceContext.gameRules().add(GameRule.COMPASS_TRACKING);
+        }
 
         // LOOT
         if (config.getBoolean("lootSpawn")) {
@@ -96,6 +113,27 @@ public final class Lockout extends JavaPlugin {
         // Reward
         if (config.getBoolean("enableReward")) {
             taskRaceContext.gameRules().add(GameRule.ALLOW_REWARD);
+        }
+    }
+
+    public void loadResourceScript(CommandSender sender, String resourceName) {
+        try {
+            String data = new String(getResource(resourceName).readAllBytes(), StandardCharsets.UTF_8);
+            loadString(sender, data);
+        }
+        catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void loadString(CommandSender sender, String data) {
+        try {
+            loadString.invoke(data);
+            MessageUtil.log(sender, "Forms evaluated from string.");
+        }
+        catch (Throwable e) {
+            e.printStackTrace();
+            MessageUtil.log(sender, ChatColor.RED + "Forms could not be evaluated.");
         }
     }
 
@@ -211,7 +249,7 @@ public final class Lockout extends JavaPlugin {
                     taskRaceContext.setGameState(GameState.END);
                 }
                 case "debug" -> {
-                    player.setCompassTarget(player.getLocation());
+                    taskRaceContext.getPlayerTracker().changeTracker(player);
                 }
                 default -> {return false;}
             }
@@ -220,6 +258,5 @@ public final class Lockout extends JavaPlugin {
 
         return false;
     }
-
 
 }

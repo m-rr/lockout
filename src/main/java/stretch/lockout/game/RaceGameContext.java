@@ -6,36 +6,39 @@ import org.bukkit.GameMode;
 import org.bukkit.Material;
 import org.bukkit.command.CommandSender;
 import org.bukkit.enchantments.Enchantment;
+import org.bukkit.entity.EntityType;
 import org.bukkit.entity.HumanEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
+import org.bukkit.event.entity.EntityCombustByBlockEvent;
+import org.bukkit.event.entity.EntityCombustEvent;
+import org.bukkit.event.entity.EntityDeathEvent;
+import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
-import org.bukkit.scoreboard.DisplaySlot;
-import org.bukkit.scoreboard.Objective;
-import org.bukkit.scoreboard.Score;
-import org.bukkit.scoreboard.Scoreboard;
 import stretch.lockout.Lockout;
-import stretch.lockout.event.CountDown;
 import stretch.lockout.event.ReadyGameEvent;
 import stretch.lockout.event.StartGameEvent;
 import stretch.lockout.event.TaskCompletedEvent;
+import stretch.lockout.event.indirect.LockoutIndirectEvent;
 import stretch.lockout.listener.*;
 import stretch.lockout.loot.LootManager;
 import stretch.lockout.scoreboard.ScoreboardHandler;
+import stretch.lockout.task.IndirectTaskListener;
 import stretch.lockout.task.TaskComponent;
+import stretch.lockout.task.TaskIndirectMob;
 import stretch.lockout.task.TaskManager;
 import stretch.lockout.task.file.TaskList;
 import stretch.lockout.team.PlayerStat;
 import stretch.lockout.team.TeamManager;
+import stretch.lockout.tracker.PlayerTracker;
 import stretch.lockout.util.MessageUtil;
 import stretch.lockout.view.InventoryTaskView;
 import stretch.lockout.view.TaskSelectionView;
 
 import java.util.HashSet;
 import java.util.List;
-import java.util.Random;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -45,9 +48,9 @@ public class RaceGameContext {
     private TaskManager taskManager = new TaskManager();
     private final LootManager lootManager = new LootManager();
     private ScoreboardHandler scoreboardManager = new ScoreboardHandler();
+    private PlayerTracker playerTracker = new PlayerTracker();
     private int maxScore;
     private GameState gameState;
-    private final Random random = new Random();
     private final Set<HumanEntity> readyPlayers = new HashSet<>();
     private final Set<GameRule> rules = new HashSet<>();
     private int countdownTime = 10;
@@ -64,6 +67,7 @@ public class RaceGameContext {
         new BlockEventHandler(this);
         new TaskRaceEventHandler(this);
         new InventoryEventHandler(this);
+        new IndirectTaskListener(this, 5);
 
         lootManager.setWorld(Bukkit.getWorld("world"));
 
@@ -102,6 +106,8 @@ public class RaceGameContext {
     public LootManager getLootManager() {return lootManager;}
 
     public TeamManager getTeamManager() {return teamManager;}
+
+    public PlayerTracker getPlayerTracker() {return playerTracker;}
 
     public GameState getGameState() {return this.gameState;}
 
@@ -170,16 +176,26 @@ public class RaceGameContext {
                 readyPlayers.clear();
 
                 // Make sure all players on are a team
-                Bukkit.getOnlinePlayers().forEach(player -> {
-                    if (!teamManager.isPlayerOnTeam(player)) {
-                        teamManager.createTeam(player.getName());
-                        teamManager.addPlayerToTeam(player, player.getName());
-                    }
-                    if (gameRules().contains(GameRule.CLEAR_INV_START)) {
-                        getTeamManager().clearAllPlayerEffectAndItems();
-                    }
-                    player.getInventory().addItem(getGuiCompass());
-                });
+                if (gameRules().contains(GameRule.FORCE_TEAM)) {
+                    Bukkit.getOnlinePlayers().forEach(player -> {
+                        if (!teamManager.isPlayerOnTeam(player)) {
+                            teamManager.createTeam(player.getName());
+                            teamManager.addPlayerToTeam(player, player.getName());
+                        }
+                        if (gameRules().contains(GameRule.CLEAR_INV_START)) {
+                            getTeamManager().clearAllPlayerEffectAndItems();
+                        }
+                        Inventory inventory = player.getInventory();
+                        ItemStack compass = getGuiCompass();
+                        if (!inventory.contains(compass)) {
+                            inventory.addItem(compass);
+                        }
+                    });
+                }
+
+                playerTracker.setPlayers(getTeamManager().getPlayerStats());
+
+                Bukkit.getScheduler().scheduleSyncRepeatingTask(getPlugin(), playerTracker, 0, 5);
 
                 MessageUtil.sendAllChat("Game Starting!");
 
@@ -203,6 +219,7 @@ public class RaceGameContext {
                 scoreboardManager = new ScoreboardHandler();
                 teamManager = new TeamManager();
                 taskManager = new TaskManager();
+                playerTracker = new PlayerTracker();
                 setGameState(GameState.PRE);
             }
         }
@@ -265,12 +282,8 @@ public class RaceGameContext {
     public void gracePeriod(HumanEntity player) {
         player.setInvulnerable(true);
         int GRACE_INVULNERABLE_TIME = 140;
-        Bukkit.getScheduler().scheduleSyncDelayedTask(getPlugin(), new Runnable() {
-            @Override
-            public void run() {
-                player.setInvulnerable(false);
-            }
-        }, GRACE_INVULNERABLE_TIME);
+        Bukkit.getScheduler().scheduleSyncDelayedTask(getPlugin(),
+                () -> player.setInvulnerable(false), GRACE_INVULNERABLE_TIME);
     }
 
     public Lockout getPlugin() {

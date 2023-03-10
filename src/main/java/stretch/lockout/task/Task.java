@@ -56,6 +56,8 @@ public class Task implements TaskComponent {
         return result;
     }
 
+    public Class getEventClass() {return eventClass;}
+
     public String getDescription() {return this.description;}
 
     public ItemStack getGuiItemStack() {return this.guiItemStack;}

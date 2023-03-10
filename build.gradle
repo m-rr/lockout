@@ -16,11 +16,23 @@ repositories {
         name = 'sonatype'
         url = 'https://oss.sonatype.org/content/groups/public/'
     }
+
+    maven {
+        name = 'MockBukkit'
+        url = 'https://repo.papermc.io/repository/maven-public/'
+    }
     }
 
 dependencies {
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.0.0-M2'
     compileOnly 'org.spigotmc:spigot-api:1.19.2-R0.1-SNAPSHOT'
     implementation 'org.clojure:clojure:1.11.1'
+    testImplementation 'com.github.seeseemelk:MockBukkit-v1.19:2.29.0'
+    //testImplementation 'com.github.seeseemelk:MockBukkit-v1.18:2.0.0'
+}
+
+test {
+    useJUnitPlatform()
 }
 
 def targetJavaVersion = 17

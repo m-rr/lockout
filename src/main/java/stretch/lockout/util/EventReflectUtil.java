@@ -71,6 +71,18 @@ public class EventReflectUtil {
         Object penultimateObject = null;
         Method getBlockOrItem = null;
 
+        // New //
+        if (getBlockOrItem == null) {
+            try {
+                getBlockOrItem = event.getClass().getMethod("getClickedBlock");
+                var block = (Block) getBlockOrItem.invoke(event);
+                return block.getType();
+            } catch (InvocationTargetException | NoSuchMethodException | IllegalAccessException | NullPointerException ignored) {
+
+            }
+
+        }
+        ///////
         if (getBlockOrItem == null) {
             try {
                 getBlockOrItem = event.getClass().getMethod("getItem");

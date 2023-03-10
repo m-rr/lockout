@@ -6,7 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class RewardComposite implements RewardComponent {
-    final private List<RewardComponent> rewardComponents;
+    private final List<RewardComponent> rewardComponents;
 
     public RewardComposite() {
         this.rewardComponents = new ArrayList<>();

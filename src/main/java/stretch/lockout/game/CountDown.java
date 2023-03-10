@@ -1,11 +1,9 @@
-package stretch.lockout.event;
+package stretch.lockout.game;
 
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Sound;
 import org.bukkit.entity.Player;
-import stretch.lockout.game.GameState;
-import stretch.lockout.game.RaceGameContext;
 
 import java.util.Set;
 
@@ -21,8 +19,11 @@ public class CountDown implements Runnable {
     }
     @Override
     public void run() {
-        players.forEach(player -> player.sendTitle("", ChatColor.GOLD + String.valueOf(time), 5, 1, 5));
         if (time > 0) {
+            players.forEach(player -> {
+                player.sendTitle("", ChatColor.GOLD + String.valueOf(time), 5, 1, 5);
+                player.playSound(player.getLocation(), Sound.BLOCK_FENCE_GATE_CLOSE, 1F, 1F);
+            });
             Bukkit.getScheduler().scheduleSyncDelayedTask(raceGameContext.getPlugin(), new CountDown(raceGameContext, time - 1, players), 20);
         }
         else {

@@ -3,12 +3,56 @@
 (set-score 7)
 ;; Tasks
 
+
+(with-player-predicate (interact :iron_golem 1 "Interact golem w/ poppy" :bell) (reify
+			java.util.function.Predicate
+			(test [this human-entity]
+				(in-main-hand? human-entity :poppy))))
+
+(kill :player 1 "Kill a player" :bell)
+(interact :bell 1 "Ring bell" :bell)
+(hit :villager 1 "Hit villager" :bell)
+(hit :player 1 "Hit a player" :bell)
+(tame :horse 1 "Tame a horse" :saddle)
+
+(with-player-predicate (interact :oak_sign 1 "Make an oak sign glow" :oak_sign) (reify
+			java.util.function.Predicate
+			(test [this human-entity]
+						(in-main-hand? human-entity :glow_ink_sac))))
+
 (def ingots {:emerald "emerald" :diamond "diamond" :copper_ingot "copper ingot" :brick "Brick"})
-(def thing (rand-nth (keys ingots)))
+(def ingot (rand-nth (keys ingots)))
 
-(with-reward '([:enchanted_golden_apple 1 :team_positive "Enchanted golden apple"]) (obtain thing 1 (str "Obtain " (ingots thing)) thing))
+(with-reward '([:apple 15 :team_positive "Apples"]) (obtain ingot 1 (str "Obtain " (ingots ingot)) ingot))
 
-(with-reward '([:golden_pickaxe 1 :team_positive "Juicer gold pickaxe" {:dig_speed 5}]) (obtain-any i/signtypes 1 "Obtain sign" :oak_sign))
+;; Nether Mobs
+(def nether-mobs {:piglin_brute :golden_axe :ghast :ghast_tear :hoglin :hoglin_spawn_egg :wither_skeleton :wither_skeleton_skull
+									:blaze :blaze_rod})
+(def nether-mob (rand-nth (keys nether-mobs)))
+
+(with-reward '([:diamond_chestplate 1 :positive "Diamond chestplate"])
+						 (kill nether-mob 1 (str "Kill " (clojure.string/replace (name nether-mob) #"_" " ")) (nether-mobs nether-mob)))
+
+;; TEST
+;(def negative-tasks {:arrow-task (list damaged-by :arrow :projectile 1 "Shot by arrow" :arrow)})
+;(def negative-pred {:arrow-task (reify java.util.function.Predicate (test [this entity] (is-entity? entity :arrow)))})
+;(def negative-pred-type {:arrow-task with-entity-predicate :seed-task with-player-predicate})
+
+(def negative-tasks {:arrow-task {:task '(damaged-by :arrow :projectile -1 "Shot by arrow" :arrow)
+																	:pred (reify java.util.function.Predicate (test [this entity] (is-entity? entity :arrow)))
+																	:pred-type with-entity-predicate}
+										 :seed-task {:task '(pickup :wheat_seeds -1 "Don't pickup wheat seed" :wheat_seeds)}
+										 :coal-task {:task '(quest "player.PlayerMoveEvent" -1 "Don't stand on coal ore" :coal_ore)
+																 :pred (reify java.util.function.Predicate (test [this entity] (on-block? entity :coal_ore)))
+																 :pred-type with-player-predicate}})
+
+(def neg-key (rand-nth (keys negative-tasks)))
+(def neg-task-info (negative-tasks neg-key))
+(def neg-task (eval (neg-task-info :task)))
+(with-reward '([:boom 1 :team_positive "Boom"]) neg-task)
+
+(if (contains? neg-task-info :pred-type)
+	((neg-task-info :pred-type) neg-task (neg-task-info :pred)))
 
 (with-reward '([:bow 1 :team_positive "Bow"] [:arrow 64 :team_positive "Stack of arrows"])
 (obtain :mossy_stone_brick_wall 1 "Obtain a mossy stone brick wall" :mossy_stone_brick_wall))
@@ -17,33 +61,25 @@
 
 (with-reward '([:speed 2 :team_positive "Speed II"]) (eat :honey_bottle 1 "Drink honey" :honey_bottle))
 
-(with-reward '([:diamond_chestplate 1 :positive "Diamond chestplate"]) (kill :piglin_brute 1 "Kill piglin brute" :golden_axe))
+;(with-reward '([:diamond_chestplate 1 :positive "Diamond chestplate"]) (kill :piglin_brute 1 "Kill piglin brute" :golden_axe))
 
 (with-reward '([:increase_damage 2 :team_positive "Strength"]) (kill :witch 1 "Kill a witch" :cauldron))
 
-(with-reward '([:tnt 20 :team_positive "20 tnt"]) (kill :ghast 1 "Kill a ghast" :ghast_tear))
+;(with-reward '([:tnt 20 :team_positive "20 tnt"]) (kill :ghast 1 "Kill a ghast" :ghast_tear))
 
 (with-reward '([:vexs 1 :enemy_negative "Vexs for enemies"]) (obtain :respawn_anchor 1 "Obtain respawn anchor" :respawn_anchor))
 
 (with-reward '([:shulker_box 1 :team_positive "Shulker box"]) (do-times 5 (kill :villager 1 "Kill 5 villagers" :iron_sword)))
 
-(with-reward '([:saddle 1 :team_positive "Saddle"] [:warped_fungus_on_a_stick 1 :team_positive "Mushroom fishing rod"]) (kill :hoglin 1 "Kill a hoglin" :hoglin_spawn_egg))
+;;(with-reward '([:saddle 1 :team_positive "Saddle"] [:warped_fungus_on_a_stick 1 :team_positive "Mushroom fishing rod"]) (kill :hoglin 1 "Kill a hoglin" :hoglin_spawn_egg))
 
-(with-reward '([:cooked_beef 25 :team_positive "25 Steak"]) (with-player-predicate (quest "player.PlayerMoveEvent" 1 "Begin to stave" :wither_skeleton_skull) (reify
-  java.util.function.Predicate
-  (test [this player]
-    (zero? (.getFoodLevel player))))))
+(with-reward '([:cooked_beef 25 :team_positive "25 Steak"]) (take-damage :starvation 1 "Begin to starve" :skeleton_skull))
 
 (with-reward '([:trident 1 :team_positive "Riptide trident" {:riptide 3}]) (with-entity-predicate (kill :drowned 1 "Kill a trident wielding drowned" :trident) (reify
 		java.util.function.Predicate
 		(test [this entity]
 			(in-main-hand? entity :trident)))))
 
-
-(with-reward '([:boom 1 :team_positive "Boom"]) (with-player-predicate (quest "player.PlayerMoveEvent" -1 "Don't stand on coal ore" :coal_ore) (reify
-		java.util.function.Predicate
-		(test [this entity]
-			(on-block? entity :coal_ore)))))
 
 (with-reward '([:levitation 1 :enemy_negative "Levitation for enemies" 1200]) (with-player-predicate (quest "player.PlayerMoveEvent" 1 "Stand on bedrock" :bedrock) (reify
 	java.util.function.Predicate
@@ -55,15 +91,7 @@
 ;	(test [this entity]
 	;	(on-block? entity :amethyst_block)))))
 
-(with-reward '([:fast_digging 1 :team_positive "Haste I"]) (with-player-predicate (quest "player.PlayerMoveEvent" -1 "Don't combust" :lava_bucket) (reify
-	java.util.function.Predicate
-	(test [this human-entity]
-	(on-fire? human-entity)))))
-
-(with-reward '([:boom 1 :team_positive "Boom"]) (pickup :wheat_seeds -1 "Don't pickup wheat seed" :wheat_seeds))
-
 (with-reward '([:ender_pearl 16 :team_positive "Stack of ender pearls"]) (pickup :grass_block 1 "Pickup a grass block" :grass_block))
-
 
 (with-reward '([:saturation 1 :team_positive "Saturation"]) (place :cake 1 "Place a cake" :cake))
 

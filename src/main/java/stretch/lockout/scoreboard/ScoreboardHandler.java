@@ -34,7 +34,6 @@ public class ScoreboardHandler {
             teamScore.setScore(team.getScore());
             team.doToPlayers(player -> player.setScoreboard(board));
         });
-        Bukkit.getConsoleSender().sendMessage("Teams: " + teams.stream().findAny().get().getName());
     }
 
     public void resetScoreboard() {

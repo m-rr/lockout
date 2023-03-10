@@ -1,49 +1,34 @@
 (ns stretch.lockout.loader.task-loader
-  (:require [stretch.lockout.util.cljutil :as util]
+  (:require (clojure [set])
             [stretch.lockout.loader.types :as i]
             [stretch.lockout.reward.function.action :as act]
-            [stretch.lockout.util.entity :as ent]
-            [clojure set])
-  (:import [org.bukkit Material]
-           [org.bukkit Bukkit]
-           [org.bukkit.enchantments Enchantment]
-           [org.bukkit.block Biome]
-           [org.bukkit.block BlockFace]
-           [org.bukkit.inventory ItemStack]
-           [org.bukkit.potion PotionEffect]
-           [org.bukkit.potion PotionEffectType]
-           [org.bukkit.event.entity EntityDamageEvent$DamageCause]
-           [stretch.lockout.game RaceGameContext]
-           [stretch.lockout.reward RewardItem]
-           [stretch.lockout.reward RewardPotion]
-           [stretch.lockout.reward RewardAction]
-           [stretch.lockout.reward RewardComposite]
-           [stretch.lockout.reward RewardType]
-           [stretch.lockout.reward.function RewardBoomLightning]
-           [stretch.lockout.task Task]
-           [stretch.lockout.task TaskANDComposite]
-           [stretch.lockout.task TaskORComposite]
-           [stretch.lockout.task.player TaskArmorStand]
-           [stretch.lockout.task.player TaskDamageFromSource]
-           [stretch.lockout.task TaskRepeat]
-           [stretch.lockout.task TaskMob]
-           [stretch.lockout.task TaskMaterial]
-           [stretch.lockout.task.player TaskMove]
-           [stretch.lockout.task.player TaskPotion]
-           [stretch.lockout.task.structure TaskStructure]
-           [stretch.lockout.task.structure.predicate PanicBinStructurePredicate]))
+            [stretch.lockout.util.entity :as ent])
+  (:import (org.bukkit Bukkit)
+           (org.bukkit.inventory ItemStack)
+           (org.bukkit.potion PotionEffect)
+           (stretch.lockout.reward RewardItem)
+           (stretch.lockout.reward RewardPotion)
+           (stretch.lockout.reward RewardAction)
+           (stretch.lockout.reward RewardComposite RewardChance$WeightedReward RewardChance)
+           (stretch.lockout.task Task)
+           (stretch.lockout.task TaskORComposite)
+           (stretch.lockout.task.player TaskDamageFromSource)
+           (stretch.lockout.task TaskRepeat)
+           (stretch.lockout.task TaskMob)
+           (stretch.lockout.task TaskMaterial TaskTHENComposite)
+           (stretch.lockout.task.player TaskPotion)
+           (stretch.lockout.task.structure TaskStructure)))
 
-(def biomes (util/map-enums Biome))
-(def blockface (util/map-enums BlockFace))
-(def rewardtypes (util/map-enums RewardType))
-(def enchanttypes (util/map-fields Enchantment))
-(def damagetypes (util/map-enums EntityDamageEvent$DamageCause))
+
 
 (defn taskrace []
   (.getTaskRaceContext (.getPlugin (Bukkit/getPluginManager) "Lockout")))
 
 (defn load-script [file]
   (load-file (str file)))
+
+(defn load-data [data]
+  (load-string (str data)))
 
 (defn potion-reward-time []
   (.getRewardPotionTicks (taskrace)))
@@ -71,21 +56,21 @@
 (defn add-enchants [item enchant-map]
   (if (empty? enchant-map) item
                            (do
-                             (.addEnchantment item (get enchanttypes (key (first enchant-map))) (val (first enchant-map)))
+                             (.addEnchantment item (get i/enchanttypes (key (first enchant-map))) (val (first enchant-map)))
                              (add-enchants item (rest enchant-map)))))
 
 (defn make-reward-potion [potion-key amplifier reward-type description potion-time]
   (let [potion-ticks (if (nil? potion-time) (potion-reward-time) potion-time)]
-    (new RewardPotion (new PotionEffect (get i/potioneffecttypes potion-key) potion-ticks (dec amplifier)) (get rewardtypes reward-type) description)))
+    (new RewardPotion (new PotionEffect (get i/potioneffecttypes potion-key) potion-ticks (dec amplifier)) (get i/rewardtypes reward-type) description)))
 
 (defn make-reward-item [material-key amount reward-type description enchantment-map]
-  (cond (nil? enchantment-map) (new RewardItem (new ItemStack (get i/materials material-key) amount) (get rewardtypes reward-type) description)
+  (cond (nil? enchantment-map) (new RewardItem (new ItemStack (get i/materials material-key) amount) (get i/rewardtypes reward-type) description)
         :else (let [item (new ItemStack (get i/materials material-key) amount)]
                 (new RewardItem (add-enchants item enchantment-map) description))))
 
 ;; not implemented
 (defn make-reward-action [action-key reward-type description]
-  (new RewardAction (get act/actiontypes action-key) (get rewardtypes reward-type) description))
+  (new RewardAction (get act/actiontypes action-key) (get i/rewardtypes reward-type) description))
 
 ; enchantment is used as potion time for reward potion...
 (defn make-reward [reward-key amount reward-type description enchantment]
@@ -100,6 +85,12 @@
 (defn make-reward-list [reward-key-vec-list]
   (if (empty? reward-key-vec-list) nil
                                    (cons (make-reward-from-vector (first reward-key-vec-list)) (make-reward-list (rest reward-key-vec-list)))))
+
+(defn make-weighted-reward [reward-vec-weight-pair]
+  (new RewardChance$WeightedReward (make-reward-from-vector (first reward-vec-weight-pair)) (second reward-vec-weight-pair)))
+
+(defn make-reward-chance [description reward-vec-chance-list]
+  (new RewardChance description (map make-weighted-reward reward-vec-chance-list)))
 
 (defn make-reward-composite [reward-key-vec-list]
   (new RewardComposite (make-reward-list reward-key-vec-list)))
@@ -132,7 +123,7 @@
     task))
 
 (defn make-damaged-by-task [damage-cause event value description item]
-  (let [task (new TaskDamageFromSource event (get damagetypes damage-cause) value description)]
+  (let [task (new TaskDamageFromSource event (get i/damagetypes damage-cause) value description)]
     (do
       (with-gui-item task item)
       task)))
@@ -161,10 +152,10 @@
                          (not (empty? (clojure.set/intersection ent-armor (set (vals armor))))))))
 
 (defn in-biome? [entity biome]
-  (= (.getBiome (.getBlock (.getLocation entity))) (get biomes biome)))
+  (= (.getBiome (.getBlock (.getLocation entity))) (get i/biomes biome)))
 
 (defn on-block? [entity material]
-  (= (.getType (.getRelative (.getBlock (.getLocation entity)) (get blockface :down))) (get i/materials material)))
+  (= (.getType (.getRelative (.getBlock (.getLocation entity)) (get i/blockface :down))) (get i/materials material)))
 
 (defn above-y? [entity y-val]
   (>= (.getY (.getLocation entity)) y-val))
@@ -190,6 +181,7 @@
 (defn on-surface? [entity]
   (<= 15 (.getLightFromSky (.getBlock (.getLocation entity)))))
 
+;; Only in paper api
 (defn is-lefty? [entity]
   (.isLeftHanded entity))
 
@@ -235,6 +227,9 @@
     (do
       (add-task task)
       task)))
+
+(defn make-then [value]
+  (new TaskTHENComposite value))
 
 (defn make-obtain [material value description item]
   (let [task (new TaskORComposite
@@ -322,6 +317,12 @@
       (add-task task)
       task)))
 
+(defn breed [entity value description item]
+  (let [task (make-entity-task entity (event-class "entity.EntityBreedEvent") value description item)]
+    (do
+      (add-task task)
+      task)))
+
 (defn damaged-by [entity-block damage-cause value description item]
   (let [event (if (contains? ent/entitytypes entity-block) (event-class "entity.EntityDamageByEntityEvent")
                                                            (event-class "entity.EntityDamageByBlockEvent"))
@@ -337,9 +338,8 @@
       task)))
 
 (defn interact [entity-block value description item]
-  (let [event (if (contains? ent/entitytypes entity-block) (event-class "player.PlayerInteractEntityEvent")
-                                                           (event-class "player.PlayerInteractEvent"))
-        task (make-entity-task entity-block event value description item)]
+  (let [task (if (contains? ent/entitytypes entity-block) (make-entity-task entity-block (event-class "player.PlayerInteractEntityEvent") value description item)
+                                                          (make-material-task entity-block (event-class "player.PlayerInteractEvent") value description item))]
     (do
       (add-task task)
       task)))
@@ -347,6 +347,20 @@
 ;; BellRingEvent is in paper api and will not work with quest fn
 (defn ring-bell [value description item]
   (let [task (new Task (Class/forName "io.papermc.paper.event.block.BellRingEvent") value description)]
+    (do
+      (with-gui-item task item)
+      (add-task task)
+      task)))
+
+(defn make-removed-tasks [task-forms]
+  (if (empty? task-forms) nil
+                          (let [task (eval (first task-forms))]
+                            (do
+                              (remove-task task)
+                              (cons task (make-removed-tasks (rest task-forms)))))))
+
+(defn do-any [value description item raw-tasks]
+  (let [task (new TaskORComposite (make-removed-tasks raw-tasks) value description)]
     (do
       (with-gui-item task item)
       (add-task task)
@@ -366,3 +380,6 @@
       (with-gui-item task item)
       (add-task task)
       task)))
+
+(defmacro make-entity-predicate [pred]
+  `(reify java.util.function.Predicate (test [this entity] ~pred)))

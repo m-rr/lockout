@@ -99,7 +99,7 @@ public class TaskRaceEventHandler implements Listener {
                 team.doToPlayers(player -> player.playSound(player, Sound.ENTITY_WARDEN_SONIC_CHARGE, 1, 0.5F));
             }
             //team.sendMessage(nameColor + finalMessagePrefix + ChatColor.LIGHT_PURPLE + reward.getDescription());
-            ChatColor finalNameColor = nameColor;
+            //ChatColor finalNameColor = nameColor;
             //team.doToPlayers(player -> taskRaceContext.getPlugin().consoleLogMessage(player, finalNameColor +
               //      finalMessagePrefix + ChatColor.LIGHT_PURPLE + reward.getDescription()));
             //team.doToPlayers(player -> player.spigot().sendMessage(ChatMessageType.ACTION_BAR, new TextComponent(finalNameColor +
@@ -161,24 +161,24 @@ public class TaskRaceEventHandler implements Listener {
     @EventHandler
     public void onPlayerInteract(PlayerInteractEvent interactEvent) {
         var player = interactEvent.getPlayer();
-        if (interactEvent.hasItem()
-                && interactEvent.getItem().getType() == Material.COMPASS
-                && (interactEvent.getAction() == Action.RIGHT_CLICK_AIR ||
-                interactEvent.getAction() == Action.RIGHT_CLICK_BLOCK)) {
+        if (interactEvent.hasItem() && interactEvent.getItem().getType() == Material.COMPASS) {
             var compass = interactEvent.getItem();
             if (compass.getEnchantments().containsKey(Enchantment.LUCK)) {
-                //switch (taskRaceContext.getGameState()) {
-                    //case PRE -> player.openInventory(taskRaceContext.getTaskSelectionView().getInventory());
-                  //  case READY, STARTING, PAUSED, RUNNING -> player.openInventory(taskRaceContext.getInventoryTaskView().getInventory());
-                //}
-                if (taskRaceContext.getTaskManager().isTasksLoaded()) {
-                    player.openInventory(taskRaceContext.getInventoryTaskView().getInventory());
+                if (interactEvent.getAction() == Action.RIGHT_CLICK_AIR || interactEvent.getAction() == Action.RIGHT_CLICK_BLOCK) {
+                    if (taskRaceContext.getTaskManager().isTasksLoaded()) {
+                        player.openInventory(taskRaceContext.getInventoryTaskView().getInventory());
+                    }
+                    else {
+                        player.openInventory(taskRaceContext.getTaskSelectionView().getInventory());
+                    }
                 }
-                else {
-                    player.openInventory(taskRaceContext.getTaskSelectionView().getInventory());
+                if ((interactEvent.getAction() == Action.LEFT_CLICK_AIR || interactEvent.getAction() == Action.LEFT_CLICK_BLOCK)
+                        && taskRaceContext.getGameState() == GameState.RUNNING && taskRaceContext.gameRules().contains(GameRule.COMPASS_TRACKING)) {
+                    taskRaceContext.getPlayerTracker().changeTracker(player);
                 }
             }
         }
     }
-
+//&& (interactEvent.getAction() == Action.RIGHT_CLICK_AIR ||
+           // interactEvent.getAction() == Action.RIGHT_CLICK_BLOCK)
 }

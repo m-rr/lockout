@@ -1,6 +1,7 @@
 package stretch.lockout.task;
 
 import org.bukkit.entity.HumanEntity;
+import org.bukkit.event.Event;
 
 import java.util.List;
 
@@ -30,5 +31,8 @@ public final class TaskORComposite extends TaskComposite {
         return playerCompletedTasks.containsKey(player);
     }
 
-
+    @Override
+    public boolean doesAccomplish(HumanEntity player, Event event) {
+        return taskComponents.stream().anyMatch(taskComponent -> taskComponent.doesAccomplish(player, event));
+    }
 }

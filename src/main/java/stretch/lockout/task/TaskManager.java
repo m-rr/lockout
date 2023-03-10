@@ -46,6 +46,10 @@ public class TaskManager {
         }
     }
 
+    public void removeAllTasks() {
+        getTasks().forEach(this::removeTask);
+    }
+
     public void removeTask(TaskComponent taskComponent) {
         var eventClasses = taskComponent.getEventClasses();
         for (var eventClass : eventClasses) {

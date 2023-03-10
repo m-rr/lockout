@@ -2,11 +2,13 @@ package stretch.lockout.listener;
 
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Entity;
+import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.*;
 import stretch.lockout.game.RaceGameContext;
+import stretch.lockout.util.MessageUtil;
 
 public record EntityEventHandler(RaceGameContext taskRaceContext) implements Listener {
     public EntityEventHandler(RaceGameContext taskRaceContext) {
@@ -105,8 +107,23 @@ public record EntityEventHandler(RaceGameContext taskRaceContext) implements Lis
             return;
         }
 
-        var player = (Player) tameEvent.getOwner();
-        taskRaceContext.checkTask(player, tameEvent);
+        var tamer = tameEvent.getOwner();
+        if (tamer instanceof Player player) {
+            taskRaceContext.checkTask(player, tameEvent);
+        }
+
+    }
+
+    @EventHandler
+    public void onBreed(EntityBreedEvent breedEvent) {
+        if (breedEvent.isCancelled()) {
+            return;
+        }
+
+        LivingEntity breeder = breedEvent.getBreeder();
+        if (breeder instanceof Player player) {
+            taskRaceContext.checkTask(player, breedEvent);
+        }
     }
 
     /* CHANGE LATER */
