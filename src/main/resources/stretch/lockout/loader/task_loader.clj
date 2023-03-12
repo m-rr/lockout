@@ -96,8 +96,7 @@
   (new RewardComposite (make-reward-list reward-key-vec-list)))
 
 (defn with-reward [reward-key-vec-list task]
-  (let [reward (if (nil? (second reward-key-vec-list)) (make-reward-from-vector (first reward-key-vec-list))
-                                                       (make-reward-composite reward-key-vec-list))]
+  (let [reward (if (nil? (second reward-key-vec-list)) (make-reward-from-vector (first reward-key-vec-list))                                                 (make-reward-composite reward-key-vec-list))]
     (do
       (.setReward task reward)
       task)))
@@ -121,6 +120,9 @@
   (do
     (.setBlockPredicate task predicate)
     task))
+
+(defmacro make-entity-predicate [pred]
+  `(reify java.util.function.Predicate (test [this entity] ~pred)))
 
 (defn make-damaged-by-task [damage-cause event value description item]
   (let [task (new TaskDamageFromSource event (get i/damagetypes damage-cause) value description)]
@@ -337,6 +339,10 @@
       (add-task task)
       task)))
 
+(defn stand-on [material value description item]
+  (-> (quest "player.PlayerMoveEvent" value description item)
+      (with-player-predicate (make-entity-predicate (on-block? entity material)))))
+
 (defn interact [entity-block value description item]
   (let [task (if (contains? ent/entitytypes entity-block) (make-entity-task entity-block (event-class "player.PlayerInteractEntityEvent") value description item)
                                                           (make-material-task entity-block (event-class "player.PlayerInteractEvent") value description item))]
@@ -381,5 +387,4 @@
       (add-task task)
       task)))
 
-(defmacro make-entity-predicate [pred]
-  `(reify java.util.function.Predicate (test [this entity] ~pred)))
+

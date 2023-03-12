@@ -6,13 +6,9 @@ import org.bukkit.GameMode;
 import org.bukkit.Material;
 import org.bukkit.command.CommandSender;
 import org.bukkit.enchantments.Enchantment;
-import org.bukkit.entity.EntityType;
 import org.bukkit.entity.HumanEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
-import org.bukkit.event.entity.EntityCombustByBlockEvent;
-import org.bukkit.event.entity.EntityCombustEvent;
-import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
@@ -21,13 +17,11 @@ import stretch.lockout.Lockout;
 import stretch.lockout.event.ReadyGameEvent;
 import stretch.lockout.event.StartGameEvent;
 import stretch.lockout.event.TaskCompletedEvent;
-import stretch.lockout.event.indirect.LockoutIndirectEvent;
 import stretch.lockout.listener.*;
 import stretch.lockout.loot.LootManager;
 import stretch.lockout.scoreboard.ScoreboardHandler;
 import stretch.lockout.task.IndirectTaskListener;
 import stretch.lockout.task.TaskComponent;
-import stretch.lockout.task.TaskIndirectMob;
 import stretch.lockout.task.TaskManager;
 import stretch.lockout.task.file.TaskList;
 import stretch.lockout.team.PlayerStat;
@@ -67,7 +61,7 @@ public class RaceGameContext {
         new BlockEventHandler(this);
         new TaskRaceEventHandler(this);
         new InventoryEventHandler(this);
-        new IndirectTaskListener(this, 5);
+        new IndirectTaskListener(this, 20);
 
         lootManager.setWorld(Bukkit.getWorld("world"));
 

@@ -28,6 +28,15 @@
 (def enchanttypes (util/map-fields Enchantment))
 (def damagetypes (util/map-enums EntityDamageEvent$DamageCause))
 
+(def ores [:emerald_ore :diamond_ore :iron_ore
+                        :gold_ore :coal_ore :redstone_ore
+                        :copper_ore])
+
+(def deepslate-ores [:deepslate_emerald_ore :deepslate_diamond_ore :deepslate_iron_ore
+                     :deepslate_gold_ore :deepslate_coal_ore :deepslate_redstone_ore
+                     :deepslate_copper_ore])
+
+
 (def snow-biome (select-keys biomes [:snowy_taiga :snowy_slopes :snowy_beach
                                      :snowy_plains :ice_spikes :frozen_ocean
                                      :frozen_peaks :frozen_river :grove
