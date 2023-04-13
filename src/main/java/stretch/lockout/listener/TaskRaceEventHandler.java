@@ -18,6 +18,8 @@ import stretch.lockout.team.LockoutTeam;
 import stretch.lockout.team.TeamManager;
 import stretch.lockout.util.MessageUtil;
 
+import java.util.function.Predicate;
+
 public class TaskRaceEventHandler implements Listener {
     private final RaceGameContext taskRaceContext;
     public TaskRaceEventHandler(RaceGameContext taskRaceContext) {
@@ -57,11 +59,20 @@ public class TaskRaceEventHandler implements Listener {
 
         LockoutTeam team = taskCompletedEvent.getPlayer().getTeam();
 
-        int remainingPoints = taskRaceContext.getTaskManager().remainingPoints();
+        //int remainingPoints = taskRaceContext.getTaskManager().remainingPoints();
         // If max score is not set, then check if it is possible for other team to come back
-        if (taskRaceContext.getMaxScore() > 0 && team.getScore() >= taskRaceContext.getMaxScore()) {
-            Bukkit.getPluginManager().callEvent(new GameOverEvent(team));
-            return;
+        //if (taskRaceContext.getMaxScore() > 0 && team.getScore() >= taskRaceContext.getMaxScore()) {
+        //    Bukkit.getPluginManager().callEvent(new GameOverEvent(team));
+        //    return;
+        //}
+
+        Predicate<RaceGameContext> isGameOver = taskRaceContext.gameRules().contains(GameRule.MAX_SCORE) ?
+                (game) -> game.getMaxScore() > 0 && team.getScore() >= game.getMaxScore() :
+                (game) -> (game.getTaskManager().remainingPoints() + team.getScore()) < game.getTeamManager().getWinningTeam().getScore();
+
+        if (isGameOver.test(taskRaceContext)) {
+          Bukkit.getPluginManager().callEvent(new GameOverEvent(team));
+          return;
         }
 
         LootManager lootManager = taskRaceContext.getLootManager();

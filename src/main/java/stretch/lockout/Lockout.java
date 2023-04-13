@@ -61,9 +61,9 @@ public final class Lockout extends JavaPlugin {
         setConfig(taskRaceContext);
 
         Thread.currentThread().setContextClassLoader(this.getClass().getClassLoader());
-        Clojure.var("clojure.core", "require").invoke(Clojure.read("stretch.lockout.loader.task-loader"));
-        loadScript = Clojure.var("stretch.lockout.loader.task-loader", "load-script");
-        loadString = Clojure.var("stretch.lockout.loader.task-loader", "load-data");
+        Clojure.var("clojure.core", "require").invoke(Clojure.read("stretch.lockout.api"));
+        loadScript = Clojure.var("stretch.lockout.api", "load-script");
+        loadString = Clojure.var("stretch.lockout.api", "load-data");
 
         taskRaceContext.setGameState(GameState.PRE);
 
@@ -93,6 +93,9 @@ public final class Lockout extends JavaPlugin {
         }
         if (config.getBoolean("allowCompassTracking")) {
             taskRaceContext.gameRules().add(GameRule.COMPASS_TRACKING);
+        }
+        if (config.getBoolean("useMaxScore")) {
+            taskRaceContext.gameRules().add(GameRule.MAX_SCORE);
         }
 
         // LOOT

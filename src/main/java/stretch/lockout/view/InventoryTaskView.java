@@ -45,13 +45,38 @@ public class InventoryTaskView extends LockoutView implements InventoryHolder {
         return new ItemStack(defaultItem);
     }
 
+    private List<String> getTaskTitle(String taskDescription, int maxWidth) {
+        String[] split = taskDescription.split(" ");
+        List<String> result = new ArrayList<>();
+        int width = 0;
+        StringBuilder line = new StringBuilder();
+        for (int i = 0; i < split.length; i++) {
+            width += split[i].length();
+            line.append(split[i]).append(" ");
+            if (width >= maxWidth) {
+                result.add(line.toString());
+                width = 0;
+                line = new StringBuilder();
+            }
+        }
+        if (!line.isEmpty()) {
+            result.add(line.toString());
+        }
+        return result;
+    }
+
     // Adds item to gui inventory based on task
     private void addTaskEntry(TaskComponent task, ItemStack itemStack) {
 
         ItemStack guiItemStack;
         ItemMeta itemMeta;
-
+        final int maxStringLength = 25;
         List<String> loreList = new ArrayList<>();
+        List<String> description = getTaskTitle(task.getDescription(), maxStringLength);
+        if (description.size() > 1) {
+            description.subList(1, description.size()).forEach(line -> loreList.add(ChatColor.BLUE + line));
+        }
+
         if (task.getValue() != 0) {
             loreList.add(ChatColor.GRAY + "Value: " + ChatColor.GOLD + task.getValue());
         }
@@ -74,12 +99,12 @@ public class InventoryTaskView extends LockoutView implements InventoryHolder {
                     + ChatColor.GREEN + task.getScoredPlayer().getTeam().getName());
 
             itemMeta = guiItemStack.getItemMeta();
-            itemMeta.setDisplayName(ChatColor.RED + task.getDescription());
+            itemMeta.setDisplayName(ChatColor.RED + description.get(0));
         }
         else {
             guiItemStack = itemStack;
             itemMeta = itemStack.getItemMeta();
-            itemMeta.setDisplayName(ChatColor.BLUE + task.getDescription());
+            itemMeta.setDisplayName(ChatColor.BLUE + description.get(0));
         }
 
         itemMeta.setLore(loreList);

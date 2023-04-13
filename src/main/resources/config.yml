@@ -1,3 +1,4 @@
+useMaxScore: false
 clearInventoryStart: false
 clearInventoryEnd: true
 moveDuringCountdown: false

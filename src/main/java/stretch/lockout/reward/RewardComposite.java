@@ -42,10 +42,14 @@ public class RewardComposite implements RewardComponent {
         StringBuilder result = new StringBuilder();
 
         for (int i = 0; i < rewardComponents.size(); i++) {
-            result.append(rewardComponents.get(i).getDescription());
-            if (i + 1 != rewardComponents.size()) {
-                result.append(" + ");
+            String rewardDescription = rewardComponents.get(i).getDescription();
+            if (!rewardDescription.isEmpty()) {
+                result.append(rewardDescription);
+                if (i + 1 != rewardComponents.size() && !rewardComponents.get(i + 1).getDescription().isEmpty()) {
+                    result.append(" + ");
+                }
             }
+
         }
 
         return result.toString();

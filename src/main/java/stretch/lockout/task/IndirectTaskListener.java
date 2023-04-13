@@ -62,7 +62,6 @@ public class IndirectTaskListener implements Listener {
             Player player = playerOptional.get();
             double distance = block.getLocation().distance(player.getLocation());
             Bukkit.getPluginManager().callEvent(new LockoutIndirectEvent(player, blockGrowEvent, distance));
-            MessageUtil.sendChat(player, "Closest player.");
         }
     }
 

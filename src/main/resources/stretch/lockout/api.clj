@@ -1,6 +1,7 @@
-(ns stretch.lockout.loader.task-loader
+(ns stretch.lockout.api
+  (:gen-class)
   (:require (clojure [set])
-            [stretch.lockout.loader.types :as i]
+            [stretch.lockout.builder.types :as i]
             [stretch.lockout.reward.function.action :as act]
             [stretch.lockout.util.entity :as ent])
   (:import (org.bukkit Bukkit)
@@ -15,9 +16,10 @@
            (stretch.lockout.task.player TaskDamageFromSource)
            (stretch.lockout.task TaskRepeat)
            (stretch.lockout.task TaskMob)
-           (stretch.lockout.task TaskMaterial TaskTHENComposite)
+           (stretch.lockout.task TaskMaterial TaskTHENComposite TaskANDComposite)
            (stretch.lockout.task.player TaskPotion)
-           (stretch.lockout.task.structure TaskStructure)))
+           (stretch.lockout.task.structure TaskStructure)
+           (java.util.function Predicate)))
 
 
 
@@ -42,15 +44,22 @@
   (.setMaxScore (taskrace) score))
 
 (defn add-task [task]
-  (.addTask (.getTaskManager (taskrace)) task))
+  (do
+    (.addTask (.getTaskManager (taskrace)) task)
+    task))
 
 (defn remove-task [task]
-  (.removeTask (.getTaskManager (taskrace)) task))
+  (do
+    (.removeTask (.getTaskManager (taskrace)) task)
+    task))
 
 (defn add-task-component [task-composite task-component]
   (do
     (when (not (nil? task-component)) (.addTaskComponent task-composite task-component))
     task-composite))
+
+(defmacro one-of [first & rest]
+  (eval (rand-nth (cons first rest))))
 
 ;; Wrapper
 (defn add-enchants [item enchant-map]
@@ -78,27 +87,41 @@
         (contains? act/actiontypes reward-key) (make-reward-action reward-key reward-type description)
         :else (make-reward-item reward-key amount reward-type description enchantment)))
 
-(defn make-reward-from-vector [reward-vec]
+(defn reward-vector [reward-vec]
   (let [[reward-key amount reward-type description enchantment] reward-vec]
     (make-reward reward-key amount reward-type description enchantment)))
 
 (defn make-reward-list [reward-key-vec-list]
   (if (empty? reward-key-vec-list) nil
-                                   (cons (make-reward-from-vector (first reward-key-vec-list)) (make-reward-list (rest reward-key-vec-list)))))
+                                   (cons (reward-vector (first reward-key-vec-list)) (make-reward-list (rest reward-key-vec-list)))))
 
-(defn make-weighted-reward [reward-vec-weight-pair]
-  (new RewardChance$WeightedReward (make-reward-from-vector (first reward-vec-weight-pair)) (second reward-vec-weight-pair)))
 
-(defn make-reward-chance [description reward-vec-chance-list]
-  (new RewardChance description (map make-weighted-reward reward-vec-chance-list)))
+(defn make-weighted-reward [reward-vec weight]
+  (new RewardChance$WeightedReward (reward-vector reward-vec) weight))
+
+(defn reward-chance [description reward-map]
+  (new RewardChance description (into [] (map (fn [[vec f]]
+                                                (make-weighted-reward vec f)) reward-map))))
 
 (defn make-reward-composite [reward-key-vec-list]
   (new RewardComposite (make-reward-list reward-key-vec-list)))
 
-(defn with-reward [reward-key-vec-list task]
-  (let [reward (if (nil? (second reward-key-vec-list)) (make-reward-from-vector (first reward-key-vec-list))                                                 (make-reward-composite reward-key-vec-list))]
+(defn with-reward-ugly [task reward-key-vec-list]
+  (let [reward (if (nil? (second reward-key-vec-list)) (reward-vector (first reward-key-vec-list))
+                                                       (make-reward-composite reward-key-vec-list))]
     (do
       (.setReward task reward)
+      task)))
+
+(defmulti with-reward (fn [task reward & rewards] (type reward)))
+
+(defmethod with-reward clojure.lang.PersistentVector [task reward & rewards]
+  (with-reward-ugly task (cons reward rewards)))
+
+(defmethod with-reward stretch.lockout.reward.RewardComponent [task reward & rewards]
+  (let [rewardComposite (new RewardComposite (cons reward rewards))]
+    (do
+      (.setReward task rewardComposite)
       task)))
 
 (defn with-gui-item [task item]
@@ -106,23 +129,32 @@
     (.setGuiItemStack task (new ItemStack (get i/materials item)))
     task))
 
-(defn with-player-predicate [task predicate]
+(defn add-player-predicate [task predicate]
   (do
     (.setPlayerPredicate task predicate)
     task))
 
-(defn with-entity-predicate [task predicate]
+(defn add-entity-predicate [task predicate]
   (do
     (.setEntityPredicate task predicate)
     task))
 
-(defn with-block-predicate [task predicate]
+(defn add-block-predicate [task predicate]
   (do
     (.setBlockPredicate task predicate)
     task))
 
-(defmacro make-entity-predicate [pred]
-  `(reify java.util.function.Predicate (test [this entity] ~pred)))
+(defmacro make-predicate [pred]
+  `(reify Predicate (test [this entity] ~pred)))
+
+(defmacro with-player-predicate [task pred]
+  `(add-player-predicate ~task (make-predicate ~pred)))
+
+(defmacro with-entity-predicate [task pred]
+  `(add-entity-predicate ~task (make-predicate ~pred)))
+
+(defmacro with-block-predicate [task pred]
+  `(add-block-predicate ~task (make-predicate ~pred)))
 
 (defn make-damaged-by-task [damage-cause event value description item]
   (let [task (new TaskDamageFromSource event (get i/damagetypes damage-cause) value description)]
@@ -142,11 +174,37 @@
       (with-gui-item task item)
       task)))
 
+(defn task-or-old [item value description first & rest]
+  (let [task (new TaskORComposite (map remove-task (cons first rest)) value description)]
+    (do
+      (add-task task)
+      (with-gui-item task item)
+      task)))
+
+(defn task-or [item value description first & rest]
+  (-> (new TaskORComposite (map remove-task (cons first rest)) value description)
+      (with-gui-item item)
+      (add-task)))
+
+(defn task-and [item value description first & rest]
+  (-> (new TaskANDComposite (map remove-task (cons first rest)) value description)
+      (with-gui-item item)
+      (add-task)))
+
+(defn task-then [item value description first & rest]
+  (-> (new TaskTHENComposite (map remove-task (cons first rest)) value description)
+      (with-gui-item item)
+      (add-task)))
+
 ;; Predicates
 (defn in-main-hand? [entity material]
   (let [ent-item (.getType (.getItemInMainHand (.getEquipment entity)))]
     (if (keyword? material) (= ent-item (get i/materials material))
                             (contains? (set (vals material)) ent-item))))
+
+;; Must implement Damageable
+(defn has-max-health? [entity]
+  (= (.getMaxHealth entity) (.getHealth entity)))
 
 (defn wearing-armor? [entity armor]
   (let [ent-armor (set (map #(.getType %) (.getArmorContents (.getEquipment entity))))]
@@ -341,7 +399,7 @@
 
 (defn stand-on [material value description item]
   (-> (quest "player.PlayerMoveEvent" value description item)
-      (with-player-predicate (make-entity-predicate (on-block? entity material)))))
+      (add-player-predicate (make-predicate (on-block? entity material)))))
 
 (defn interact [entity-block value description item]
   (let [task (if (contains? ent/entitytypes entity-block) (make-entity-task entity-block (event-class "player.PlayerInteractEntityEvent") value description item)
@@ -353,20 +411,6 @@
 ;; BellRingEvent is in paper api and will not work with quest fn
 (defn ring-bell [value description item]
   (let [task (new Task (Class/forName "io.papermc.paper.event.block.BellRingEvent") value description)]
-    (do
-      (with-gui-item task item)
-      (add-task task)
-      task)))
-
-(defn make-removed-tasks [task-forms]
-  (if (empty? task-forms) nil
-                          (let [task (eval (first task-forms))]
-                            (do
-                              (remove-task task)
-                              (cons task (make-removed-tasks (rest task-forms)))))))
-
-(defn do-any [value description item raw-tasks]
-  (let [task (new TaskORComposite (make-removed-tasks raw-tasks) value description)]
     (do
       (with-gui-item task item)
       (add-task task)

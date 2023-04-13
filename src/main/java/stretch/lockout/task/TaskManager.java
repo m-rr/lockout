@@ -83,6 +83,7 @@ public class TaskManager {
     public int remainingPoints() {
         return getTasks().stream()
                 .filter(Predicate.not(TaskComponent::isCompleted))
+                .filter(taskComponent -> taskComponent.getValue() > 0)
                 .mapToInt(TaskComponent::getValue)
                 .sum();
     }

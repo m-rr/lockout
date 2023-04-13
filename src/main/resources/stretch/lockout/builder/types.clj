@@ -1,4 +1,4 @@
-(ns stretch.lockout.loader.types
+(ns stretch.lockout.builder.types
   (:require [stretch.lockout.util.cljutil :as util])
   (:import (org.bukkit CropState DyeColor GrassSpecies Material TreeSpecies)
            (org.bukkit Tag)

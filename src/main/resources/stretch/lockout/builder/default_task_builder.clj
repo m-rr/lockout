@@ -1,5 +1,4 @@
-(ns stretch.lockout.loader.default-task-builder
-  (:require [stretch.lockout.loader.task-loader :as t]))
+(ns stretch.lockout.api)
 
 (def bad-stand-on [:sand :coal_ore])
 (def bad-pickup [:wheat_seeds :gravel])
@@ -13,15 +12,10 @@
   #(let [material (rand-nth bad-pickup)]
     (t/pickup material 1 (str "Pick up " material) material)))
 
-;; Should return a sequence of tasks of a type
-
 ;; Returns func only taking material as parameter
 (defn task-builder [func value desc]
   (fn [material]
     (func material value (str desc material) material)))
-
-(defn next-task-sequence [built-task-func material-vec]
-  (built-task-func (rand-nth material-vec)))
 
 (defn task-builder-composer [func value desc material-vec]
   (comp (task-builder func value desc) #(rand-nth material-vec)))

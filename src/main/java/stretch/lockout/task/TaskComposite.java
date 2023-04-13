@@ -30,6 +30,12 @@ public sealed abstract class TaskComposite implements TaskComponent permits Task
         taskComponents.forEach(this::addTaskComponent);
     }
 
+    public TaskComposite(List<TaskComponent> taskComponents, int value, String description) {
+        this.value = value;
+        this.description = description;
+        taskComponents.forEach(this::addTaskComponent);
+    }
+
     @Override
     public TaskComponent setGuiItemStack(ItemStack itemStack) {
         guiItemStack = itemStack;
@@ -58,7 +64,7 @@ public sealed abstract class TaskComposite implements TaskComponent permits Task
     @Override
     public String getDescription() {
         if (description == null) {
-            return getDescriptionRecursive();
+            description = getDescriptionRecursive();
         }
 
         return description;
