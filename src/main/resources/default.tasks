@@ -164,7 +164,7 @@
             (with-reward [:trident 1 :positive "Riptide trident" {:riptide 3}]))
 
         (-> (hit :warden 1 "Hit a warden" :sculk_catalyst)
-            (with-reward [:])))
+            (with-reward [:netherite_sword 1 :positive "Sharpness III netherite sword" {:damage_all 3}])))
 
 (with-reward '([:chorus_fruit 64 :team_positive "Chorus fruit"]) (obtain :goat_horn 1 "Obtain a goat horn" :goat_horn))
 
