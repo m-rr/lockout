@@ -75,7 +75,7 @@
 (defn make-reward-item [material-key amount reward-type description enchantment-map]
   (cond (nil? enchantment-map) (new RewardItem (new ItemStack (get i/materials material-key) amount) (get i/rewardtypes reward-type) description)
         :else (let [item (new ItemStack (get i/materials material-key) amount)]
-                (new RewardItem (add-enchants item enchantment-map) description))))
+                (new RewardItem (add-enchants item enchantment-map) (get i/rewardtypes reward-type) description))))
 
 ;; not implemented
 (defn make-reward-action [action-key reward-type description]
