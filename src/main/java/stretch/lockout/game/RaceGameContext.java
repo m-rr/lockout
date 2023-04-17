@@ -176,16 +176,22 @@ public class RaceGameContext {
                             teamManager.createTeam(player.getName());
                             teamManager.addPlayerToTeam(player, player.getName());
                         }
-                        if (gameRules().contains(GameRule.CLEAR_INV_START)) {
-                            getTeamManager().clearAllPlayerEffectAndItems();
-                        }
-                        Inventory inventory = player.getInventory();
-                        ItemStack compass = getGuiCompass();
-                        if (!inventory.contains(compass)) {
-                            inventory.addItem(compass);
-                        }
+
                     });
                 }
+
+                if (gameRules().contains(GameRule.CLEAR_INV_START)) {
+                    getTeamManager().clearAllPlayerEffectAndItems();
+                }
+
+                // Give all players compass
+                getTeamManager().doToAllPlayers(player -> {
+                    Inventory inventory = player.getInventory();
+                    ItemStack compass = getGuiCompass();
+                    if (!inventory.contains(compass)) {
+                        inventory.addItem(compass);
+                    }
+                });
 
                 playerTracker.setPlayers(getTeamManager().getPlayerStats());
 
