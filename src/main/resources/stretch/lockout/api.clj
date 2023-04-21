@@ -129,11 +129,6 @@
     (.setGuiItemStack task (new ItemStack (get i/materials item)))
     task))
 
-(defn add-player-predicate [task predicate]
-  (do
-    (.setPlayerPredicate task predicate)
-    task))
-
 (defn add-entity-predicate [task predicate]
   (do
     (.setEntityPredicate task predicate)
@@ -144,16 +139,10 @@
     (.setBlockPredicate task predicate)
     task))
 
-(defmacro make-predicate-old [pred]
-  `(reify Predicate (test [this entity] ~pred)))
-
 (defn make-predicate [pred]
   (reify Predicate
     (test [this actor]
       (pred actor))))
-
-(defmacro with-player-predicate-old [task pred]
-  `(add-player-predicate ~task (make-predicate-old ~pred)))
 
 (defn with-player-predicate [task pred]
   (do
@@ -164,17 +153,6 @@
   (do
     (.setEntityPredicate task (make-predicate pred))
     task))
-
-(defn with-block-predicate [task pred]
-  (do
-    (.setBlockPredicate task (make-predicate pred))
-    task))
-
-(defmacro with-entity-predicate-old [task pred]
-  `(add-entity-predicate ~task (make-predicate-old ~pred)))
-
-(defmacro with-block-predicate-old [task pred]
-  `(add-block-predicate ~task (make-predicate-old ~pred)))
 
 (defn make-damaged-by-task [damage-cause event value description item]
   (let [task (new TaskDamageFromSource event (get i/damagetypes damage-cause) value description)]
@@ -419,7 +397,7 @@
 
 (defn stand-on [material value description item]
   (-> (quest "player.PlayerMoveEvent" value description item)
-      (add-player-predicate (make-predicate-old (on-block? entity material)))))
+      (with-player-predicate #(on-block? % material))))
 
 (defn interact [entity-block value description item]
   (let [task (if (contains? ent/entitytypes entity-block) (make-entity-task entity-block (event-class "player.PlayerInteractEntityEvent") value description item)
