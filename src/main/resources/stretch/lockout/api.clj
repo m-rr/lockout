@@ -144,17 +144,37 @@
     (.setBlockPredicate task predicate)
     task))
 
-(defmacro make-predicate [pred]
+(defmacro make-predicate-old [pred]
   `(reify Predicate (test [this entity] ~pred)))
 
-(defmacro with-player-predicate [task pred]
-  `(add-player-predicate ~task (make-predicate ~pred)))
+(defn make-predicate [pred]
+  (reify Predicate
+    (test [this actor]
+      (pred actor))))
 
-(defmacro with-entity-predicate [task pred]
-  `(add-entity-predicate ~task (make-predicate ~pred)))
+(defmacro with-player-predicate-old [task pred]
+  `(add-player-predicate ~task (make-predicate-old ~pred)))
 
-(defmacro with-block-predicate [task pred]
-  `(add-block-predicate ~task (make-predicate ~pred)))
+(defn with-player-predicate [task pred]
+  (do
+    (.setPlayerPredicate task (make-predicate pred))
+    task))
+
+(defn with-entity-predicate [task pred]
+  (do
+    (.setEntityPredicate task (make-predicate pred))
+    task))
+
+(defn with-block-predicate [task pred]
+  (do
+    (.setBlockPredicate task (make-predicate pred))
+    task))
+
+(defmacro with-entity-predicate-old [task pred]
+  `(add-entity-predicate ~task (make-predicate-old ~pred)))
+
+(defmacro with-block-predicate-old [task pred]
+  `(add-block-predicate ~task (make-predicate-old ~pred)))
 
 (defn make-damaged-by-task [damage-cause event value description item]
   (let [task (new TaskDamageFromSource event (get i/damagetypes damage-cause) value description)]
@@ -202,7 +222,7 @@
     (if (keyword? material) (= ent-item (get i/materials material))
                             (contains? (set (vals material)) ent-item))))
 
-;; Must implement Damageable
+;; Entity must implement Damageable
 (defn has-max-health? [entity]
   (= (.getMaxHealth entity) (.getHealth entity)))
 
@@ -399,7 +419,7 @@
 
 (defn stand-on [material value description item]
   (-> (quest "player.PlayerMoveEvent" value description item)
-      (add-player-predicate (make-predicate (on-block? entity material)))))
+      (add-player-predicate (make-predicate-old (on-block? entity material)))))
 
 (defn interact [entity-block value description item]
   (let [task (if (contains? ent/entitytypes entity-block) (make-entity-task entity-block (event-class "player.PlayerInteractEntityEvent") value description item)
@@ -424,8 +444,8 @@
       repeat-task)))
 
 ;; Remove later
-(defn structure [predicate value description item]
-  (let [task (new TaskStructure (event-class "block.BlockPlaceEvent") predicate value description)]
+(defn structure [value description item pred]
+  (let [task (new TaskStructure (event-class "block.BlockPlaceEvent") (make-predicate pred) value description)]
     (do
       (with-gui-item task item)
       (add-task task)
