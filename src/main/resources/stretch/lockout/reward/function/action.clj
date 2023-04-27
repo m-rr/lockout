@@ -7,7 +7,7 @@
               (let [world (.getWorld human-entity)
                     loc (.getLocation human-entity)]
                 (do
-                  (.createExplosion world (.getX loc) (.getY loc) (.getZ loc) 1 true true)
+                  (.createExplosion world (.getX loc) (.getY loc) (.getZ loc) (float 0.5) true true)
                   (.strikeLightning world loc))))))
 
 (def give-xp (reify Consumer

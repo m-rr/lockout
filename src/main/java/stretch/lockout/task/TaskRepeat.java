@@ -8,6 +8,7 @@ import stretch.lockout.team.PlayerStat;
 
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.function.Predicate;
 
 public class TaskRepeat implements TaskComponent {
     final private TaskComponent taskComponent;
@@ -42,6 +43,11 @@ public class TaskRepeat implements TaskComponent {
     @Override
     public PlayerStat getScoredPlayer() {
         return taskComponent.getScoredPlayer();
+    }
+
+    @Override
+    public void setPlayerPredicate(Predicate<HumanEntity> predicate) {
+        taskComponent.setPlayerPredicate(predicate);
     }
 
     @Override

@@ -1,5 +1,6 @@
 package stretch.lockout.task;
 
+import org.bukkit.Bukkit;
 import org.bukkit.entity.HumanEntity;
 import org.bukkit.event.Event;
 import org.bukkit.inventory.ItemStack;
@@ -10,6 +11,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.function.Predicate;
 
 public sealed abstract class TaskComposite implements TaskComponent permits TaskANDComposite, TaskORComposite, TaskTHENComposite {
     final protected List<TaskComponent> taskComponents = new ArrayList<>();
@@ -66,8 +68,13 @@ public sealed abstract class TaskComposite implements TaskComponent permits Task
         if (description == null) {
             description = getDescriptionRecursive();
         }
-
+        
         return description;
+    }
+
+    @Override
+    public void setPlayerPredicate(Predicate<HumanEntity> predicate) {
+        taskComponents.forEach(taskComponent -> taskComponent.setPlayerPredicate(predicate));
     }
 
     public void setDescriptionEntryPrefix(String str) {

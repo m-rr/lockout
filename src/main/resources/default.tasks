@@ -116,9 +116,9 @@
             (with-reward (reward-chance "Diamond pickaxe or lightning"
                                         {
                                          [:diamond_pickaxe 1 :positive ""] 1
-                                         [:boom 1 :positive ""] 1
+                                         [:boom 1 :positive ""]            1
                                          }
-                                         ))))
+                                        ))))
 
 ;; OBTAIN WEIRD ITEM
 (one-of (-> (obtain :mossy_stone_brick_wall 1 "Obtain mossy stone brick wall" :mossy_stone_brick_wall)
@@ -182,16 +182,10 @@
 
 (with-reward '([:cooked_beef 25 :team_positive "25 Steak"]) (take-damage :starvation 1 "Begin to starve" :skeleton_skull))
 
-(with-reward '([:trident 1 :team_positive "Riptide trident" {:riptide 3}]) (add-entity-predicate (kill :drowned 1 "Kill a trident wielding drowned" :trident) (reify
-                                                                                                                                                                 java.util.function.Predicate
-                                                                                                                                                                 (test [this entity]
-                                                                                                                                                                   (in-main-hand? entity :trident)))))
-
-
 (with-reward '([:levitation 1 :enemy_negative "Levitation for enemies" 1200]) (add-player-predicate (quest "player.PlayerMoveEvent" 1 "Stand on bedrock" :bedrock) (reify
-                                                                                                                                                                      java.util.function.Predicate
-                                                                                                                                                                      (test [this entity]
-                                                                                                                                                                        (on-block? entity :bedrock)))))
+                                                                                                                                                                     java.util.function.Predicate
+                                                                                                                                                                     (test [this entity]
+                                                                                                                                                                       (on-block? entity :bedrock)))))
 
 ;(with-reward '([:speed 2 :team_positive "Speed II"]) (with-player-predicate (quest "player.PlayerMoveEvent" 1 "Walk on amethyst" :amethyst_block) (reify
 ;	java.util.function.Predicate
@@ -218,9 +212,9 @@
 (with-reward '([:jukebox 1 :positive "Jukebox!"] [:diamond_sword 1 :team_positive "Diamond sword"]) (obtain-any i/disctypes 1 "Obtain any disc" :music_disc_wait))
 
 (with-reward '([:leather_boots 1 :team_positive "Feather falling boots" {:protection_fall 4}]) (add-player-predicate (quest "player.PlayerMoveEvent" 1 "Reach build height" :nether_star) (reify
-                                                                                                                                                                                             java.util.function.Predicate
-                                                                                                                                                                                             (test [this entity]
-                                                                                                                                                                                               (above-y? entity 320)))))
+                                                                                                                                                                                            java.util.function.Predicate
+                                                                                                                                                                                            (test [this entity]
+                                                                                                                                                                                              (above-y? entity 320)))))
 
 ;; Jank
 ;(with-reward '([:iron_axe 1 :team_positive "Iron axe"]) (structure (new PanicBinStructurePredicate) 1 "Build a panic bin" :composter))

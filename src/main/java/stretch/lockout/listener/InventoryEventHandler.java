@@ -7,10 +7,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.enchantment.EnchantItemEvent;
-import org.bukkit.event.inventory.FurnaceExtractEvent;
-import org.bukkit.event.inventory.InventoryClickEvent;
-import org.bukkit.event.inventory.InventoryDragEvent;
-import org.bukkit.event.inventory.InventoryMoveItemEvent;
+import org.bukkit.event.inventory.*;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
@@ -54,6 +51,12 @@ public record InventoryEventHandler(RaceGameContext taskRaceContext) implements 
         }
 
         taskRaceContext.checkTask(player, clickEvent);
+    }
+
+    @EventHandler
+    public void onInventoryClose(InventoryCloseEvent closeEvent) {
+        var player = (Player) closeEvent.getPlayer();
+        taskRaceContext.checkTask(player, closeEvent);
     }
 
     @EventHandler

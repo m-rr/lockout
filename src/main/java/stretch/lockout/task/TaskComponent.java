@@ -23,4 +23,5 @@ public interface TaskComponent {
     public TaskComponent setReward(RewardComponent rewardComponent);
     public int getValue();
     public boolean doesAccomplish(HumanEntity player, Event event);
+    public void setPlayerPredicate(Predicate<HumanEntity> predicate);
 }

@@ -5,12 +5,17 @@
             [stretch.lockout.reward.function.action :as act]
             [stretch.lockout.util.entity :as ent])
   (:import (org.bukkit Bukkit)
+           (org.bukkit.block BlockFace)
            (org.bukkit.inventory ItemStack)
            (org.bukkit.potion PotionEffect)
+           (org.bukkit.inventory ItemStack)
+           (org.bukkit.entity LivingEntity)
            (stretch.lockout.reward RewardItem)
            (stretch.lockout.reward RewardPotion)
            (stretch.lockout.reward RewardAction)
-           (stretch.lockout.reward RewardComposite RewardChance$WeightedReward RewardChance)
+           (stretch.lockout.reward RewardComposite RewardChance$WeightedReward RewardChance RewardComponent)
+           (stretch.lockout.task TaskComponent)
+           (stretch.lockout.task TaskComposite)
            (stretch.lockout.task Task)
            (stretch.lockout.task TaskORComposite)
            (stretch.lockout.task.player TaskDamageFromSource)
@@ -19,7 +24,9 @@
            (stretch.lockout.task TaskMaterial TaskTHENComposite TaskANDComposite)
            (stretch.lockout.task.player TaskPotion)
            (stretch.lockout.task.structure TaskStructure)
-           (java.util.function Predicate)))
+           (java.util.function Predicate)
+           (clojure.lang PersistentVector)
+           (org.bukkit.attribute Attribute)))
 
 
 
@@ -43,26 +50,26 @@
 (defn set-score [score]
   (.setMaxScore (taskrace) score))
 
-(defn add-task [task]
+(defn add-task [^TaskComponent task]
   (do
     (.addTask (.getTaskManager (taskrace)) task)
     task))
 
-(defn remove-task [task]
+(defn remove-task [^TaskComponent task]
   (do
     (.removeTask (.getTaskManager (taskrace)) task)
     task))
 
-(defn add-task-component [task-composite task-component]
+(defn add-task-component [^TaskComposite task-composite ^TaskComponent task-component]
   (do
     (when (not (nil? task-component)) (.addTaskComponent task-composite task-component))
     task-composite))
 
-(defmacro one-of [first & rest]
+(defmacro one-of [^TaskComponent first & rest]
   (eval (rand-nth (cons first rest))))
 
 ;; Wrapper
-(defn add-enchants [item enchant-map]
+(defn add-enchants [^ItemStack item enchant-map]
   (if (empty? enchant-map) item
                            (do
                              (.addEnchantment item (get i/enchanttypes (key (first enchant-map))) (val (first enchant-map)))
@@ -115,28 +122,18 @@
 
 (defmulti with-reward (fn [task reward & rewards] (type reward)))
 
-(defmethod with-reward clojure.lang.PersistentVector [task reward & rewards]
+(defmethod with-reward PersistentVector [^TaskComponent task reward & rewards]
   (with-reward-ugly task (cons reward rewards)))
 
-(defmethod with-reward stretch.lockout.reward.RewardComponent [task reward & rewards]
+(defmethod with-reward RewardComponent [^TaskComponent task reward & rewards]
   (let [rewardComposite (new RewardComposite (cons reward rewards))]
     (do
       (.setReward task rewardComposite)
       task)))
 
-(defn with-gui-item [task item]
+(defn with-gui-item [^TaskComponent task item]
   (do
     (.setGuiItemStack task (new ItemStack (get i/materials item)))
-    task))
-
-(defn add-entity-predicate [task predicate]
-  (do
-    (.setEntityPredicate task predicate)
-    task))
-
-(defn add-block-predicate [task predicate]
-  (do
-    (.setBlockPredicate task predicate)
     task))
 
 (defn make-predicate [pred]
@@ -172,12 +169,6 @@
       (with-gui-item task item)
       task)))
 
-(defn task-or-old [item value description first & rest]
-  (let [task (new TaskORComposite (map remove-task (cons first rest)) value description)]
-    (do
-      (add-task task)
-      (with-gui-item task item)
-      task)))
 
 (defn task-or [item value description first & rest]
   (-> (new TaskORComposite (map remove-task (cons first rest)) value description)
@@ -195,55 +186,59 @@
       (add-task)))
 
 ;; Predicates
-(defn in-main-hand? [entity material]
+(defn in-main-hand? [^LivingEntity entity material]
   (let [ent-item (.getType (.getItemInMainHand (.getEquipment entity)))]
     (if (keyword? material) (= ent-item (get i/materials material))
                             (contains? (set (vals material)) ent-item))))
 
-;; Entity must implement Damageable
-(defn has-max-health? [entity]
-  (= (.getMaxHealth entity) (.getHealth entity)))
+(defn has-max-health? [^LivingEntity entity]
+  (= (.getValue (.getAttribute entity Attribute/GENERIC_MAX_HEALTH)) (.getHealth entity)))
 
-(defn wearing-armor? [entity armor]
+(defn wearing-armor? [^LivingEntity entity armor]
   (let [ent-armor (set (map #(.getType %) (.getArmorContents (.getEquipment entity))))]
     (if (keyword? armor) (contains? ent-armor (get i/materials armor))
                          (not (empty? (clojure.set/intersection ent-armor (set (vals armor))))))))
 
-(defn in-biome? [entity biome]
+(defmulti in-biome? (fn [entity biome] (set? biome)))
+
+(defmethod in-biome? false [^LivingEntity entity biome]
   (= (.getBiome (.getBlock (.getLocation entity))) (get i/biomes biome)))
 
-(defn on-block? [entity material]
+(defmethod in-biome? true [^LivingEntity entity biome]
+  (contains? biome (keyword (.toLowerCase (.name (.getBiome (.getBlock (.getLocation entity))))))))
+
+(defn on-block? [^LivingEntity entity material]
   (= (.getType (.getRelative (.getBlock (.getLocation entity)) (get i/blockface :down))) (get i/materials material)))
 
-(defn above-y? [entity y-val]
+(defn above-y? [^LivingEntity entity y-val]
   (>= (.getY (.getLocation entity)) y-val))
 
-(defn has-potion-effect? [entity potion-effect]
+(defn has-potion-effect? [^LivingEntity entity potion-effect]
   (not (nil? (.getPotionEffect entity (get i/potioneffecttypes potion-effect)))))
 
-(defn on-fire? [entity]
+(defn on-fire? [^LivingEntity entity]
   (< 0 (.getFireTicks entity)))
 
-(defn in-water? [entity]
+(defn in-water? [^LivingEntity entity]
   (.isInWater entity))
 
-(defn in-rain? [entity]
+(defn in-rain? [^LivingEntity entity]
   (.isInRain entity))
 
-(defn is-day? [entity]
+(defn is-day? [^LivingEntity entity]
   (> 13000 (.getTime (.getWorld entity))))
 
-(defn is-night? [entity]
+(defn is-night? [^LivingEntity entity]
   (not (is-day? entity)))
 
-(defn on-surface? [entity]
+(defn on-surface? [^LivingEntity entity]
   (<= 15 (.getLightFromSky (.getBlock (.getLocation entity)))))
 
 ;; Only in paper api
 (defn is-lefty? [entity]
   (.isLeftHanded entity))
 
-(defn is-entity? [entity entity-type]
+(defn is-entity? [^LivingEntity entity entity-type]
   (= (get ent/entitytypes entity-type) (.getType entity)))
 
 (defn is-material? [block-item material]
