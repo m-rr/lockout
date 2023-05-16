@@ -193,9 +193,9 @@ public class RaceGameContext {
                     }
                 });
 
-                playerTracker.setPlayers(getTeamManager().getPlayerStats());
+                playerTracker.setAllPlayers(getTeamManager().getPlayerStats());
 
-                Bukkit.getScheduler().scheduleSyncRepeatingTask(getPlugin(), playerTracker, 0, 5);
+                Bukkit.getScheduler().scheduleSyncRepeatingTask(getPlugin(), playerTracker, 0, 3);
 
                 MessageUtil.sendAllChat("Game Starting!");
 

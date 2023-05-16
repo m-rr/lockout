@@ -4,7 +4,6 @@ import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.potion.PotionEffect;
 import stretch.lockout.event.PlayerJoinTeamEvent;
-import stretch.lockout.team.PlayerStat;
 
 import java.util.*;
 import java.util.function.Consumer;
@@ -19,7 +18,7 @@ public class TeamManager {
 
     public TeamManager(Collection<LockoutTeam> teams) {
         teams.forEach(team -> team.setTeamManager(this));
-        this.lockoutTeams = new HashSet<LockoutTeam>(teams);
+        this.lockoutTeams = new HashSet<>(teams);
     }
 
     public List<String> getTeamNames() {

@@ -30,7 +30,10 @@ public class PlayerStat {
     public void setTeam(LockoutTeam lockoutTeam) {
         this.lockoutTeam = lockoutTeam;
     }
-    public int getScore() {return this.score;}
+    public int getScore() {
+        //return this.score;
+        return completedTasks.stream().mapToInt(TaskComponent::getValue).sum();
+    }
     public int getTotalCompletedTasks() {
         return this.completedTasks.size();
     }

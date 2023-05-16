@@ -63,6 +63,12 @@ public class TaskManager {
         }
     }
 
+    public long getTaskCount() {
+        return getTasks().stream()
+                .filter(taskComponent -> !(taskComponent instanceof TaskInvisible))
+                .count();
+    }
+
     public Queue<TaskComponent> getCompletedTasks() {return completedTasks;}
 
     public void setTaskCompleted(PlayerStat playerStat, TaskComponent task) {

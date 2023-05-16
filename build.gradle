@@ -8,9 +8,14 @@ version = '1.0-SNAPSHOT'
 
 repositories {
     mavenCentral()
+    mavenLocal()
     maven {
         name = 'spigotmc-repo'
         url = 'https://hub.spigotmc.org/nexus/content/repositories/snapshots/'
+        content {
+            includeGroup 'org.bukkit'
+            includeGroup "org.spigotmc"
+        }
     }
     maven {
         name = 'sonatype'
@@ -26,6 +31,8 @@ repositories {
 dependencies {
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.0.0-M2'
     compileOnly 'org.spigotmc:spigot-api:1.19.2-R0.1-SNAPSHOT'
+    //compileOnly 'org.spigotmc:spigot:1.19.2-R0.1-SNAPSHOT'
+    compileOnly 'stretch:spigot-nms:1.0'
     implementation 'org.clojure:clojure:1.11.1'
     testImplementation 'com.github.seeseemelk:MockBukkit-v1.19:2.29.0'
 }

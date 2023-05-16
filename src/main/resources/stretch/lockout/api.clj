@@ -13,7 +13,7 @@
            (stretch.lockout.reward RewardItem)
            (stretch.lockout.reward RewardPotion)
            (stretch.lockout.reward RewardAction)
-           (stretch.lockout.reward RewardComposite RewardChance$WeightedReward RewardChance RewardComponent)
+           (stretch.lockout.reward RewardComposite RewardChance$WeightedReward RewardChance RewardComponent RewardTask)
            (stretch.lockout.task TaskComponent)
            (stretch.lockout.task TaskComposite)
            (stretch.lockout.task Task)
@@ -21,10 +21,10 @@
            (stretch.lockout.task.player TaskDamageFromSource)
            (stretch.lockout.task TaskRepeat)
            (stretch.lockout.task TaskMob)
-           (stretch.lockout.task TaskMaterial TaskTHENComposite TaskANDComposite)
+           (stretch.lockout.task TaskMaterial TaskTHENComposite TaskANDComposite TaskInvisible)
            (stretch.lockout.task.player TaskPotion)
            (stretch.lockout.task.structure TaskStructure)
-           (java.util.function Predicate)
+           (java.util.function Predicate Consumer)
            (clojure.lang PersistentVector)
            (org.bukkit.attribute Attribute)))
 
@@ -50,6 +50,15 @@
 (defn set-score [score]
   (.setMaxScore (taskrace) score))
 
+(defn task-count []
+  (.getTaskCount (.getTaskManager (taskrace))))
+
+(defn player-tracker []
+  (.getPlayerTracker (taskrace)))
+
+(defn tracked-player [player]
+  (.getTrackedPlayer (player-tracker) player))
+
 (defn add-task [^TaskComponent task]
   (do
     (.addTask (.getTaskManager (taskrace)) task)
@@ -65,8 +74,21 @@
     (when (not (nil? task-component)) (.addTaskComponent task-composite task-component))
     task-composite))
 
+(defn make-consumer [consume]
+  (reify Consumer
+    (accept [this player]
+      (consume player))))
+
+(defn make-predicate [pred]
+  (reify Predicate
+    (test [this actor]
+      (pred actor))))
+
 (defmacro one-of [^TaskComponent first & rest]
   (eval (rand-nth (cons first rest))))
+
+(defn one-of [^TaskComponent first & rest]
+  (add-task (rand-nth (cons first rest))))
 
 ;; Wrapper
 (defn add-enchants [^ItemStack item enchant-map]
@@ -87,6 +109,15 @@
 ;; not implemented
 (defn make-reward-action [action-key reward-type description]
   (new RewardAction (get act/actiontypes action-key) (get i/rewardtypes reward-type) description))
+
+(defn task-invisible [task]
+  (add-task (new TaskInvisible task)))
+
+(defn reward-task [reward-type description ^TaskComponent reward-task]
+  (new RewardTask (task-invisible reward-task) (reward-type i/rewardtypes) description))
+
+(defn reward-action [reward-type description consumer]
+  (new RewardAction (make-consumer consumer) (reward-type i/rewardtypes) description))
 
 ; enchantment is used as potion time for reward potion...
 (defn make-reward [reward-key amount reward-type description enchantment]
@@ -136,11 +167,6 @@
     (.setGuiItemStack task (new ItemStack (get i/materials item)))
     task))
 
-(defn make-predicate [pred]
-  (reify Predicate
-    (test [this actor]
-      (pred actor))))
-
 (defn with-player-predicate [task pred]
   (do
     (.setPlayerPredicate task (make-predicate pred))
@@ -172,18 +198,15 @@
 
 (defn task-or [item value description first & rest]
   (-> (new TaskORComposite (map remove-task (cons first rest)) value description)
-      (with-gui-item item)
-      (add-task)))
+      (with-gui-item item)))
 
 (defn task-and [item value description first & rest]
   (-> (new TaskANDComposite (map remove-task (cons first rest)) value description)
-      (with-gui-item item)
-      (add-task)))
+      (with-gui-item item)))
 
 (defn task-then [item value description first & rest]
   (-> (new TaskTHENComposite (map remove-task (cons first rest)) value description)
-      (with-gui-item item)
-      (add-task)))
+      (with-gui-item item)))
 
 ;; Predicates
 (defn in-main-hand? [^LivingEntity entity material]
@@ -251,11 +274,19 @@
       (add-task task)
       task)))
 
+(defn place [material value description item]
+  (make-material-task material (event-class "block.BlockPlaceEvent") value description item))
+
 (defn break [material value description item]
   (let [task (make-material-task material (event-class "block.BlockBreakEvent") value description item)]
     (do
       (add-task task)
       task)))
+
+(defn break [material value description item]
+  (make-material-task material (event-class "block.BlockBreakEvent") value description item))
+
+
 
 (defn pickup [material value description item]
   (let [task (make-material-task material (event-class "entity.EntityPickupItemEvent") value description item)]
@@ -263,11 +294,17 @@
       (add-task task)
       task)))
 
+(defn pickup [material value description item]
+  (make-material-task material (event-class "entity.EntityPickupItemEvent") value description item))
+
 (defn drop-item [material value description item]
   (let [task (make-material-task material (event-class "player.PlayerDropItemEvent") value description item)]
     (do
       (add-task task)
       task)))
+
+(defn drop-item [material value description item]
+  (make-material-task material (event-class "player.PlayerDropItemEvent") value description item))
 
 (defn tame [entity value description item]
   (let [task (make-entity-task entity (event-class "entity.EntityTameEvent") value description item)]
@@ -275,14 +312,17 @@
       (add-task task)
       task)))
 
+(defn tame [entity value description item]
+  (make-entity-task entity (event-class "entity.EntityTameEvent") value description item))
+
 (defn shear [entity value description item]
   (let [task (make-entity-task entity (event-class "player.PlayerShearEntityEvent") value description item)]
     (do
       (add-task task)
       task)))
 
-(defn make-then [value]
-  (new TaskTHENComposite value))
+(defn shear [entity value description item]
+  (make-entity-task entity (event-class "player.PlayerShearEntityEvent") value description item))
 
 (defn make-obtain [material value description item]
   (let [task (new TaskORComposite
@@ -295,11 +335,24 @@
       (with-gui-item task item)
       task)))
 
+(defn make-obtain [material value description item]
+  (let [task (task-or item value description
+                      (new TaskMaterial (event-class "inventory.InventoryClickEvent") (get i/materials material) value description)
+                      (new TaskMaterial (event-class "inventory.FurnaceExtractEvent") (get i/materials material) value description)
+                      (new TaskMaterial (event-class "inventory.CraftItemEvent") (get i/materials material) value description)
+                      (new TaskMaterial (event-class "entity.EntityPickupItemEvent") (get i/materials material) value description))]
+    (do
+      (with-gui-item task item)
+      task)))
+
 (defn obtain [material value description item]
   (let [task (make-obtain material value description item)]
     (do
       (add-task task)
       task)))
+
+(defn obtain [material value description item]
+  (make-obtain material value description item))
 
 (defn make-obtain-any [material-type value description item]
   (cond (not (list? material-type)) (make-obtain-any (list material-type) value description item)
@@ -313,7 +366,6 @@
   (let [task (make-obtain-any material-type value description item)]
     (do
       (with-gui-item task item)
-      (add-task task)
       task)))
 
 (defn make-quest [event value description item]
@@ -328,6 +380,9 @@
       (add-task task)
       task)))
 
+(defn quest [event value description item]
+  (make-quest event value description item))
+
 (defn make-acquire [potion-effect value description item]
   (let [task (new TaskPotion (get i/potioneffecttypes potion-effect) value description)]
     (do
@@ -340,11 +395,17 @@
       (add-task task)
       task)))
 
+(defn eat [food value description item]
+  (make-material-task food (event-class "player.PlayerItemConsumeEvent") value description item))
+
 (defn acquire [potion-effect value description item]
   (let [task (make-acquire potion-effect value description item)]
     (do
       (add-task task)
       task)))
+
+(defn acquire [potion-effect value description item]
+  (make-acquire potion-effect value description item))
 
 (defn kill [entity value description item]
   (let [task (make-entity-task entity (event-class "entity.EntityDeathEvent") value description item)]
@@ -352,11 +413,17 @@
       (add-task task)
       task)))
 
+(defn kill [entity value description item]
+  (make-entity-task entity (event-class "entity.EntityDeathEvent") value description item))
+
 (defn smelt [material value description item]
   (let [task (make-material-task material (event-class "inventory.FurnaceExtractEvent") value description item)]
     (do
       (add-task task)
       task)))
+
+(defn smelt [material value description item]
+  (make-material-task material (event-class "inventory.FurnaceExtractEvent") value description item))
 
 (defn bucket [entity value description item]
   (let [task (make-entity-task entity (if (= entity :axolotl) (event-class "player.PlayerBucketEntityEvent") (event-class "player.PlayerBucketFishEvent")) value description item)]
@@ -364,17 +431,31 @@
       (add-task task)
       task)))
 
+(defmulti bucket (fn [entity _ _ _] entity))
+
+(defmethod bucket :axolotl [entity value description item]
+  (make-entity-task entity (event-class "player.PlayerBucketEntityEvent") value description item))
+
+(defmethod bucket :default [entity value description item]
+  (make-entity-task entity (event-class "player.PlayerBucketFishEvent") value description item))
+
 (defn hit [entity value description item]
   (let [task (make-entity-task entity (event-class "entity.EntityDamageByEntityEvent") value description item)]
     (do
       (add-task task)
       task)))
 
+(defn hit [entity value description item]
+  (make-entity-task entity (event-class "entity.EntityDamageByEntityEvent") value description item))
+
 (defn breed [entity value description item]
   (let [task (make-entity-task entity (event-class "entity.EntityBreedEvent") value description item)]
     (do
       (add-task task)
       task)))
+
+(defn breed [entity value description item]
+  (make-entity-task entity (event-class "entity.EntityBreedEvent") value description item))
 
 (defn damaged-by [entity-block damage-cause value description item]
   (let [event (if (contains? ent/entitytypes entity-block) (event-class "entity.EntityDamageByEntityEvent")
@@ -384,11 +465,22 @@
       (add-task task)
       task)))
 
+(defmulti damaged-by (fn [actor _ _ _ _] (contains? ent/entitytypes actor)))
+
+(defmethod damaged-by true [actor damage-cause value description item]
+  (make-damaged-by-task damage-cause (event-class "entity.EntityDamageByEntityEvent") value description item))
+
+(defmethod damaged-by false [actor damage-cause value description item]
+  (make-damaged-by-task damage-cause (event-class "entity.EntityDamageByBlockEvent") value description item))
+
 (defn take-damage [damage-cause value description item]
   (let [task (make-damaged-by-task damage-cause (event-class "entity.EntityDamageEvent") value description item)]
     (do
       (add-task task)
       task)))
+
+(defn take-damage [damage-cause value description item]
+  (make-damaged-by-task damage-cause (event-class "entity.EntityDamageEvent") value description item))
 
 (defn stand-on [material value description item]
   (-> (quest "player.PlayerMoveEvent" value description item)
@@ -401,13 +493,13 @@
       (add-task task)
       task)))
 
-;; BellRingEvent is in paper api and will not work with quest fn
-(defn ring-bell [value description item]
-  (let [task (new Task (Class/forName "io.papermc.paper.event.block.BellRingEvent") value description)]
-    (do
-      (with-gui-item task item)
-      (add-task task)
-      task)))
+(defmulti interact (fn [actor value description item] (contains? ent/entitytypes actor)))
+
+(defmethod interact true [actor value description item]
+  (make-entity-task actor (event-class "player.PlayerInteractEntityEvent") value description item))
+
+(defmethod interact :default [actor value description item]
+  (make-material-task actor (event-class "player.PlayerInteractEvent") value description item))
 
 (defn do-times [n task]
   (let [repeat-task (new TaskRepeat task n)]
@@ -415,6 +507,9 @@
       (remove-task task)
       (add-task repeat-task)
       repeat-task)))
+
+(defn do-times [n task]
+  (new TaskRepeat task n))
 
 ;; Remove later
 (defn structure [value description item pred]
@@ -424,4 +519,6 @@
       (add-task task)
       task)))
 
-
+(defn structure [value description item pred]
+  (-> (new TaskStructure (event-class "block.BlockPlaceEvent") (make-predicate pred) value description)
+      (with-gui-item item)))

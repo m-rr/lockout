@@ -11,6 +11,7 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import stretch.lockout.reward.RewardComponent;
 import stretch.lockout.task.TaskComponent;
+import stretch.lockout.task.TaskInvisible;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -27,8 +28,8 @@ public class InventoryTaskView extends LockoutView implements InventoryHolder {
         this.showRewards = showRewards;
 
         this.inventory = Bukkit.createInventory(this, size, "Lockout");
-        this.defaultItem = new ItemStack(Material.BARRIER);
-        this.completedItem = new ItemStack(Material.GRAY_STAINED_GLASS);
+        this.defaultItem = new ItemStack(Material.GRAY_STAINED_GLASS);
+        this.completedItem = new ItemStack(Material.BARRIER);
 
     }
     @Override
@@ -122,6 +123,9 @@ public class InventoryTaskView extends LockoutView implements InventoryHolder {
 
     // Uses guiItemStack of task by default
     public void addTaskEntry(TaskComponent task) {
+        if (task instanceof TaskInvisible) {
+            return;
+        }
         ItemStack itemStack = task.getGuiItemStack();
         if (!task.hasGuiItemStack()) {
             itemStack = defaultItemFactory();

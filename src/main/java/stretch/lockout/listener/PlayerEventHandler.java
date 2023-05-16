@@ -254,6 +254,7 @@ public class PlayerEventHandler implements Listener {
                 player.setScoreboard(taskRaceContext.getScoreboardManager().getBoard());
                 var playerStat = mappedPlayerStats.get(player.getUniqueId());
                 playerStat.setPlayer(player);
+                taskRaceContext.getPlayerTracker().setPlayer(playerStat);
             }
         }
     }
@@ -261,7 +262,7 @@ public class PlayerEventHandler implements Listener {
     @EventHandler
     public void onPlayerLeave(PlayerQuitEvent quitEvent) {
         // Game should end if all players are disconnected
-        // This is called before they are really disconnected, and they may rejoin, so we wait a minute first.
+        // This is when the last player disconnects, and they may rejoin, so we wait a minute first.
 
         if (Bukkit.getOnlinePlayers().size() < 2) {
             Bukkit.getScheduler().scheduleSyncDelayedTask(taskRaceContext.getPlugin(), () -> {

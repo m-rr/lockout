@@ -2,6 +2,11 @@
   (:require [stretch.lockout.util.entity :as ent])
   (:import (java.util.function Consumer)))
 
+(defn make-consumer [consume]
+  (reify Consumer
+    (accept [this player]
+      (consume player))))
+
 (def boom (reify Consumer
             (accept [this human-entity]
               (let [world (.getWorld human-entity)

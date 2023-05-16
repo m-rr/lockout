@@ -19,11 +19,11 @@ public abstract class RewardLeaf implements RewardComponent {
     public void applyReward(PlayerStat playerStat) {
         switch (rewardType) {
             case POSITIVE -> giveReward(playerStat.getPlayer());
-            case TEAM_POSITIVE -> playerStat.getTeam().getPlayerStats().stream()
-                    .map(PlayerStat::getPlayer).forEach(this::giveReward);
+            //case TEAM_POSITIVE -> playerStat.getTeam().getPlayerStats().stream()
+            //        .map(PlayerStat::getPlayer).forEach(this::giveReward);
+            case TEAM_POSITIVE -> playerStat.getTeam().doToPlayers(this::giveReward);
             case ENEMY_NEGATIVE -> playerStat.getTeam().doToOpposingTeams(this::giveReward);
         }
-        //applyReward(playerStat.getPlayer());
     }
 
     protected abstract void giveReward(Player player);
