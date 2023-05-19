@@ -3,10 +3,6 @@ package stretch.lockout;
 import clojure.java.api.Clojure;
 import clojure.lang.IFn;
 import org.bukkit.ChatColor;
-import org.bukkit.Chunk;
-import org.bukkit.ChunkSnapshot;
-import org.bukkit.Material;
-import org.bukkit.block.Biome;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.file.FileConfiguration;
@@ -21,13 +17,12 @@ import stretch.lockout.game.RaceGameContext;
 import stretch.lockout.task.file.TaskList;
 import stretch.lockout.team.TeamManager;
 import stretch.lockout.util.MessageUtil;
-import stretch.lockout.util.WorldUtil;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.*;
-import java.util.function.Predicate;
+import java.util.List;
+import java.util.Locale;
 import java.util.stream.Stream;
 
 public final class Lockout extends JavaPlugin {
@@ -145,6 +140,11 @@ public final class Lockout extends JavaPlugin {
         }
     }
 
+    public void loadLua(CommandSender sender, String filePath) {
+
+
+    }
+
     public void loadScript(CommandSender sender, TaskList taskList) {
         try {
             loadScript.invoke(Clojure.read(getDataFolderRelativePath() + taskList.taskName() + getTaskFileExtension()));
@@ -257,41 +257,8 @@ public final class Lockout extends JavaPlugin {
                     taskRaceContext.setGameState(GameState.END);
                 }
                 case "debug" -> {
-                    final int EDGE = 20;
-                    final long seed = player.getWorld().getSeed();
-                    Predicate<ChunkSnapshot> pred = (c) -> {
-                        int chunkX = c.getX();
-                        int chunkY = c.getZ();
+                    taskRaceContext.getLuaEnvironment().loadFile("plugins/Lockout/test.lua");
 
-                        Random random = new Random();
-
-                        byte villageParam1 = 32;
-                        byte villageParam2 = 8;
-
-                        int k = chunkX;
-                        int m = chunkY;
-                        if (chunkX < 0) chunkX -= villageParam1 - 1;
-                        if (chunkY < 0) chunkY -= villageParam1 - 1;
-
-                        int n = chunkX / villageParam1;
-                        int i1 = chunkY / villageParam1;
-
-                        long positionSeed = n * 341873128712L + i1 * 132897987541L + seed + 10387312L;
-                        random.setSeed(positionSeed);
-
-                        n *= villageParam1;
-                        i1 *= villageParam1;
-                        n += random.nextInt(villageParam1 - villageParam2);
-                        i1 += random.nextInt(villageParam1 - villageParam2);
-                        chunkX = k;
-                        chunkY = m;
-                        return (chunkX == n) && (chunkY == i1);
-                            //return MinecraftUtil.isValidBiome(chunkX * 16 + 8, chunkY * 16 + 8, 0, validBiomes);
-                    };
-                    Predicate<Chunk> predBell = (c) -> WorldUtil.materialsInChunk(c).contains(Material.BELL);
-                    //player.sendMessage("Has Bell: " + predBell.test(player.getLocation().getChunk()));
-                    //player.sendMessage("Has village: " + pred.test(player.getLocation().getChunk().getChunkSnapshot()));
-                    player.sendMessage("result: " + WorldUtil.findValidChunk(player.getLocation(), EDGE, pred, player));
                 }
                 default -> {return false;}
             }

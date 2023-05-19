@@ -24,7 +24,7 @@
 ;(def arrowtypes (util/map-material-tags Tag/ENTITY_TYPES_ARROWS))
 (def potioneffecttypes (util/map-fields PotionEffectType))
 (def biomes (util/map-enums Biome))
-(def blockface (util/map-enums BlockFace))
+(def blockface (util/map-enums Block  Face))
 (def rewardtypes (util/map-enums RewardType))
 (def enchanttypes (util/map-fields Enchantment))
 (def damagetypes (util/map-enums EntityDamageEvent$DamageCause))

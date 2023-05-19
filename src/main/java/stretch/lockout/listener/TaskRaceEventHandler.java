@@ -84,6 +84,11 @@ public class TaskRaceEventHandler implements Listener {
                 var rewardEvent = new RewardApplyEvent(scoredPlayerStat, reward);
                 Bukkit.getPluginManager().callEvent(rewardEvent);
             }
+
+            var actions = reward.getActions();
+            if (!actions.isEmpty()) {
+                taskRaceContext.getRewardScheduler().scheduleRewardActions(reward);
+            }
         }
 
         Predicate<RaceGameContext> isGameOver = taskRaceContext.gameRules().contains(GameRule.MAX_SCORE) ?

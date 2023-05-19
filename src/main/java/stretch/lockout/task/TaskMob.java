@@ -37,11 +37,13 @@ public class TaskMob extends Task {
     }
     public boolean hasTargetPlayerPredicate() {return targetPlayerCondition != null;}
 
-    public void setEntityPredicate(Predicate<Mob> mobPredicate) {
+    public TaskComponent setEntityPredicate(Predicate<Mob> mobPredicate) {
         condition = mobPredicate;
+        return this;
     }
 
-    public void setTargetPlayerPredicate(Predicate<HumanEntity> playerPredicate) {
+    public TaskComponent setTargetPlayerPredicate(Predicate<HumanEntity> playerPredicate) {
         targetPlayerCondition = playerPredicate;
+        return this;
     }
 }

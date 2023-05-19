@@ -3,7 +3,7 @@ package stretch.lockout.reward;
 import org.bukkit.entity.Player;
 import org.bukkit.potion.PotionEffect;
 
-public class RewardPotion extends RewardLeaf{
+public class RewardPotion extends RewardLeaf {
     final private PotionEffect potionEffect;
     public RewardPotion(PotionEffect potionEffect, String description) {
         super(description);

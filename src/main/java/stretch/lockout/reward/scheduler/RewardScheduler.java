@@ -5,8 +5,6 @@ import org.bukkit.scheduler.BukkitScheduler;
 import org.bukkit.scheduler.BukkitTask;
 import stretch.lockout.Lockout;
 import stretch.lockout.reward.RewardComponent;
-import stretch.lockout.reward.function.RewardRunnable;
-
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
@@ -24,12 +22,11 @@ public class RewardScheduler {
         return scheduler.runTask(plugin, action);
     }
 
-    public void scheduleRewardAction(RewardRunnable action) {
-        RewardComponent reward = action.getReward();
+    public void scheduleRewardActions(RewardComponent reward) {
         if (!scheduledActions.containsKey(reward)) {
             scheduledActions.put(reward, new LinkedList<>());
         }
-        scheduledActions.get(reward).offer(runTask(action));
+        reward.getActions().forEach(this::runTask);
     }
 
     public boolean isCurrentlyRunning(RewardComponent reward) {
@@ -44,7 +41,11 @@ public class RewardScheduler {
             scheduledActions.get(reward).stream()
                     .mapToInt(BukkitTask::getTaskId)
                     .forEach(scheduler::cancelTask);
-            scheduledActions.put(reward, new LinkedList<>());
+            scheduledActions.remove(reward);
         }
+    }
+
+    public void cancelAll() {
+        scheduledActions.keySet().forEach(this::cancelRewardActions);
     }
 }

@@ -195,7 +195,6 @@
       (with-gui-item task item)
       task)))
 
-
 (defn task-or [item value description first & rest]
   (-> (new TaskORComposite (map remove-task (cons first rest)) value description)
       (with-gui-item item)))

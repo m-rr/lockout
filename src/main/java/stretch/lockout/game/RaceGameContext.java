@@ -18,7 +18,9 @@ import stretch.lockout.event.ReadyGameEvent;
 import stretch.lockout.event.StartGameEvent;
 import stretch.lockout.event.TaskCompletedEvent;
 import stretch.lockout.listener.*;
+import stretch.lockout.lua.LuaEnvironment;
 import stretch.lockout.loot.LootManager;
+import stretch.lockout.reward.scheduler.RewardScheduler;
 import stretch.lockout.scoreboard.ScoreboardHandler;
 import stretch.lockout.task.IndirectTaskListener;
 import stretch.lockout.task.TaskComponent;
@@ -43,6 +45,8 @@ public class RaceGameContext {
     private final LootManager lootManager = new LootManager();
     private ScoreboardHandler scoreboardManager = new ScoreboardHandler();
     private PlayerTracker playerTracker = new PlayerTracker();
+    private RewardScheduler rewardScheduler;
+    private final LuaEnvironment luaEnvironment;
     private int maxScore;
     private GameState gameState;
     private final Set<HumanEntity> readyPlayers = new HashSet<>();
@@ -62,6 +66,8 @@ public class RaceGameContext {
         new TaskRaceEventHandler(this);
         new InventoryEventHandler(this);
         new IndirectTaskListener(this, 20);
+        rewardScheduler = new RewardScheduler(getPlugin());
+        luaEnvironment = new LuaEnvironment(this);
 
         lootManager.setWorld(Bukkit.getWorld("world"));
 
@@ -102,6 +108,10 @@ public class RaceGameContext {
     public TeamManager getTeamManager() {return teamManager;}
 
     public PlayerTracker getPlayerTracker() {return playerTracker;}
+
+    public RewardScheduler getRewardScheduler() {return rewardScheduler;}
+
+    public LuaEnvironment getLuaEnvironment() {return luaEnvironment;}
 
     public GameState getGameState() {return this.gameState;}
 
@@ -148,6 +158,13 @@ public class RaceGameContext {
                     TaskList taskList = new TaskList(getPlugin().getConfig().getString("autoLoadTask"));
                     if (getPlugin().getTaskLists().contains(taskList)) {
                         loadTaskList(getPlugin().getServer().getConsoleSender(), taskList);
+                        //var reward = new RewardAction(player -> player.setFireTicks(60), "test");
+                        //reward.addAction(() -> Bukkit.getPlayer("MR_STRETCH13").sendMessage("hello"));
+
+                        //var task = new TaskMaterial(BlockBreakEvent.class, Material.STONE, 1, "Break stone");
+                        //task.setReward(reward);
+                        //task.setGuiItemStack(new ItemStack(Material.STONE));
+                        //taskManager.addTask(task);
                     }
                     else {
                         MessageUtil.consoleLog(ChatColor.RED + "TaskList " + taskList.taskName() + " was not found.");
@@ -220,6 +237,7 @@ public class RaceGameContext {
                 teamManager = new TeamManager();
                 taskManager = new TaskManager();
                 playerTracker = new PlayerTracker();
+                rewardScheduler = new RewardScheduler(getPlugin());
                 setGameState(GameState.PRE);
             }
         }

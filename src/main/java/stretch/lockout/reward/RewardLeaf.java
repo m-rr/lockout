@@ -3,9 +3,13 @@ package stretch.lockout.reward;
 import org.bukkit.entity.Player;
 import stretch.lockout.team.PlayerStat;
 
+import java.util.*;
+
 public abstract class RewardLeaf implements RewardComponent {
     final protected RewardType rewardType;
     final protected String description;
+    private final List<Runnable> rewardRunnables = new ArrayList<>();
+    //private final Set<RewardRunnable> rewardRunnables = new HashSet<>();
     public RewardLeaf(String description) {
         this.description = description;
         this.rewardType = RewardType.POSITIVE;
@@ -13,6 +17,16 @@ public abstract class RewardLeaf implements RewardComponent {
     public RewardLeaf(RewardType rewardType, String description) {
         this.description = description;
         this.rewardType = rewardType;
+    }
+
+    @Override
+    public List<Runnable> getActions() {
+        return rewardRunnables;
+    }
+
+    @Override
+    public void addAction(Runnable rewardRunnable) {
+        rewardRunnables.add(rewardRunnable);
     }
 
     @Override

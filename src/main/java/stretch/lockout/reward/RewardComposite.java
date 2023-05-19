@@ -7,6 +7,7 @@ import java.util.List;
 
 public class RewardComposite implements RewardComponent {
     private final List<RewardComponent> rewardComponents;
+    private final List<Runnable> rewardRunnables = new ArrayList<>();
 
     public RewardComposite() {
         this.rewardComponents = new ArrayList<>();
@@ -25,6 +26,14 @@ public class RewardComposite implements RewardComponent {
     }
 
     public List<RewardComponent> getRewardComponents() {return rewardComponents;}
+
+    @Override
+    public List<Runnable> getActions() {return rewardRunnables;}
+
+    @Override
+    public void addAction(Runnable rewardRunnable) {
+        rewardRunnables.add(rewardRunnable);
+    }
 
     @Override
     public void applyReward(PlayerStat playerStat) {

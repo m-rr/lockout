@@ -1,9 +1,9 @@
 package stretch.lockout.task;
 
-import org.bukkit.Bukkit;
 import org.bukkit.entity.HumanEntity;
 import org.bukkit.event.Event;
 import org.bukkit.inventory.ItemStack;
+import org.luaj.vm2.LuaValue;
 import stretch.lockout.reward.RewardComponent;
 import stretch.lockout.team.PlayerStat;
 
@@ -68,13 +68,20 @@ public sealed abstract class TaskComposite implements TaskComponent permits Task
         if (description == null) {
             description = getDescriptionRecursive();
         }
-        
+
         return description;
     }
 
     @Override
-    public void setPlayerPredicate(Predicate<HumanEntity> predicate) {
+    public TaskComponent setPlayerPredicate(Predicate<HumanEntity> predicate) {
         taskComponents.forEach(taskComponent -> taskComponent.setPlayerPredicate(predicate));
+        return this;
+    }
+
+    @Override
+    public TaskComponent setPlayerPredicate(LuaValue predicate) {
+        taskComponents.forEach(taskComponent -> taskComponent.setPlayerPredicate(predicate));
+        return this;
     }
 
     public void setDescriptionEntryPrefix(String str) {

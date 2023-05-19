@@ -3,6 +3,7 @@ package stretch.lockout.task;
 import org.bukkit.entity.HumanEntity;
 import org.bukkit.event.Event;
 import org.bukkit.inventory.ItemStack;
+import org.luaj.vm2.LuaValue;
 import stretch.lockout.reward.RewardComponent;
 import stretch.lockout.team.PlayerStat;
 
@@ -102,7 +103,14 @@ public class TaskInvisible implements TaskComponent {
     }
 
     @Override
-    public void setPlayerPredicate(Predicate<HumanEntity> predicate) {
+    public TaskComponent setPlayerPredicate(Predicate<HumanEntity> predicate) {
         taskComponent.setPlayerPredicate(predicate);
+        return this;
+    }
+
+    @Override
+    public TaskComponent setPlayerPredicate(LuaValue predicate) {
+        taskComponent.setPlayerPredicate(predicate);
+        return this;
     }
 }

@@ -12,6 +12,7 @@ public class RewardChance implements RewardComponent {
     private final List<WeightedReward> weightedRewards = new ArrayList<>();
     private RewardComponent selectedReward;
     private final Random random = new Random(System.currentTimeMillis());
+    private final List<Runnable> rewardRunnables = new ArrayList<>();
 
     public RewardChance(String description) {
         this.description = description;
@@ -87,6 +88,16 @@ public class RewardChance implements RewardComponent {
     @Override
     public String getDescription() {
         return description;
+    }
+
+    @Override
+    public List<Runnable> getActions() {
+        return rewardRunnables;
+    }
+
+    @Override
+    public void addAction(Runnable rewardRunnable) {
+        rewardRunnables.add(rewardRunnable);
     }
 
     public record WeightedReward(RewardComponent rewardComponent, int weight) {}

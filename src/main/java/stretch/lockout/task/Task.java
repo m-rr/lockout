@@ -3,7 +3,9 @@ package stretch.lockout.task;
 import org.bukkit.entity.HumanEntity;
 import org.bukkit.event.Event;
 import org.bukkit.inventory.ItemStack;
+import org.luaj.vm2.LuaValue;
 import stretch.lockout.reward.RewardComponent;
+import stretch.lockout.lua.LuaPredicate;
 import stretch.lockout.team.PlayerStat;
 
 import java.util.HashSet;
@@ -47,7 +49,14 @@ public class Task implements TaskComponent {
     }
     public RewardComponent getReward() {return this.reward;}
     public boolean hasPlayerPredicate() {return playerStatePredicate != null;}
-    public void setPlayerPredicate(Predicate<HumanEntity> predicate) {playerStatePredicate = predicate;}
+    public TaskComponent setPlayerPredicate(Predicate<HumanEntity> predicate) {
+        playerStatePredicate = predicate;
+        return this;
+    }
+    public TaskComponent setPlayerPredicate(LuaValue predicate) {
+        setPlayerPredicate(new LuaPredicate(predicate));
+        return this;
+    }
     public int getValue() {return this.value;}
 
     public HashSet<Class> getEventClasses() {
