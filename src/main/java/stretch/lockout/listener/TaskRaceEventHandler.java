@@ -1,6 +1,9 @@
 package stretch.lockout.listener;
 
-import org.bukkit.*;
+import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
+import org.bukkit.Material;
+import org.bukkit.Sound;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -19,7 +22,6 @@ import stretch.lockout.team.LockoutTeam;
 import stretch.lockout.team.PlayerStat;
 import stretch.lockout.team.TeamManager;
 import stretch.lockout.util.MessageUtil;
-import stretch.lockout.util.WorldUtil;
 
 import java.util.function.Consumer;
 import java.util.function.Predicate;
@@ -124,9 +126,9 @@ public class TaskRaceEventHandler implements Listener {
 
         Consumer<Player> sendMessage = (player) -> {
             String messagePrefix = switch (reward.getRewardType()) {
-                case POSITIVE -> scoredPlayerStat.getPlayer().getName() + " received: ";
-                case TEAM_POSITIVE, COMPOSITE -> "Team " + scoredPlayerStat.getTeam().getName() + " received: ";
-                case ENEMY_NEGATIVE -> "Team " + scoredPlayerStat.getTeam().getName() + " caused debuff: ";
+                case SOLO -> scoredPlayerStat.getPlayer().getName() + " received: ";
+                case TEAM, COMPOSITE -> "Team " + scoredPlayerStat.getTeam().getName() + " received: ";
+                case ENEMY -> "Team " + scoredPlayerStat.getTeam().getName() + " caused debuff: ";
             };
             String message = messagePrefix + ChatColor.LIGHT_PURPLE + reward.getDescription();
             MessageUtil.sendChat(player, ChatColor.GRAY + message);

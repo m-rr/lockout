@@ -1,18 +1,18 @@
 package stretch.lockout.reward;
 
+import org.luaj.vm2.LuaValue;
 import stretch.lockout.team.PlayerStat;
 import stretch.lockout.util.MessageUtil;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 
 public class RewardChance implements RewardComponent {
     private final String description;
     private final List<WeightedReward> weightedRewards = new ArrayList<>();
     private RewardComponent selectedReward;
     private final Random random = new Random(System.currentTimeMillis());
-    private final List<Runnable> rewardRunnables = new ArrayList<>();
+    //private final List<Runnable> rewardRunnables = new ArrayList<>();
+    private final Map<Runnable, Long> rewardRunnables = new HashMap<>();
 
     public RewardChance(String description) {
         this.description = description;
@@ -91,13 +91,28 @@ public class RewardChance implements RewardComponent {
     }
 
     @Override
-    public List<Runnable> getActions() {
+    public Map<Runnable, Long> getActions() {
         return rewardRunnables;
     }
 
     @Override
     public void addAction(Runnable rewardRunnable) {
-        rewardRunnables.add(rewardRunnable);
+        addAction(rewardRunnable, -1L);
+    }
+
+    @Override
+    public void addAction(Runnable rewardRunnable, long delay) {
+        rewardRunnables.put(rewardRunnable, delay);
+    }
+
+    @Override
+    public void addAction(LuaValue luaRunnable) {
+        addAction(luaRunnable, -1L);
+    }
+
+    @Override
+    public void addAction(LuaValue luaRunnable, long delay) {
+        rewardRunnables.put(() -> luaRunnable.checkfunction().call(), delay);
     }
 
     public record WeightedReward(RewardComponent rewardComponent, int weight) {}

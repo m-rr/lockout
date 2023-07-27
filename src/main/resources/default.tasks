@@ -1,220 +1,404 @@
-(ns stretch.lockout.api)
+function shuffle(tbl)
+for i = #tbl, 2, -1 do
+local j = math.random(i)
+tbl[i], tbl[j] = tbl[j], tbl[i]
+end
+return tbl
+end
 
-(set-score 7)
-;; Tasks
+function take(n, tasks)
+for i=1, n do
+addTask(tasks[i])
+end
+return tasks
+end
 
-;; VILLAGE
-(one-of (-> (hit :iron_golem 1 "Slap an iron golem with salmon" :salmon)
-            (with-player-predicate (in-main-hand? entity :salmon))
-            (with-reward [:slow 1 :enemy_negative "Slowness for enemies" 1200]))
+function glow_in_hand(player)
+return inMainHand(player, Material.GLOW_INK_SAC)
+end
 
-        (-> (interact :bell 1 "Ring a bell with an iron hoe" :bell)
-            (with-player-predicate (in-main-hand? entity :iron_hoe))
-            (with-reward [:jump 1 :team_positive "Jump I"]))
+function spawn_vex(player)
+local loc = player:getLocation()
+for i=1, 5 do
+player:getWorld():spawnEntity(loc, Entity.VEX)
+end
+end
 
-        (-> (tame :cat 1 "Tame a cat" :cat_spawn_egg)
-            (with-reward [:cooked_rabbit 15 :team_positive "15 cooked rabbit"]))
+function smite(player)
+local loc = player:getLocation()
+local world = player:getWorld()
+world:createExplosion(loc, 1)
+world:strikeLightning(loc)
+end
 
-        (-> (do-times 5 (kill :villager 1 "Kill 5 villagers" :iron_sword))
-            (with-reward [:netherite_shovel 1 :positive "Netherite shovel"]))
+function tp_tracked(player)
+local target = trackedPlayer(player)
+local player_loc = player:getLocation()
 
-        (-> (interact :iron_golem 1 "Repair an iron golem" :iron_ingot)
-            (with-player-predicate (in-main-hand? entity :iron_ingot))
-            (with-entity-predicate (not (has-max-health? entity)))
-            (with-reward [:slow 1 :enemy_negative "Slowness for enemies"])))
+if target then
+player:teleport(target)
+target:teleport(player_loc)
+end
+end
 
-
-;; SIGNS
-(one-of (-> (task-or :oak_sign 1 "Make an oak sign glow"
-                     (-> (interact :oak_sign 1 "" :oak_sign)
-                         (with-player-predicate (in-main-hand? entity :glow_ink_sac)))
-                     (-> (interact :oak_wall_sign 1 "" :oak_sign)
-                         (with-player-predicate (in-main-hand? entity :glow_ink_sac))))
-            (with-reward [:slow 1 :enemy_negative "Slowness for enemies" 1200]))
-
-        (-> (task-or :oak_sign 1 "Make an oak sign glow"
-                     (-> (interact :spruce_sign 1 "" :spruce_sign)
-                         (with-player-predicate (in-main-hand? entity :glow_ink_sac)))
-                     (-> (interact :spruce_wall_sign 1 "" :spruce_sign)
-                         (with-player-predicate (in-main-hand? entity :glow_ink_sac))))
-            (with-reward [:slow 1 :enemy_negative "Slowness for enemies" 1200]))
-
-        (-> (task-or :birch_sign 1 "Make a birch sign glow"
-                     (-> (interact :birch_sign 1 "" :birch_sign)
-                         (with-player-predicate (in-main-hand? entity :glow_ink_sac)))
-                     (-> (interact :birch_wall_sign 1 "" :birch_sign)
-                         (with-player-predicate (in-main-hand? entity :glow_ink_sac))))))
-
-;; OBTAIN INGOT
-(def ingots {:emerald "emerald" :diamond "diamond" :copper_ingot "copper ingot" :brick "Brick"})
-(def ingot (rand-nth (keys ingots)))
-
-(-> (obtain ingot 1 (str "Obtain " (ingots ingot)) ingot)
-    (with-reward [:boom 1 :enemy_negative "Smite your enemies"] [:blindness 1 :enemy_negative "" 300]))
-
-;; KILL NETHER MOB
-(def nether-mobs {:piglin_brute :golden_axe :ghast :ghast_tear :hoglin :hoglin_spawn_egg :wither_skeleton :wither_skeleton_skull
-                  :blaze        :blaze_rod})
-(def nether-mob (rand-nth (keys nether-mobs)))
-
-(-> (kill nether-mob 1 (str "Kill " (clojure.string/replace (name nether-mob) #"_" " ")) (nether-mobs nether-mob))
-    (with-reward [:diamond_chestplate 1 :positive "Diamond chestplate"]))
+function prepare_tasks(nested_tasks)
+local result = {}
+for _, i in ipairs(nested_tasks) do
+for _, j in ipairs(i) do
+table.insert(result, j)
+end
+end
+return shuffle(result)
+end
+----
+local stretch = Bukkit:getPlayer("MR_STRETCH13")
+local start = Lockout:getWorld():getSpawnLocation()
+local loc = stretch:getLocation()
+local biomes = getBiomes(loc, 67)
 
 
-;; NEGATIVE TASKS
-(one-of (-> (damaged-by :arrow :projectile -1 "Don't be shot by an arrow" :arrow)
-            (with-entity-predicate (is-entity? entity :arrow))
-            (with-reward [:ender_pearl 8 :enemy_negative "Enderpearls for enemies"]))
+-- Rewards
+local speed_II_temp = potion(Effect.SPEED, 2, RewardType.TEAM, "Speed I temporary", 2400)
+local slowness_II_enemies_temp = potion(Effect.SLOW, 2, RewardType.ENEMY, "Slowness for enemies", 2400)
+local iron_pickaxe = item(Material.IRON_PICKAXE, 1, RewardType.TEAM, "Iron pickaxe", {efficiency=2})
+local rabbit = item(Material.COOKED_RABBIT, 15, RewardType.TEAM, "15 cooked rabbit")
+local netherite_shovel = item(Material.NETHERITE_SHOVEL, 1, RewardType.SOLO, "Netherite shovel")
+local iron_chestplate = item(Material.IRON_CHESTPLATE, 1, RewardType.TEAM, "Iron chestplate")
+local blind_enemies = potion(Effect.BLINDNESS, 1, RewardType.ENEMY, "Blind your enemies", 1200)
+local gapple = item(Material.ENCHANTED_GOLDEN_APPLE, 1, RewardType.SOLO, "Gapple")
+local diamond_chestplate = item(Material.DIAMOND_CHESTPLATE, 1, RewardType.SOLO, "Diamond chestplate")
+local tnt = item(Material.TNT, 20, RewardType.SOLO, "20 tnt")
+local glowing = potion(Effect.GLOWING, 1, RewardType.SOLO, "You're real bright")
+local poison = potion(Effect.POISON, 1, RewardType.TEAM, "Poison", 1200)
+local weakness = potion(Effect.WEAKNESS, 1, RewardType.TEAM, "Weakness")
+local helium = potion(Effect.LEVITATION, 1, RewardType.SOLO, "Helium")
+local helium_enemies = potion(Effect.LEVITATION, 1, RewardType.ENEMY, "Levitation for enemies")
+local vex = action(RewardType.SOLO, "Vexs", spawn_vex)
+local mutton = item(Material.COOKED_MUTTON, 15, RewardType.TEAM, "15 cooked mutton")
+local bow = item(Material.BOW, 1, RewardType.TEAM, "Bow")
+local arrows = item(Material.ARROW, 32, RewardType.TEAM, "Arrows")
+local iron_leggings = item(Material.IRON_LEGGINGS, 1, RewardType.TEAM, "Iron leggings", {fire_protection=2})
+local poison_enemies = potion(Effect.POISON, 1, RewardType.ENEMY, "Poison for enemies", 1200)
+local saddle = item(Material.SADDLE, 1, RewardType.SOLO, "Saddle")
+local turtle_helmet = item(Material.TURTLE_HELMET, 1, RewardType.SOLO, "Turtle helmet", {respiration=3, aqua_affinity=1})
+local vex_enemies = action(RewardType.ENEMY, "Vexs", spawn_vex)
+local porkchop = item(Material.COOKED_PORKCHOP, 15, RewardType.TEAM, "15 cooked porkchop")
+local diamond_pickaxe = item(Material.DIAMOND_PICKAXE, 1, RewardType.SOLO, "Diamond pickaxe")
+local boom = action(RewardType.SOLO, "Lightning", smite)
+local tp_tracked_player = action(RewardType.SOLO, "Swap with tracked player", tp_tracked)
+local diamond_shovel = item(Material.DIAMOND_SHOVEL, 1, RewardType.TEAM, "Diamond shovel")
+local jump = potion(Effect.JUMP, 3, RewardType.SOLO, "Jump II")
+local speed_I = potion(Effect.SPEED, 1, RewardType.SOLO, "Speed II")
+local strength_I_team = potion(Effect.SPEED, 1, RewardType.TEAM, "Strength I")
+local trident_loyalty = item(Material.TRIDENT, 1, RewardType.SOLO, "Loyalty trident", {loyalty=3, impaling=5})
+local trident_riptide = item(Material.TRIDENT, 1, RewardType.SOLO, "Riptide trident", {riptide=3})
+local netherite_pickaxe = item(Material.NETHERITE_PICKAXE, 1, RewardType.SOLO, "NetheritePickaxe", {efficiency=3})
+local night_vision = potion(Effect.NIGHT_VISION, 1, RewardType.SOLO, "Night vision")
+local resistance = potion(Effect.DAMAGE_RESISTANCE, 2, RewardType.SOLO, "Damage resistance", 600)
+local haste = potion(Effect.FAST_DIGGING, 3, RewardType.SOLO, "Haste III", 600)
+local totem = item(Material.TOTEM_OF_UNDYING, 1, RewardType.SOLO, "Totem of undying")
+local pearl = item(Material.ENDER_PEARL, 1, RewardType.SOLO, "Enderpearl")
+local pearls = item(Material.ENDER_PEARL, 8, RewardType.SOLO, "Enderpearls")
+local feather_boots = item(Material.CHAINMAIL_BOOTS, 1, RewardType.SOLO, "Feather falling boots", {feather_falling=4})
+local frost_boots = item(Material.CHAINMAIL_BOOTS, 1, RewardType.SOLO, "Frostwalker boots", {frost_walker=2})
+----
 
-        (-> (pickup :wheat_seeds -1 "Don't pickup wheat seed" :wheat_seeds)
-            (with-reward [:ender_pearl 8 :enemy_negative "Enderpearls for enemies"]))
+local village = {
 
-        (-> (stand-on :coal_ore -1 "Don't stand on coal ore" :coal_ore)
-            (with-reward [:ender_pearl 8 :enemy_negative "Enderpearls for enemies"]))
+                 hit(Entity.IRON_GOLEM, 1, "Slap an iron golem with salmon", Material.SALMON)
+                 :addPlayerPredicate(function (player)
+                                              return inMainHand(player, Material.SALMON) end)
+                 :setReward(rewards(slowness_II_enemies_temp, iron_pickaxe)),
 
-        (-> (stand-on :gravel -1 "Don't stand on gravel" :gravel)
-            (with-reward [:ender_pearl 8 :enemy_negative "Enderpearls for enemies"])))
+                 interactBlock(Material.BELL, 1, "Ring a bell with an iron hoe", Material.BELL)
+                 :addPlayerPredicate(function (player)
+                                              return inMainHand(player, Material.IRON_HOE) end)
+                 :setReward(rewards(iron_pickaxe, speed_II_temp)),
 
-(one-of (-> (hit :zombie -1 "Don't hit a zombie" :zombie_head)
-            (with-reward [:weakness 1 :team_positive "Weakness"]))
+                 tame(Entity.CAT, 1, "Tame a cat", Material.CAT_SPAWN_EGG)
+                 :setReward(rabbit),
 
-        (-> (take-damage :fall -1 "Don't take fall damage" :chainmail_boots)
-            (with-reward [:levitation 1 :positive "Helium" 300]))
+                 doTimes(5, kill(Entity.VILLAGER, 1, "Kill 5 villagers", Material.IRON_SWORD))
+                 :setReward(netherite_shovel),
 
-        (-> (damaged-by :creeper :entity_explosion -1 "Don't get creeper bombed" :tnt)
-            (with-reward [:vexs 1 :positive "Vexs"])))
+                 interactEntity(Entity.IRON_GOLEM, 1, "Repair an iron golem", Material.IRON_INGOT)
+                 :addPlayerPredicate(function (player)
+                                              return inMainHand(player, Material.IRON_INGOT) end)
+                 :setReward(slowness_II_enemies_temp)
+                 }
 
+local wood = {
+              anyOf(Material.OAK_SIGN, 1, "Make an oak sign glow",
 
-;; KILL ANIMAL
-(one-of (-> (kill :sheep 1 "Kill a blue sheep" :blue_wool)
-            (with-entity-predicate (and (is-entity? entity :sheep) (= (:blue i/dyecolors) (.getColor entity))))
-            (with-reward [:cooked_mutton 15 :team_positive "15 cooked mutton"]))
+                                       interactBlock(Material.OAK_SIGN, 1, "", Material.OAK_SIGN)
+                                       :addPlayerPredicate(glow_in_hand),
+                                       interactBlock(Material.OAK_WALL_SIGN, 1, "", Material.OAK_SIGN)
+                                       :addPlayerPredicate(glow_in_hand))
+              :setReward(slowness_II_enemies_temp),
 
-        (-> (kill :sheep 1 "Kill a yellow sheep with a brick" :yellow_wool)
-            (with-entity-predicate (and (is-entity? entity :sheep) (= (:yellow i/dyecolors) (.getColor entity))))
-            (with-player-predicate (in-main-hand? entity :brick))
-            (with-reward [:cooked_mutton 20 :team_positive "20 cooked mutton"]))
+              anyOf(Material.BIRCH_SIGN, 1, "Make a birch sign glow",
 
-        (-> (do-times 10 (kill :chicken 1 "Kill 10 chicken" :feather))
-            (with-reward [:arrow 32 :team_positive "32 arrows"]))
+                                         interactBlock(Material.BIRCH_SIGN, 1, "", Material.BIRCH_SIGN)
+                                         :addPlayerPredicate(glow_in_hand),
+                                         interactBlock(Material.BIRCH_WALL_SIGN, 1, "", Material.BIRCH_SIGN)
+                                         :addPlayerPredicate(glow_in_hand))
+              :setReward(slowness_II_enemies_temp),
 
-        (-> (kill :pig 1 "Kill a flaming pig" :cooked_porkchop)
-            (with-entity-predicate (on-fire? entity))
-            (with-reward [:cooked_porkchop 15 :team_positive "15 cooked porkchop"])))
+              structure(1, "Place a trapdoor on a composter", Material.COMPOSTER,
+                         function (block) local below = block:getRelative(BlockFace.DOWN)
+                         return MaterialType.TRAPDOOR:contains(block:getType()) and
+                         below:getType() == Material.COMPOSTER  end)
+              :setReward(rewards(slowness_II_enemies_temp, iron_chestplate)),
 
-;; Animal
-(one-of (-> (interact :parrot 1 "Feed a parrot a cookie" :cookie)
-            (with-player-predicate (in-main-hand? entity :cookie))
-            (with-reward [:enchanted_golden_apple 1 :positive "Gapple"]))
+              structure(1, "Place an iron trapdoor on a cauldron", Material.CAULDRON,
+                         function (block) local below = block:getRelative(BlockFace.DOWN)
+                         return block:getType() == Material.IRON_TRAPDOOR and
+                         below:getType() == Material.CAULDRON  end)
+              :setReward(rewards(slowness_II_enemies_temp, iron_chestplate))
+              }
 
-        (-> (do-times 3 (breed :cow 1 "Breed 3 pairs of cows" :leather))
-            (with-reward [:iron_ingot 10 :positive "Iron"])))
+local ingot = {
+               obtain(Material.EMERALD, 1, "Obtain an emerald", Material.EMERALD)
+               :setReward(rewards(blind_enemies, gapple)),
 
+               obtain(Material.DIAMOND, 1, "Obtain a diamond", Material.DIAMOND)
+               :setReward(rewards(blind_enemies, gapple)),
 
-;; X FACTOR
-(one-of (-> (obtain :heart_of_the_sea 0 "Find heart of the sea" :heart_of_the_sea)
-            (with-reward (reward-chance "Diamond pickaxe or lightning"
-                                        {
-                                         [:diamond_pickaxe 1 :positive ""] 1
-                                         [:boom 1 :positive ""]            1
-                                         }
-                                        ))))
+               obtain(Material.COPPER_INGOT, 1, "Obtain copper ingot", Material.COPPER_INGOT)
+               :setReward(rewards(blind_enemies, gapple))
+               }
 
-;; OBTAIN WEIRD ITEM
-(one-of (-> (obtain :mossy_stone_brick_wall 1 "Obtain mossy stone brick wall" :mossy_stone_brick_wall)
-            (with-reward [:bow 1 :team_positive "Bow"] [:arrow 32 :team_positive "32 arrows"]))
+local nether_mob = {
+                    kill(Entity.PIGLIN_BRUTE, 1, "Kill a piglin brute", Material.GOLDEN_AXE)
+                    :setReward(diamond_chestplate),
 
-        (-> (place :cracked_deepslate_tiles 1 "Place cracked deepslate tiles" :cracked_deepslate_tiles)
-            (with-reward [:bow 1 :team_positive "Bow"] [:arrow 32 :team_positive "32 arrows"])))
+                    kill(Entity.GHAST, 1, "Kill a ghast", Material.GHAST_TEAR)
+                    :setReward(tnt),
 
-;; DAY NIGHT
-(one-of (-> (do-times 20 (task-or :seagrass 1 "During the night, destroy 20 seagrass"
-                                  (-> (break :seagrass 1 "" :seagrass)
-                                      (with-player-predicate (is-night? entity)))
-                                  (-> (break :tall_seagrass 1 "" :seagrass)
-                                      (with-player-predicate (is-night? entity)))))
-            (with-reward [:blindness 1 :enemy_negative "Blindess for enemies" 300]))
+                    kill(Entity.WITHER_SKELETON, 1, "Kill a wither skeleton", Material.WITHER_SKELETON_SKULL)
+                    :setReward(diamond_chestplate),
 
-        (-> (task-and :red_stained_glass 1 "Place 5 red glass during the day and 5 black glass during the night"
-                      (do-times 5 (-> (place :red_stained_glass 1 "" :dirt)
-                                      (with-player-predicate (is-day? entity))))
-                      (do-times 5 (-> (place :black_stained_glass 1 "" :dirt)
-                                      (with-player-predicate (is-night? entity)))))
-            (with-reward [:vexs 1 :enemy_negative "Vexs attack enemies"])))
+                    kill(Entity.BLAZE, 1, "Kill a blaze", Material.BLAZE_ROD)
+                    :setReward(diamond_chestplate)
+                    }
 
-;; WEIRD FOOD
-(one-of (-> (eat :rabbit_stew 1 "Eat rabbit stew" :rabbit_stew)
-            (with-reward [:speed 1 :team_positive "Speed"]))
+local negative = {
+                  damageByEntity(Entity.ARROW, DamageCause.PROJECTILE, -1, "Don't be shot by an arrow", Material.ARROW)
+                  :addEntityPredicate(function (entity)
+                                               return isEntity(entity, Entity.ARROW) end)
+                  :setReward(rewards(
+                                      item(Material.BOW, 1, RewardType.ENEMY, "Bow + arrows for enemies", {power=2}),
+                                          item(Material.ARROW, 32, RewardType.ENEMY, ""))),
 
-        (-> (place :cake 1 "Place a cake" :cake)
-            (with-reward [:speed 1 :team_positive "Speed"]))
+                  pickup(Material.WHEAT_SEEDS, -1, "Don't pickup wheat seed", Material.WHEAT_SEEDS)
+                  :setReward(glowing),
 
-        (-> (eat :honey_bottle 1 "Drink honey" :honey_bottle)
-            (with-reward [:speed 1 :team_positive "Speed"]))
+                  standOn(Material.COAL_ORE, -1, "Don't stand on coal ore", Material.COAL_ORE)
+                  :setReward(item(Material.COAL_ORE, 32, RewardType.ENEMY, "Enemies get coal")),
 
-        (-> (eat :pumpkin_pie 1 "Eat pumpkin pie" :pumpkin_pie)
-            (with-reward [:speed 1 :team_positive "Speed"])))
+                  standOn(Material.GRAVEL, -1, "Don't stand on gravel", Material.GRAVEL)
+                  :setReward(poison),
 
-;; RARE MOB
-(one-of (-> (kill :witch 1 "Kill a witch" :cauldron)
-            (with-reward [:increase_damage 1 :team_positive "Strength"]))
+                  hit(Entity.ZOMBIE, -1, "Don't hit a zombie", Material.ZOMBIE_HEAD)
+                  :setReward(weakness),
 
-        (-> (kill :drowned 1 "Kill a trident wielding drowned" :trident)
-            (with-entity-predicate (in-main-hand? entity :trident))
-            (with-reward [:trident 1 :positive "Riptide trident" {:riptide 3}]))
+                  takeDamage(DamageCause.FALL, -1, "Don't take fall damage", Material.CHAINMAIL_BOOTS)
+                  :setReward(helium),
 
-        (-> (hit :warden 1 "Hit a warden" :sculk_catalyst)
-            (with-reward [:netherite_sword 1 :positive "Sharpness III netherite sword" {:damage_all 3}])))
+                  damageByEntity(Entity.CREEPER, DamageCause.ENTITY_EXPLOSION, -1, "Don't get bombed", Material.TNT)
+                  :addEntityPredicate(function(entity)
+                                              return isEntity(entity, Entity.CREEPER) end)
+                  :setReward(vex),
 
-(with-reward '([:chorus_fruit 64 :team_positive "Chorus fruit"]) (obtain :goat_horn 1 "Obtain a goat horn" :goat_horn))
+                  eat(Material.BREAD, -1, "Don't eat bread", Material.BREAD)
+                  :setReward(vex)
+                  }
 
-;(with-reward '([:diamond_chestplate 1 :positive "Diamond chestplate"]) (kill :piglin_brute 1 "Kill piglin brute" :golden_axe))
+local animal = {
+                shear(Entity.SHEEP, 1, "Shear a blue sheep", Material.BLUE_WOOL)
+                :addEntityPredicate(function (entity)
+                                             return isEntity(entity, Entity.SHEEP) and DyeColor.BLUE == entity:getColor() end)
+                :setReward(mutton),
 
-(with-reward '([:increase_damage 2 :team_positive "Strength"]) (kill :witch 1 "Kill a witch" :cauldron))
+                kill(Entity.SHEEP, 1, "Kill a yellow sheep with a brick", Material.YELLOW_WOOL)
+                :addEntityPredicate(function (entity)
+                                             return isEntity(entity, Entity.SHEEP) and DyeColor.YELLOW == entity:getColor() end)
+                :addPlayerPredicate(function (player)
+                                             return inMainHand(player, Material.BRICK) end)
+                :setReward(mutton),
 
-;(with-reward '([:tnt 20 :team_positive "20 tnt"]) (kill :ghast 1 "Kill a ghast" :ghast_tear))
+                doTimes(10, kill(Entity.CHICKEN, 1, "Kill 10 chicken", Material.FEATHER))
+                :setReward(rewards(bow, arrows)),
 
-(with-reward '([:vexs 1 :enemy_negative "Vexs for enemies"]) (obtain :respawn_anchor 1 "Obtain respawn anchor" :respawn_anchor))
+                kill(Entity.PIG, 1, "Kill a flaming pig", Material.COOKED_PORKCHOP)
+                :addEntityPredicate(onFire)
+                :setReward(rewards(porkchop, iron_leggings)),
 
-(with-reward '([:shulker_box 1 :team_positive "Shulker box"]) (do-times 5 (kill :villager 1 "Kill 5 villagers" :iron_sword)))
+                doTimes(3, breed(Entity.COW, 1, "Breed 3 pairs of cows", Material.LEATHER))
+                :setReward(poison_enemies),
 
-;;(with-reward '([:saddle 1 :team_positive "Saddle"] [:warped_fungus_on_a_stick 1 :team_positive "Mushroom fishing rod"]) (kill :hoglin 1 "Kill a hoglin" :hoglin_spawn_egg))
+                tame(Entity.HORSE, 1, "Tame a horse", Material.SADDLE)
+                :setReward(saddle),
 
-(with-reward '([:cooked_beef 25 :team_positive "25 Steak"]) (take-damage :starvation 1 "Begin to starve" :skeleton_skull))
+                tame(Entity.WOLF, 1, "Tame a wolf", Material.WOLF_SPAWN_EGG)
+                :setReward(vex_enemies),
 
-(with-reward '([:levitation 1 :enemy_negative "Levitation for enemies" 1200]) (add-player-predicate (quest "player.PlayerMoveEvent" 1 "Stand on bedrock" :bedrock) (reify
-                                                                                                                                                                     java.util.function.Predicate
-                                                                                                                                                                     (test [this entity]
-                                                                                                                                                                       (on-block? entity :bedrock)))))
+                destroy(Material.TURTLE_EGG, 1, "Break a turtle egg", Material.TURTLE_EGG)
+                :setReward(turtle_helmet)
+                }
 
-;(with-reward '([:speed 2 :team_positive "Speed II"]) (with-player-predicate (quest "player.PlayerMoveEvent" 1 "Walk on amethyst" :amethyst_block) (reify
-;	java.util.function.Predicate
-;	(test [this entity]
-;	(on-block? entity :amethyst_block)))))
+local x_factor = {
+                  obtain(Material.HEART_OF_THE_SEA, 1, "Find heart of the sea", Material.HEART_OF_THE_SEA)
+                  :setReward(rewardChance("Diamond pickaxe or lightning",
+                                           {
+                                            [boom]=1,
+                                            [diamond_pickaxe]=1
+                                            }))
+                  }
 
-(with-reward '([:ender_pearl 16 :team_positive "Stack of ender pearls"]) (pickup :grass_block 1 "Pickup a grass block" :grass_block))
+local weird_item = {
+                    obtain(Material.MOSSY_STONE_BRICK_WALL, 1, "Obtain mossy stone brick wall", Material.MOSSY_STONE_BRICK_WALL)
+                    :setReward(rewards(bow, arrows)),
 
-(with-reward '([:saturation 1 :team_positive "Saturation"]) (place :cake 1 "Place a cake" :cake))
+                    place(Material.CRACKED_DEEPSLATE_TILES, 1, "Place cracked deepslate tiles", Material.CRACKED_DEEPSLATE_TILES)
+                    :setReward(tp_tracked_player)
+                    }
 
-(with-reward '([:fire_resistance 1 :team_positive "Fire resistance"]) (acquire :regeneration 1 "Obtain regeneration" :splash_potion))
+local day_night = {
+                   doTimes(20, anyOf(Material.SEAGRASS, 1, "During the night, destroy 20 seagrass",
+                                                        destroy(Material.SEAGRASS, 1, "", Material.SEAGRASS),
+                                                        destroy(Material.TALL_SEAGRASS, 1, "", Material.SEAGRASS)))
+                   :addPlayerPredicate(isDay)
+                   :setReward(rewards(blind_enemies, diamond_shovel)),
 
-(with-reward '([:xp 1 :team_positive "30 xp levels"] [:bookshelf 16 :positive "Bookshelves"]) (quest "enchantment.EnchantItemEvent" 1 "Enchant an item" :enchanting_table))
+                   allOf(Material.RED_STAINED_GLASS, 1, "Place 5 red glass during the day and 5 black glass during the night",
+                                                     doTimes(5, place(Material.RED_STAINED_GLASS, 1, "", Material.DIRT))
+                                                     :addPlayerPredicate(isDay),
+                                                     doTimes(5, place(Material.BLACK_STAINED_GLASS, 1, "", Material.DIRT))
+                                                     :addPlayerPredicate(function (player)
+                                                                                  return not isDay(player) end))
+                   :setReward(rewards(vex_enemies, diamond_shovel))
+                   }
 
-(with-reward '([:totem_of_undying 1 :team_positive "Totem of undying"]) (quest "raid.RaidTriggerEvent" 1 "Start a raid" :crossbow))
+local weird_food = {
+                    place(Material.CAKE, 1, "Place a cake", Material.CAKE)
+                    :setReward(speed_I),
 
-(with-reward '([:pumpkin_pie 30 :team_positive "30 pumpkin pie"]) (shear :snowman 1 "Shear a snow golem" :jack_o_lantern))
+                    eat(Material.HONEY_BOTTLE, 1, "Drink honey", Material.HONEY_BOTTLE)
+                    :setReward(speed_I),
 
-(with-reward '([:iron_pickaxe 1 :team_positive "Iron pickaxe" {:dig_speed 3 :loot_bonus_blocks 3}]) (obtain :gold_ingot 1 "Obtain gold ingot" :gold_ingot))
-;(ring-bell 1 "Ring a bell" :bell)
-;(smelt :iron_ingot 1 "Smelt an iron ingot" :furnace)
-(with-reward '([:night_vision 1 :team_positive "Night vision"]) (bucket :axolotl 1 "Bucket axolotl" :axolotl_bucket))
-;(with-reward '([:fast_digging 3 :team_positive "Haste III"] [:night_vision 1 :team_positive "Night vision"] [:netherite_pickaxe 1 :team_positive "Netherite pickaxe"]) (hit :warden 1 "Hit a warden" :sculk))
-(with-reward '([:jukebox 1 :positive "Jukebox!"] [:diamond_sword 1 :team_positive "Diamond sword"]) (obtain-any i/disctypes 1 "Obtain any disc" :music_disc_wait))
+                    eat(Material.PUMPKIN_PIE, 1, "Eat pumpkin pie", Material.PUMPKIN_PIE)
+                    :setReward(speed_I)
+                    }
 
-(with-reward '([:leather_boots 1 :team_positive "Feather falling boots" {:protection_fall 4}]) (add-player-predicate (quest "player.PlayerMoveEvent" 1 "Reach build height" :nether_star) (reify
-                                                                                                                                                                                            java.util.function.Predicate
-                                                                                                                                                                                            (test [this entity]
-                                                                                                                                                                                              (above-y? entity 320)))))
+local rare_mob = {
+                  kill(Entity.WITCH, 1, "Kill a witch", Material.CAULDRON)
+                  :setReward(strength_I_team),
 
-;; Jank
-;(with-reward '([:iron_axe 1 :team_positive "Iron axe"]) (structure (new PanicBinStructurePredicate) 1 "Build a panic bin" :composter))
+                  kill(Entity.DROWNED, 1, "Kill a trident wielding drowned", Material.TRIDENT)
+                  :addEntityPredicate(function (entity)
+                                               return inMainHand(entity, Material.TRIDENT) end)
+                  :setReward(rewardChance("Trident",
+                                           {
+                                            [trident_loyalty]=1,
+                                            [trident_riptide]=1
+                                            })),
+
+                  hit(Entity.WARDEN, 1, "Hit a warden", Material.SCULK_CATALYST)
+                  :setReward(rewards(haste, night_vision, netherite_pickaxe, resistance))
+                  }
+
+local explore = {
+                 --hit(Entity.GOAT, 1, "Hit a goat with ")
+
+                 kill(Entity.LLAMA, 1, "Kill a llama", Material.TRADER_LLAMA_SPAWN_EGG)
+                 :setReward(diamond_pickaxe),
+
+                 quest("org.bukkit.event.raid.RaidTriggerEvent", 1, "Start a raid", Material.TOTEM_OF_UNDYING)
+                 :setReward(totem)
+                 }
+
+local grind = {
+               standOn(Material.BEDROCK, 1, "Stand on bedrock", Material.BEDROCK)
+               :setReward(helium_enemies),
+
+               quest("org.bukkit.event.player.PlayerMoveEvent", 1, "Reach build height", Material.NETHER_STAR)
+               :addPlayerPredicate(function (player)
+                                            return aboveY(player, player:getWorld():getMaxHeight()) end)
+               :setReward(rewards(feather_boots, pearl))
+               }
+
+local fish = {
+              eat(Material.PUFFERFISH, 1, "Eat a pufferfish", Material.PUFFERFISH)
+              :setReward(night_vision),
+
+              bucket(Entity.AXOLOTL, 1, "Bucket an axolotl", Material.AXOLOTL_BUCKET)
+              :setReward(night_vision)
+              }
+
+local grass = {
+               pickup(Material.GRASS_BLOCK, 1, "Pickup a grass block", Material.GRASS_BLOCK)
+               :setReward(pearls)
+               }
+
+local desert_tasks = {
+                      eat(Material.RABBIT_STEW, 1, "Eat rabbit stew", Material.RABBIT_STEW)
+                      :setReward(speed_II_temp),
+
+                      doTimes(3, kill(Entity.HUSK, 1, "Kill 3 husks", Material.HUSK_SPAWN_EGG))
+                      :setReward(speed_I)
+                      }
+
+local snow_tasks = {
+                    shear(Entity.SNOWMAN, 1, "Shear a snow golem", Material.CARVED_PUMPKIN)
+                    :setReward(frost_boots)
+                    }
+
+local jungle_tasks = {
+                      interactEntity(Entity.PARROT, 1, "Feed a parrot a cookie", Material.COOKIE)
+                      :addPlayerPredicate(function (player)
+                                                   return inMainHand(player, Material.COOKIE) end)
+                      :setReward(speed_I),
+
+                      breed(Entity.PANDA, 1, "Breed pandas", Material.BAMBOO)
+                      :setReward(speed_I),
+
+                      kill(Entity.SPIDER, 1, "Kill a spider in a jungle", Material.SPIDER_EYE)
+                      :addPlayerPredicate(function (player)
+                                                   return inBiomeType(player, BiomeType.JUNGLE) end)
+                      :addEntityPredicate(function (entity)
+                                                   return inBiomeType(entity, BiomeType.JUNGLE) end)
+                      :setReward(speed_I)
+                      }
+
+local snow_jungle = {
+                     destroy(Material.MELON, 1, "Break a melon in a snow biome", Material.MELON)
+                     :addPlayerPredicate(function (player)
+                                                  return inBiomeType(player, BiomeType.SNOW) end)
+                     :setReward(stength)
+                     }
+----
+----
+if containsBiomeType(biomes, BiomeType.SNOW) then
+take(1, shuffle(snow_tasks))
+end
+
+if containsBiomeType(biomes, BiomeType.JUNGLE) then
+take(2, shuffle(jungle_tasks))
+end
+
+if containsBiomeType(biomes, BiomeType.DESERT) then
+take(1, shuffle(desert_tasks))
+end
+
+if containsBiomeType(biomes, BiomeType.JUNGLE) and containsBiomeType(biomes, BiomeType.SNOW) then
+take(1, shuffle(snow_jungle))
+end
+----
+local tasks = {
+               village, wood, ingot, nether_mob, animal, weird_item, x_factor, day_night, weird_food,
+               rare_mob, explore, grind, fish, grass
+               }
+
+take(2, shuffle(negative))
+take(27 - taskCount(), prepare_tasks(tasks))

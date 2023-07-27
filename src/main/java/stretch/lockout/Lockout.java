@@ -1,7 +1,5 @@
 package stretch.lockout;
 
-import clojure.java.api.Clojure;
-import clojure.lang.IFn;
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
@@ -14,22 +12,19 @@ import org.bukkit.plugin.java.JavaPluginLoader;
 import stretch.lockout.game.GameRule;
 import stretch.lockout.game.GameState;
 import stretch.lockout.game.RaceGameContext;
-import stretch.lockout.task.file.TaskList;
 import stretch.lockout.team.TeamManager;
 import stretch.lockout.util.MessageUtil;
+import stretch.lockout.util.TimingUtil;
 
 import java.io.File;
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Locale;
+import java.util.Optional;
 import java.util.stream.Stream;
 
 public final class Lockout extends JavaPlugin {
     private RaceGameContext taskRaceContext;
-    private IFn loadScript;
-    private IFn loadString;
-    private final String DEFAULTTASKNAME = "default.tasks";
+    private final String DEFAULT_TASK_NAME = "default.tasks";
     private FileConfiguration config;
 
     public Lockout() {
@@ -49,9 +44,9 @@ public final class Lockout extends JavaPlugin {
             }
         }
 
-        File defaultTasks = new File(getDataFolder(), DEFAULTTASKNAME);
+        File defaultTasks = new File(getDataFolder(), DEFAULT_TASK_NAME);
         if (!defaultTasks.exists()) {
-            saveResource(DEFAULTTASKNAME, false);
+            saveResource(DEFAULT_TASK_NAME, false);
             MessageUtil.consoleLog("Create default task list.");
         }
 
@@ -60,13 +55,7 @@ public final class Lockout extends JavaPlugin {
         saveDefaultConfig();
         setConfig(taskRaceContext);
 
-        Thread.currentThread().setContextClassLoader(this.getClass().getClassLoader());
-        Clojure.var("clojure.core", "require").invoke(Clojure.read("stretch.lockout.api"));
-        loadScript = Clojure.var("stretch.lockout.api", "load-script");
-        loadString = Clojure.var("stretch.lockout.api", "load-data");
-
         taskRaceContext.setGameState(GameState.PRE);
-
     }
 
     @Override
@@ -117,53 +106,57 @@ public final class Lockout extends JavaPlugin {
         if (config.getBoolean("enableReward")) {
             taskRaceContext.gameRules().add(GameRule.ALLOW_REWARD);
         }
+
+        // World
+        String worldName = Optional.ofNullable(config.getString("world"))
+                .orElse("world");
+        taskRaceContext.setGameWorld(worldName);
     }
 
-    public void loadResourceScript(CommandSender sender, String resourceName) {
-        try {
-            String data = new String(getResource(resourceName).readAllBytes(), StandardCharsets.UTF_8);
-            loadString(sender, data);
-        }
-        catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    public void loadString(CommandSender sender, String data) {
-        try {
-            loadString.invoke(data);
-            MessageUtil.log(sender, "Forms evaluated from string.");
-        }
-        catch (Throwable e) {
-            e.printStackTrace();
-            MessageUtil.log(sender, ChatColor.RED + "Forms could not be evaluated.");
-        }
-    }
-
-    public void loadLua(CommandSender sender, String filePath) {
 
 
-    }
+    //public void loadResourceScript(CommandSender sender, String resourceName) {
+    //        try {
+    //            String data = new String(getResource(resourceName).readAllBytes(), StandardCharsets.UTF_8);
+    //            loadString(sender, data);
+    //        }
+    //        catch (IOException e) {
+    //            e.printStackTrace();
+    //        }
+    //    }
 
-    public void loadScript(CommandSender sender, TaskList taskList) {
-        try {
-            loadScript.invoke(Clojure.read(getDataFolderRelativePath() + taskList.taskName() + getTaskFileExtension()));
-            MessageUtil.log(sender, "Tasks from " + taskList.taskName() + " loaded.");
-        }
-        catch (Throwable e) {
-            MessageUtil.log(sender, ChatColor.RED + "Tasks from " + taskList.taskName() + " could not be loaded.");
-            e.printStackTrace();
-        }
-    }
+//public void loadString(CommandSender sender, String data) {
+//        try {
+//            loadString.invoke(data);
+//            MessageUtil.log(sender, "Forms evaluated from string.");
+//        }
+//        catch (Throwable e) {
+//            e.printStackTrace();
+//            MessageUtil.log(sender, ChatColor.RED + "Forms could not be evaluated.");
+//        }
+//    }
+
+//public void loadScript(CommandSender sender, TaskList taskList) {
+//        try {
+//            loadScript.invoke(Clojure.read(getDataFolderRelativePath() + taskList.taskName() + getTaskFileExtension()));
+//            MessageUtil.log(sender, "Tasks from " + taskList.taskName() + " loaded.");
+//        }
+//        catch (Throwable e) {
+//            MessageUtil.log(sender, ChatColor.RED + "Tasks from " + taskList.taskName() + " could not be loaded.");
+//            e.printStackTrace();
+//        }
+//    }
 
     public String getTaskFileExtension() {return ".tasks";}
     public String getDataFolderRelativePath() {return "plugins/Lockout/";}
 
     // Should instead return config file which lists boards
-    public List<TaskList> getTaskLists() {
+    public List<String> getTaskLists() {
         return Stream.of(new File(getDataFolder().getAbsolutePath()).listFiles())
                 .filter(file -> file.getName().contains(".tasks"))
-                .map(file -> new TaskList(file.getName().substring(0, file.getName().lastIndexOf("."))))
+                .map(file ->
+                        file.getName()
+                                .substring(0, file.getName().lastIndexOf(".")))
                 .toList();
     }
 
@@ -257,8 +250,10 @@ public final class Lockout extends JavaPlugin {
                     taskRaceContext.setGameState(GameState.END);
                 }
                 case "debug" -> {
-                    taskRaceContext.getLuaEnvironment().loadFile("plugins/Lockout/test.lua");
-
+                    taskRaceContext.getLuaEnvironment().otherInit("test.lua");
+                }
+                case "debugload" -> {
+                    TimingUtil.timeMethod(() -> taskRaceContext.getLuaEnvironment().otherLoad());
                 }
                 default -> {return false;}
             }

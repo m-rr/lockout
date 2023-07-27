@@ -3,6 +3,7 @@ package stretch.lockout.listener;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
+import org.bukkit.entity.HumanEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -12,7 +13,6 @@ import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
 import stretch.lockout.game.RaceGameContext;
-import stretch.lockout.task.file.TaskList;
 import stretch.lockout.view.InventoryTaskView;
 import stretch.lockout.view.TaskSelectionView;
 
@@ -44,7 +44,8 @@ public record InventoryEventHandler(RaceGameContext taskRaceContext) implements 
                     player.sendMessage(ChatColor.RED + "Tasks already loaded");
                     return;
                 }
-                taskRaceContext.loadTaskList(player, new TaskList(clickedItem.getItemMeta().getDisplayName()));
+                //taskRaceContext.loadTaskList(player, new TaskList(clickedItem.getItemMeta().getDisplayName()));
+                taskRaceContext.getLuaEnvironment().loadFile(player, clickedItem.getItemMeta().getDisplayName());
             }
             clickEvent.setCancelled(true);
             return;
@@ -96,5 +97,17 @@ public record InventoryEventHandler(RaceGameContext taskRaceContext) implements 
     public void onFurnaceExtract(FurnaceExtractEvent furnaceExtractEvent) {
         var player = furnaceExtractEvent.getPlayer();
         taskRaceContext.checkTask(player, furnaceExtractEvent);
+    }
+
+    @EventHandler
+    public void onCraftItem(CraftItemEvent craftItemEvent) {
+        if (craftItemEvent.isCancelled()) {
+            return;
+        }
+
+        HumanEntity humanEntity =  craftItemEvent.getWhoClicked();
+        if (humanEntity instanceof Player player) {
+            taskRaceContext.checkTask(player, craftItemEvent);
+        }
     }
 }

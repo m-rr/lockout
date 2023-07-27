@@ -16,7 +16,7 @@ public class TaskStructure extends Task {
     }
 
     @Override
-    public boolean doesAccomplish( HumanEntity player, Event event) {
+    public boolean doesAccomplish(HumanEntity player, Event event) {
         if (!(event instanceof BlockEvent blockEvent)) {
             return false;
         }

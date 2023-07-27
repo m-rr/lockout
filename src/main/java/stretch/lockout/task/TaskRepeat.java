@@ -47,14 +47,14 @@ public class TaskRepeat implements TaskComponent {
     }
 
     @Override
-    public TaskComponent setPlayerPredicate(Predicate<HumanEntity> predicate) {
-        taskComponent.setPlayerPredicate(predicate);
+    public TaskComponent addPlayerPredicate(Predicate<HumanEntity> predicate) {
+        taskComponent.addPlayerPredicate(predicate);
         return this;
     }
 
     @Override
-    public TaskComponent setPlayerPredicate(LuaValue predicate) {
-        taskComponent.setPlayerPredicate(predicate);
+    public TaskComponent addPlayerPredicate(LuaValue predicate) {
+        taskComponent.addPlayerPredicate(predicate);
         return this;
     }
 

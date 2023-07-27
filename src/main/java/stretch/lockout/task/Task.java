@@ -5,7 +5,7 @@ import org.bukkit.event.Event;
 import org.bukkit.inventory.ItemStack;
 import org.luaj.vm2.LuaValue;
 import stretch.lockout.reward.RewardComponent;
-import stretch.lockout.lua.LuaPredicate;
+import stretch.lockout.lua.LuaHumanEntityPredicate;
 import stretch.lockout.team.PlayerStat;
 
 import java.util.HashSet;
@@ -18,7 +18,7 @@ public class Task implements TaskComponent {
     protected RewardComponent reward;
     protected ItemStack guiItemStack;
     protected PlayerStat scoredPlayer;
-    protected Predicate<HumanEntity> playerStatePredicate;
+    protected Predicate<HumanEntity> playerStatePredicate = (bar) -> true;
 
     // Class should be of type org.bukkit.event.Event
     public Task(Class eventClass, int value, String description) {
@@ -49,12 +49,12 @@ public class Task implements TaskComponent {
     }
     public RewardComponent getReward() {return this.reward;}
     public boolean hasPlayerPredicate() {return playerStatePredicate != null;}
-    public TaskComponent setPlayerPredicate(Predicate<HumanEntity> predicate) {
-        playerStatePredicate = predicate;
+    public TaskComponent addPlayerPredicate(Predicate<HumanEntity> predicate) {
+        playerStatePredicate = playerStatePredicate.and(predicate);
         return this;
     }
-    public TaskComponent setPlayerPredicate(LuaValue predicate) {
-        setPlayerPredicate(new LuaPredicate(predicate));
+    public TaskComponent addPlayerPredicate(LuaValue predicate) {
+        addPlayerPredicate(new LuaHumanEntityPredicate(predicate));
         return this;
     }
     public int getValue() {return this.value;}

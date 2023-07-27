@@ -5,6 +5,7 @@ import org.bukkit.scheduler.BukkitScheduler;
 import org.bukkit.scheduler.BukkitTask;
 import stretch.lockout.Lockout;
 import stretch.lockout.reward.RewardComponent;
+
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
@@ -18,8 +19,10 @@ public class RewardScheduler {
         this.plugin = plugin;
     }
 
-    private BukkitTask runTask(Runnable action) {
-        return scheduler.runTask(plugin, action);
+    private BukkitTask runTask(Runnable action, long delay) {
+        return delay < 1L ?
+                scheduler.runTask(plugin, action) :
+                scheduler.runTaskLater(plugin, action, delay);
     }
 
     public void scheduleRewardActions(RewardComponent reward) {

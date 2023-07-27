@@ -1,10 +1,6 @@
 package stretch.lockout.game;
 
-import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
-import org.bukkit.GameMode;
-import org.bukkit.Material;
-import org.bukkit.command.CommandSender;
+import org.bukkit.*;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.HumanEntity;
 import org.bukkit.entity.Player;
@@ -18,24 +14,26 @@ import stretch.lockout.event.ReadyGameEvent;
 import stretch.lockout.event.StartGameEvent;
 import stretch.lockout.event.TaskCompletedEvent;
 import stretch.lockout.listener.*;
-import stretch.lockout.lua.LuaEnvironment;
 import stretch.lockout.loot.LootManager;
+import stretch.lockout.lua.LuaEnvironment;
 import stretch.lockout.reward.scheduler.RewardScheduler;
 import stretch.lockout.scoreboard.ScoreboardHandler;
 import stretch.lockout.task.IndirectTaskListener;
 import stretch.lockout.task.TaskComponent;
 import stretch.lockout.task.TaskManager;
-import stretch.lockout.task.file.TaskList;
 import stretch.lockout.team.PlayerStat;
 import stretch.lockout.team.TeamManager;
 import stretch.lockout.tracker.PlayerTracker;
 import stretch.lockout.util.MessageUtil;
+import stretch.lockout.util.TimingUtil;
 import stretch.lockout.view.InventoryTaskView;
 import stretch.lockout.view.TaskSelectionView;
 
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
+import java.util.logging.Level;
 import java.util.stream.Collectors;
 
 public class RaceGameContext {
@@ -49,6 +47,7 @@ public class RaceGameContext {
     private final LuaEnvironment luaEnvironment;
     private int maxScore;
     private GameState gameState;
+    private World gameWorld;
     private final Set<HumanEntity> readyPlayers = new HashSet<>();
     private final Set<GameRule> rules = new HashSet<>();
     private int countdownTime = 10;
@@ -155,9 +154,13 @@ public class RaceGameContext {
         switch (gameState) {
             case PRE -> {
                 if (gameRules().contains(GameRule.AUTO_LOAD)) {
-                    TaskList taskList = new TaskList(getPlugin().getConfig().getString("autoLoadTask"));
-                    if (getPlugin().getTaskLists().contains(taskList)) {
-                        loadTaskList(getPlugin().getServer().getConsoleSender(), taskList);
+                    //TaskList taskList = new TaskList(getPlugin().getConfig().getString("autoLoadTask"));
+                    String taskList = Optional.ofNullable(getPlugin().getConfig().getString("autoLoadTask")).orElse("test.lua");
+                    //getLuaEnvironment().loadFile(taskList);
+                    TimingUtil.timeMethod(() -> getLuaEnvironment().loadFile(taskList));
+
+                    //if (getPlugin().getTaskLists().contains(taskList)) {
+                        //loadTaskList(getPlugin().getServer().getConsoleSender(), taskList);
                         //var reward = new RewardAction(player -> player.setFireTicks(60), "test");
                         //reward.addAction(() -> Bukkit.getPlayer("MR_STRETCH13").sendMessage("hello"));
 
@@ -165,10 +168,13 @@ public class RaceGameContext {
                         //task.setReward(reward);
                         //task.setGuiItemStack(new ItemStack(Material.STONE));
                         //taskManager.addTask(task);
-                    }
-                    else {
-                        MessageUtil.consoleLog(ChatColor.RED + "TaskList " + taskList.taskName() + " was not found.");
-                    }
+
+                        //var task = new TaskIndirectMob(LockoutIndirectEvent.class, EntityDamageEvent.class, EntityType.GOAT, 20D, 1, "Goat hit by freeze");
+
+                    //}
+                    //else {
+                        //MessageUtil.consoleLog(ChatColor.RED + "TaskList " + taskList.taskName() + " was not found.");
+                    //}
                 }
                 setGameState(GameState.READY);
             }
@@ -246,9 +252,17 @@ public class RaceGameContext {
     public int getMaxScore() {
         return maxScore;
     }
+    public World getGameWorld() {return gameWorld;}
 
     public void setMaxScore(int score) {
         maxScore = score;
+    }
+
+    public void setGameWorld(String worldName) {
+        Optional<World> world = Optional.ofNullable(Bukkit.getWorld(worldName));
+        world.ifPresentOrElse(w -> gameWorld = w,
+                () -> getPlugin().getLogger().log(Level.WARNING,
+                        "Could not load world: " + worldName));
     }
 
     public long getRewardPotionTicks() {
@@ -265,14 +279,10 @@ public class RaceGameContext {
 
     public TaskSelectionView getTaskSelectionView() {
         var taskSelectionView = new TaskSelectionView();
-        List<TaskList> guiTaskLists = getPlugin().getTaskLists();
+        List<String> guiTaskLists = getPlugin().getTaskLists();
         guiTaskLists.forEach(taskSelectionView::addTaskListEntry);
 
         return taskSelectionView;
-    }
-
-    public void loadTaskList(CommandSender sender, TaskList taskList) {
-        getPlugin().loadScript(sender, taskList);
     }
 
   // Events must be player completable

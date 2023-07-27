@@ -16,9 +16,10 @@ public class RewardTask extends RewardLeaf {
         this.taskInvisible = task;
     }
 
-
     @Override
     protected void giveReward(Player player) {
         taskInvisible.subscribe(player);
     }
+
+    public TaskInvisible getDelegate() {return taskInvisible;}
 }

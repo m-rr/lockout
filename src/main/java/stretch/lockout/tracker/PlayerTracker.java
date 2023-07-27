@@ -22,7 +22,7 @@ public class PlayerTracker implements Runnable {
 
     public void changeTracker(Player player) {
         if (players.stream().map(playerStat -> playerStat.getPlayer().isOnline()).count() < 2) {
-            MessageUtil.sendActionBar(player, ChatColor.RED + "You are the only player online");
+            MessageUtil.sendActionBar(player, ChatColor.RED + "No other players to track.");
             return;
         }
 

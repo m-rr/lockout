@@ -13,4 +13,5 @@ public class BiomeTypes {
     public static final Set<Biome> SWAMP = ImmutableSet.of(Biome.SWAMP, Biome.MANGROVE_SWAMP);
     public static final Set<Biome> SAVANNA = ImmutableSet.of(Biome.SAVANNA, Biome.SAVANNA_PLATEAU, Biome.WINDSWEPT_SAVANNA);
     public static final Set<Biome> BADLANDS = ImmutableSet.of(Biome.BADLANDS, Biome.ERODED_BADLANDS, Biome.WOODED_BADLANDS);
+    public static final Set<Biome> DESERT = ImmutableSet.of(Biome.DESERT);
 }

@@ -73,14 +73,14 @@ public sealed abstract class TaskComposite implements TaskComponent permits Task
     }
 
     @Override
-    public TaskComponent setPlayerPredicate(Predicate<HumanEntity> predicate) {
-        taskComponents.forEach(taskComponent -> taskComponent.setPlayerPredicate(predicate));
+    public TaskComponent addPlayerPredicate(Predicate<HumanEntity> predicate) {
+        taskComponents.forEach(taskComponent -> taskComponent.addPlayerPredicate(predicate));
         return this;
     }
 
     @Override
-    public TaskComponent setPlayerPredicate(LuaValue predicate) {
-        taskComponents.forEach(taskComponent -> taskComponent.setPlayerPredicate(predicate));
+    public TaskComponent addPlayerPredicate(LuaValue predicate) {
+        taskComponents.forEach(taskComponent -> taskComponent.addPlayerPredicate(predicate));
         return this;
     }
 
