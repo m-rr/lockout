@@ -16,7 +16,6 @@ import org.bukkit.inventory.PlayerInventory;
 import stretch.lockout.game.RaceGameContext;
 import stretch.lockout.team.TeamManager;
 import stretch.lockout.view.InventoryTaskView;
-import stretch.lockout.view.LockoutView;
 import stretch.lockout.view.TaskSelectionView;
 import stretch.lockout.view.TeamSelectionView;
 
@@ -60,7 +59,7 @@ public record InventoryEventHandler(RaceGameContext taskRaceContext) implements 
             String teamName = clickedItem.getItemMeta().getDisplayName();
             if (!teamManager.isPlayerOnTeam(player)) {
                 teamManager.addPlayerToTeam(player, teamName);
-            } // IDK how this got so ugly.
+            }
             else if (!teamManager.getMappedPlayerStats().get(player).getTeam().getName()
                     .equals(teamName)) {
 

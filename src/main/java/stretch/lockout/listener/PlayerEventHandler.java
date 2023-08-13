@@ -248,6 +248,9 @@ public class PlayerEventHandler implements Listener {
     public void onPlayerJoin(PlayerJoinEvent joinEvent) {
 
         var player = joinEvent.getPlayer();
+        if (!taskRaceContext.hasGuiCompass(player)) {
+            player.getInventory().addItem(taskRaceContext.getGuiCompass());
+        }
         TeamManager teamManager = taskRaceContext.getTeamManager();
 
         // Reattach pointer to appropriate PlayerStat
@@ -267,7 +270,6 @@ public class PlayerEventHandler implements Listener {
     public void onPlayerLeave(PlayerQuitEvent quitEvent) {
         // Game should end if all players are disconnected
         // This is when the last player disconnects, and they may rejoin, so we wait a minute first.
-
         if (Bukkit.getOnlinePlayers().size() < 2) {
             Bukkit.getScheduler().scheduleSyncDelayedTask(taskRaceContext.getPlugin(), () -> {
                 if (Bukkit.getOnlinePlayers().size() < 1) {

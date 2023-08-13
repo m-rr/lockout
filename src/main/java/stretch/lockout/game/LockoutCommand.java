@@ -123,6 +123,9 @@ public class LockoutCommand implements TabExecutor {
                     }
                     lockout.setGameState(GameState.END);
                 }
+                case "version" -> {
+                    MessageUtil.log(sender, "Version: 2.1");
+                }
                 case "debugteam" -> {
                     String teamName = ChatColor.AQUA + "aqua";
                     lockout.getTeamManager().createTeam(teamName);
@@ -146,7 +149,7 @@ public class LockoutCommand implements TabExecutor {
             @NonNull String label,
             @NonNull String[] args) {
         return cmd.getName().equalsIgnoreCase("lockout") && args.length == 1 ?
-                ImmutableList.of("team", "end", "start", "compass") :
+                ImmutableList.of("team", "end", "start", "compass", "version") :
                 ImmutableList.of("");
     }
 }
