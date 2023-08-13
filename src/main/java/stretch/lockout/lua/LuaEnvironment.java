@@ -15,7 +15,6 @@ public class LuaEnvironment extends LuaFileHandler {
     private final RaceGameContext lockout;
     private final String dataPath = "plugins/Lockout/";
     private final String fileExtension = ".tasks";
-    private LuaValue storedChunk;
 
     public LuaEnvironment(final RaceGameContext lockout) {
         this.lockout = lockout;
@@ -31,14 +30,6 @@ public class LuaEnvironment extends LuaFileHandler {
 
     public void loadFile(String filePath) {
         loadFile(Bukkit.getConsoleSender(), filePath);
-    }
-
-    public void otherLoad() {
-        storedChunk.call();
-    }
-
-    public void otherInit(String filePath) {
-        storedChunk = table.loadfile(dataPath + filePath);
     }
 
     private void initTable() {

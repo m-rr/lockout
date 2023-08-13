@@ -10,8 +10,8 @@ import org.bukkit.event.inventory.FurnaceExtractEvent;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.player.*;
 import org.bukkit.potion.PotionEffectType;
-import stretch.lockout.task.player.TaskDamageFromSource;
-import stretch.lockout.task.player.TaskPotion;
+import stretch.lockout.task.special.TaskDamageFromSource;
+import stretch.lockout.task.special.TaskPotion;
 
 import java.util.Collection;
 import java.util.List;

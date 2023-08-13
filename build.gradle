@@ -4,7 +4,7 @@ plugins {
 }
 
 group = 'stretch'
-version = '1.0-SNAPSHOT'
+version = '2.0'
 
 repositories {
     mavenCentral()
@@ -37,6 +37,7 @@ dependencies {
     //implementation 'org.clojure:clojure:1.11.1'
     //implementation 'org.luaj:luaj-jse:3.0.1'
     //implementation 'org.luaj:luaj-jse:3.0.1'
+    //implementation 'org.bstats:bstats-bukkit:3.0.2'
     implementation 'stretch:luaj-jse:3.0'
     implementation 'stretch:luaj-core:3.0'
     testImplementation 'com.github.seeseemelk:MockBukkit-v1.19:2.29.0'

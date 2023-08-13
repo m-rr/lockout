@@ -5,7 +5,6 @@ import org.bukkit.entity.Entity;
 import org.bukkit.entity.HumanEntity;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
-import org.bukkit.event.block.BlockEvent;
 import org.bukkit.event.entity.EntityCombustEvent;
 import org.bukkit.event.entity.FoodLevelChangeEvent;
 import org.bukkit.event.player.*;
@@ -59,6 +58,11 @@ public class PlayerEventHandler implements Listener {
     @EventHandler
     public void onDropItem(PlayerDropItemEvent dropItemEvent) {
         if (dropItemEvent.isCancelled()) {
+            return;
+        }
+
+        if (taskRaceContext.getGameState() == GameState.STARTING && !taskRaceContext.gameRules().contains(GameRule.COUNTDOWN_MOVE)) {
+            dropItemEvent.setCancelled(true);
             return;
         }
 

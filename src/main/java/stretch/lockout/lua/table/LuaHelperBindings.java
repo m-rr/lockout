@@ -2,8 +2,10 @@ package stretch.lockout.lua.table;
 
 import com.google.common.collect.Sets;
 import org.bukkit.Location;
+import org.bukkit.Material;
 import org.bukkit.block.Biome;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
 import org.luaj.vm2.LuaTable;
 import org.luaj.vm2.LuaValue;
 import org.luaj.vm2.Varargs;
@@ -36,10 +38,29 @@ public class LuaHelperBindings implements LuaTableBinding {
             }
         });
 
+        //createItem(material, amount)
+        table.set("createItem", new TwoArgFunction() {
+            @Override
+            public LuaValue call(LuaValue luaValue, LuaValue luaValue1) {
+                Material material = (Material) CoerceLuaToJava.coerce(luaValue, Material.class);
+                int amount = (int) CoerceLuaToJava.coerce(luaValue1, int.class);
+                return CoerceJavaToLua.coerce(new ItemStack(material, amount));
+            }
+        });
+
         table.set("taskCount", new ZeroArgFunction() {
             @Override
             public LuaValue call() {
                 return CoerceJavaToLua.coerce(lockout.getTaskManager().getTaskCount());
+            }
+        });
+
+        table.set("setMaxScore", new OneArgFunction() {
+            @Override
+            public LuaValue call(LuaValue luaValue) {
+                int score = (int) CoerceLuaToJava.coerce(luaValue, int.class);
+                lockout.setMaxScore(score);
+                return null;
             }
         });
 

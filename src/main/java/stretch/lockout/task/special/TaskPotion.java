@@ -1,4 +1,4 @@
-package stretch.lockout.task.player;
+package stretch.lockout.task.special;
 
 import org.bukkit.entity.HumanEntity;
 import org.bukkit.event.Event;

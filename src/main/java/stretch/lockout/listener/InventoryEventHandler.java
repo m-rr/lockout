@@ -10,11 +10,15 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.enchantment.EnchantItemEvent;
 import org.bukkit.event.inventory.*;
 import org.bukkit.inventory.Inventory;
+import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
 import stretch.lockout.game.RaceGameContext;
+import stretch.lockout.team.TeamManager;
 import stretch.lockout.view.InventoryTaskView;
+import stretch.lockout.view.LockoutView;
 import stretch.lockout.view.TaskSelectionView;
+import stretch.lockout.view.TeamSelectionView;
 
 public record InventoryEventHandler(RaceGameContext taskRaceContext) implements Listener {
 
@@ -44,9 +48,28 @@ public record InventoryEventHandler(RaceGameContext taskRaceContext) implements 
                     player.sendMessage(ChatColor.RED + "Tasks already loaded");
                     return;
                 }
-                //taskRaceContext.loadTaskList(player, new TaskList(clickedItem.getItemMeta().getDisplayName()));
                 taskRaceContext.getLuaEnvironment().loadFile(player, clickedItem.getItemMeta().getDisplayName());
             }
+            clickEvent.setCancelled(true);
+            return;
+        }
+
+        if (clickEvent.getClickedInventory().getHolder() instanceof TeamSelectionView) {
+            ItemStack clickedItem = clickEvent.getCurrentItem();
+            TeamManager teamManager = taskRaceContext.getTeamManager();
+            String teamName = clickedItem.getItemMeta().getDisplayName();
+            if (!teamManager.isPlayerOnTeam(player)) {
+                teamManager.addPlayerToTeam(player, teamName);
+            } // IDK how this got so ugly.
+            else if (!teamManager.getMappedPlayerStats().get(player).getTeam().getName()
+                    .equals(teamName)) {
+
+                teamManager.getTeamByName(teamManager.getMappedPlayerStats().get(player).getTeam().getName())
+                        .removePlayer(player);
+
+                teamManager.addPlayerToTeam(player, teamName);
+            }
+
             clickEvent.setCancelled(true);
             return;
         }
@@ -88,7 +111,11 @@ public record InventoryEventHandler(RaceGameContext taskRaceContext) implements 
             return;
         }
 
-        if (dragEvent.getInventory().getHolder() instanceof InventoryTaskView || dragEvent.getInventory().getHolder() instanceof TaskSelectionView) {
+        InventoryHolder holder = dragEvent.getInventory().getHolder();
+
+        if (holder instanceof InventoryTaskView ||
+                holder instanceof TaskSelectionView ||
+                holder instanceof TeamSelectionView) {
             dragEvent.setCancelled(true);
         }
     }

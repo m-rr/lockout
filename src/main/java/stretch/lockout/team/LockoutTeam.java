@@ -1,6 +1,7 @@
 package stretch.lockout.team;
 
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.scoreboard.Scoreboard;
 
 import javax.annotation.Nullable;
@@ -8,16 +9,32 @@ import java.util.HashSet;
 import java.util.function.Consumer;
 
 public class LockoutTeam {
-    final protected HashSet<PlayerStat> players = new HashSet<>();
-    final protected String teamName;
-    protected Scoreboard board;
-    protected TeamManager teamManager;
+    private final HashSet<PlayerStat> players = new HashSet<>();
+    private final String teamName;
+    private ItemStack guiItem;
+    private Scoreboard board;
+    private TeamManager teamManager;
+    private final int maxSize;
 
-    public LockoutTeam(@Nullable TeamManager teamManager, String teamName) {
+    public LockoutTeam(final String teamName, final int maxSize, @Nullable final TeamManager teamManager) {
         this.teamName = teamName;
+        this.maxSize = maxSize;
         this.teamManager = teamManager;
     }
 
+    public LockoutTeam(final String teamName, final int maxSize) {
+        this.teamName = teamName;
+        this.maxSize = maxSize;
+    }
+
+    public boolean isFull() {
+        return playerCount() >= getMaxSize();
+    }
+    public int getMaxSize() {return maxSize;}
+    public void setGuiItem(ItemStack item) {
+        this.guiItem = item;
+    }
+    public ItemStack getGuiItem() {return guiItem;}
     public void setTeamManager(TeamManager teamManager) {
         this.teamManager = teamManager;
     }

@@ -4,8 +4,10 @@ import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
+import org.luaj.vm2.LuaFunction;
 import org.luaj.vm2.LuaTable;
 import org.luaj.vm2.LuaValue;
 import org.luaj.vm2.Varargs;
@@ -32,7 +34,7 @@ public class LuaRewardBindings implements LuaTableBinding {
 
     @Override
     public void injectBindings(LuaTable table) {
-        //item(material, amount, rewardType, description, {optional} enchantment table)
+        //item(material, amount, rewardType, description, {optional} enchantment table, {optional} itemMetaConsumer)
         table.set("item", new VarArgFunction() {
             @Override
             public Varargs invoke(Varargs args) {
@@ -52,6 +54,11 @@ public class LuaRewardBindings implements LuaTableBinding {
                         enchantments.put(enchantment, value);
                     }
                     item.addUnsafeEnchantments(enchantments);
+                }
+
+                if (args.arg(6).isfunction()) {
+                    LuaFunction itemMetaConsumer = args.arg(6).checkfunction();
+                    itemMetaConsumer.call(CoerceJavaToLua.coerce(item));
                 }
                 return CoerceJavaToLua.coerce(new RewardItem(item, rewardType, description));
             }

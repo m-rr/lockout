@@ -1,24 +1,39 @@
 package stretch.lockout.team;
 
 import org.bukkit.Bukkit;
+import org.bukkit.DyeColor;
+import org.bukkit.Material;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.potion.PotionEffect;
 import stretch.lockout.event.PlayerJoinTeamEvent;
+import stretch.lockout.view.TeamSelectionView;
 
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 public class TeamManager {
-    private final Set<LockoutTeam> lockoutTeams;
+    private Set<LockoutTeam> lockoutTeams;
+
+    private TeamSelectionView teamSelectionView;
+    private int defaultTeams = 0;
+    private int teamSize = 16;
+    private int maxTeams = 8;
 
     public TeamManager() {
         this.lockoutTeams = new HashSet<>();
+        this.teamSelectionView = new TeamSelectionView();
     }
 
     public TeamManager(Collection<LockoutTeam> teams) {
         teams.forEach(team -> team.setTeamManager(this));
         this.lockoutTeams = new HashSet<>(teams);
+        this.teamSelectionView = new TeamSelectionView();
+    }
+
+    public TeamSelectionView getTeamSelectionView() {
+        return teamSelectionView;
     }
 
     public List<String> getTeamNames() {
@@ -113,18 +128,49 @@ public class TeamManager {
         getTeams().forEach(team -> team.doToPlayers(doAction));
     }
 
+    public void addDefaultTeams() {
+        for (int i = 0; i < DyeColor.values().length && i < defaultTeams; i++ ) {
+            DyeColor dyeColor = DyeColor.values()[i];
+            var team = new LockoutTeam(dyeColor.name(), teamSize);
+            team.setGuiItem(new ItemStack(Material.getMaterial(dyeColor.name() + "_WOOL")));
+            addTeam(team);
+        }
+    }
+
+    public void setDefaultTeams(final int defaultTeams) {this.defaultTeams = defaultTeams;}
+    public void setTeamSize(final int teamSize) {this.teamSize = teamSize;}
+    public void setMaxTeams(final int maxTeams) {this.maxTeams = maxTeams;}
+    public int getMaxTeams() {return this.maxTeams;}
+    public int getTeamSize() {return this.teamSize;}
+    public int getDefaultTeams() {return this.defaultTeams;}
+
+    public boolean addTeam(LockoutTeam team) {
+        if (getTeams().size() >= maxTeams) {
+            return false;
+        }
+        team.setTeamManager(this);
+        lockoutTeams.add(team);
+        teamSelectionView.addTeam(team);
+        teamSelectionView.update();
+        return true;
+    }
+
     // Safe to try
     public boolean createTeam(String teamName) {
-        if (getMappedTeams().containsKey(teamName)) {
+        if (getMappedTeams().containsKey(teamName) || getTeams().size() >= maxTeams) {
             return false;
         }
 
-        getTeams().add(new LockoutTeam(this, teamName));
+        LockoutTeam team = new LockoutTeam(teamName, teamSize, this);
+
+        getTeams().add(team);
+        teamSelectionView.addTeam(team);
+        teamSelectionView.update();
         return true;
     }
 
     public boolean addPlayerToTeam(Player player, String teamName) {
-        if (isPlayerOnTeam(player) || !isTeam(teamName)) {
+        if (isPlayerOnTeam(player) || !isTeam(teamName) || getTeamByName(teamName).isFull()) {
             return false;
         }
 
@@ -132,7 +178,12 @@ public class TeamManager {
         PlayerStat playerStat = new PlayerStat(player, team);
         team.addPlayer(playerStat);
         Bukkit.getPluginManager().callEvent(new PlayerJoinTeamEvent(playerStat));
+        teamSelectionView.update();
         return true;
     }
 
+    public void destroyAllTeams() {
+        this.lockoutTeams = new HashSet<>();
+        this.teamSelectionView = new TeamSelectionView();
+    }
 }

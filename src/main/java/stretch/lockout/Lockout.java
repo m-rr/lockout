@@ -1,28 +1,24 @@
 package stretch.lockout;
 
 import org.bukkit.ChatColor;
-import org.bukkit.command.Command;
-import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.file.FileConfiguration;
-import org.bukkit.entity.Player;
-import org.bukkit.inventory.Inventory;
 import org.bukkit.plugin.PluginDescriptionFile;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.plugin.java.JavaPluginLoader;
+import stretch.lockout.metrics.Metrics;
 import stretch.lockout.game.GameRule;
 import stretch.lockout.game.GameState;
+import stretch.lockout.game.LockoutCommand;
 import stretch.lockout.game.RaceGameContext;
-import stretch.lockout.team.TeamManager;
 import stretch.lockout.util.MessageUtil;
-import stretch.lockout.util.TimingUtil;
 
 import java.io.File;
 import java.util.List;
-import java.util.Locale;
 import java.util.Optional;
 import java.util.stream.Stream;
 
 public final class Lockout extends JavaPlugin {
+    private final int pluginId = 19299;
     private RaceGameContext taskRaceContext;
     private final String DEFAULT_TASK_NAME = "default.tasks";
     private FileConfiguration config;
@@ -55,6 +51,11 @@ public final class Lockout extends JavaPlugin {
         saveDefaultConfig();
         setConfig(taskRaceContext);
 
+        getCommand("lockout")
+                .setExecutor(new LockoutCommand(taskRaceContext, config));
+
+        Metrics metrics = new Metrics(this, pluginId);
+
         taskRaceContext.setGameState(GameState.PRE);
     }
 
@@ -86,8 +87,11 @@ public final class Lockout extends JavaPlugin {
         if (config.getBoolean("useMaxScore")) {
             taskRaceContext.gameRules().add(GameRule.MAX_SCORE);
         }
+        if (config.getBoolean("commandsRequireOp")) {
+            taskRaceContext.gameRules().add(GameRule.OP_COMMANDS);
+        }
 
-        // LOOT
+        // Loot
         if (config.getBoolean("lootSpawn")) {
             taskRaceContext.gameRules().add(GameRule.SPAWN_LOOT);
             taskRaceContext.getLootManager().setLootSpawnChance(config.getInt("lootChance"));
@@ -111,41 +115,18 @@ public final class Lockout extends JavaPlugin {
         String worldName = Optional.ofNullable(config.getString("world"))
                 .orElse("world");
         taskRaceContext.setGameWorld(worldName);
+
+        // Teams
+        int teamCount = Optional.of(config.getInt("defaultTeams"))
+                .orElse(0);
+        taskRaceContext.getTeamManager().setDefaultTeams(teamCount);
+        int teamSize = Optional.of(config.getInt("teamSize"))
+                .orElse(16);
+        taskRaceContext.getTeamManager().setTeamSize(teamSize);
+        int maxTeams = Optional.of(config.getInt("maxTeams"))
+                .orElse(8);
+        taskRaceContext.getTeamManager().setMaxTeams(maxTeams);
     }
-
-
-
-    //public void loadResourceScript(CommandSender sender, String resourceName) {
-    //        try {
-    //            String data = new String(getResource(resourceName).readAllBytes(), StandardCharsets.UTF_8);
-    //            loadString(sender, data);
-    //        }
-    //        catch (IOException e) {
-    //            e.printStackTrace();
-    //        }
-    //    }
-
-//public void loadString(CommandSender sender, String data) {
-//        try {
-//            loadString.invoke(data);
-//            MessageUtil.log(sender, "Forms evaluated from string.");
-//        }
-//        catch (Throwable e) {
-//            e.printStackTrace();
-//            MessageUtil.log(sender, ChatColor.RED + "Forms could not be evaluated.");
-//        }
-//    }
-
-//public void loadScript(CommandSender sender, TaskList taskList) {
-//        try {
-//            loadScript.invoke(Clojure.read(getDataFolderRelativePath() + taskList.taskName() + getTaskFileExtension()));
-//            MessageUtil.log(sender, "Tasks from " + taskList.taskName() + " loaded.");
-//        }
-//        catch (Throwable e) {
-//            MessageUtil.log(sender, ChatColor.RED + "Tasks from " + taskList.taskName() + " could not be loaded.");
-//            e.printStackTrace();
-//        }
-//    }
 
     public String getTaskFileExtension() {return ".tasks";}
     public String getDataFolderRelativePath() {return "plugins/Lockout/";}
@@ -162,105 +143,6 @@ public final class Lockout extends JavaPlugin {
 
     public RaceGameContext getTaskRaceContext() {
         return taskRaceContext;
-    }
-
-    private void noPermissionMessage(CommandSender sender) {
-        MessageUtil.log(sender, ChatColor.RED + "You do not have permission to use that.");
-    }
-
-    @Override
-    public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
-
-        if (sender instanceof Player player && (cmd.getName().equalsIgnoreCase("ready") ||
-                cmd.getName().equalsIgnoreCase("unready"))) {
-            if (!player.hasPermission("lockout.ready") || !config.getBoolean("allowPlayerReady")) {
-                noPermissionMessage(player);
-                return true;
-            }
-
-            switch(cmd.getName().toLowerCase(Locale.ROOT)) {
-                case "ready" -> {
-                    taskRaceContext.playerReady(player);
-                }
-                case "unready" -> {
-                    taskRaceContext.playerUnready(player);
-                }
-                default -> {return false;}
-            }
-
-
-            return true;
-        }
-
-        if (sender instanceof Player player && cmd.getName().equalsIgnoreCase("lockout") && args.length >= 1) {
-            String command = args[0];
-            switch (command) {
-                case "team" -> {
-                    if (!player.hasPermission("lockout.team")) {
-                        noPermissionMessage(player);
-                        return true;
-                    }
-
-                    if (args.length == 2) {
-                        String teamName = args[1];
-                        TeamManager teamManager = taskRaceContext.getTeamManager();
-                        if (teamManager.isPlayerOnTeam(player)) {
-                            MessageUtil.sendChat(player, "You are already on a team!");
-                            return true;
-                        }
-                        if (teamManager.createTeam(teamName)) {
-                            MessageUtil.sendAllChat(player.getName() + " created team " + ChatColor.GOLD + teamName);
-                        }
-                        teamManager.addPlayerToTeam(player, teamName);
-                        if (!taskRaceContext.hasGuiCompass(player)) {
-                            player.getInventory().addItem(taskRaceContext.getGuiCompass());
-                        }
-                    }
-                    else {
-                        return false;
-                    }
-                }
-                case "compass" -> {
-                    if (!player.hasPermission("lockout.compass")) {
-                        noPermissionMessage(player);
-                        return true;
-                    }
-                    Inventory playerInv = player.getInventory();
-                    playerInv.addItem(taskRaceContext.getGuiCompass());
-                }
-                case "start" -> {
-                    if (!player.hasPermission("lockout.start")) {
-                        noPermissionMessage(player);
-                        return true;
-                    }
-
-                    if (taskRaceContext.getGameState() != GameState.READY) {
-                        MessageUtil.sendChat(player, "The game is already started!");
-                    }
-                    else {
-                        taskRaceContext.setGameState(GameState.STARTING);
-                    }
-
-                }
-                case "end" -> {
-                    if (!player.hasPermission("lockout.end")) {
-                        noPermissionMessage(player);
-                        return true;
-                    }
-                    taskRaceContext.setGameState(GameState.END);
-                }
-                case "debug" -> {
-                    taskRaceContext.getLuaEnvironment().otherInit("test.lua");
-                }
-                case "debugload" -> {
-                    TimingUtil.timeMethod(() -> taskRaceContext.getLuaEnvironment().otherLoad());
-                }
-                default -> {return false;}
-            }
-            return true;
-        }
-
-        return false;
     }
 
 }

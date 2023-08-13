@@ -51,10 +51,8 @@ end
 return shuffle(result)
 end
 ----
-local stretch = Bukkit:getPlayer("MR_STRETCH13")
 local start = Lockout:getWorld():getSpawnLocation()
-local loc = stretch:getLocation()
-local biomes = getBiomes(loc, 67)
+local biomes = getBiomes(start, 67)
 
 
 -- Rewards
@@ -71,8 +69,8 @@ local tnt = item(Material.TNT, 20, RewardType.SOLO, "20 tnt")
 local glowing = potion(Effect.GLOWING, 1, RewardType.SOLO, "You're real bright")
 local poison = potion(Effect.POISON, 1, RewardType.TEAM, "Poison", 1200)
 local weakness = potion(Effect.WEAKNESS, 1, RewardType.TEAM, "Weakness")
-local helium = potion(Effect.LEVITATION, 1, RewardType.SOLO, "Helium")
-local helium_enemies = potion(Effect.LEVITATION, 1, RewardType.ENEMY, "Levitation for enemies")
+local helium = potion(Effect.LEVITATION, 1, RewardType.SOLO, "Helium", 600)
+local helium_enemies = potion(Effect.LEVITATION, 1, RewardType.ENEMY, "Levitation for enemies", 600)
 local vex = action(RewardType.SOLO, "Vexs", spawn_vex)
 local mutton = item(Material.COOKED_MUTTON, 15, RewardType.TEAM, "15 cooked mutton")
 local bow = item(Material.BOW, 1, RewardType.TEAM, "Bow")
@@ -81,7 +79,7 @@ local iron_leggings = item(Material.IRON_LEGGINGS, 1, RewardType.TEAM, "Iron leg
 local poison_enemies = potion(Effect.POISON, 1, RewardType.ENEMY, "Poison for enemies", 1200)
 local saddle = item(Material.SADDLE, 1, RewardType.SOLO, "Saddle")
 local turtle_helmet = item(Material.TURTLE_HELMET, 1, RewardType.SOLO, "Turtle helmet", {respiration=3, aqua_affinity=1})
-local vex_enemies = action(RewardType.ENEMY, "Vexs", spawn_vex)
+local vex_enemies = action(RewardType.ENEMY, "Vexs for enemies", spawn_vex)
 local porkchop = item(Material.COOKED_PORKCHOP, 15, RewardType.TEAM, "15 cooked porkchop")
 local diamond_pickaxe = item(Material.DIAMOND_PICKAXE, 1, RewardType.SOLO, "Diamond pickaxe")
 local boom = action(RewardType.SOLO, "Lightning", smite)
@@ -92,11 +90,10 @@ local speed_I = potion(Effect.SPEED, 1, RewardType.SOLO, "Speed II")
 local strength_I_team = potion(Effect.SPEED, 1, RewardType.TEAM, "Strength I")
 local trident_loyalty = item(Material.TRIDENT, 1, RewardType.SOLO, "Loyalty trident", {loyalty=3, impaling=5})
 local trident_riptide = item(Material.TRIDENT, 1, RewardType.SOLO, "Riptide trident", {riptide=3})
-local netherite_pickaxe = item(Material.NETHERITE_PICKAXE, 1, RewardType.SOLO, "NetheritePickaxe", {efficiency=3})
+--local netherite_pickaxe = item(Material.NETHERITE_PICKAXE, 1, RewardType.SOLO, "NetheritePickaxe", {efficiency=3})
 local night_vision = potion(Effect.NIGHT_VISION, 1, RewardType.SOLO, "Night vision")
-local resistance = potion(Effect.DAMAGE_RESISTANCE, 2, RewardType.SOLO, "Damage resistance", 600)
+--local resistance = potion(Effect.DAMAGE_RESISTANCE, 2, RewardType.SOLO, "Damage resistance", 600)
 local haste = potion(Effect.FAST_DIGGING, 3, RewardType.SOLO, "Haste III", 600)
-local totem = item(Material.TOTEM_OF_UNDYING, 1, RewardType.SOLO, "Totem of undying")
 local pearl = item(Material.ENDER_PEARL, 1, RewardType.SOLO, "Enderpearl")
 local pearls = item(Material.ENDER_PEARL, 8, RewardType.SOLO, "Enderpearls")
 local feather_boots = item(Material.CHAINMAIL_BOOTS, 1, RewardType.SOLO, "Feather falling boots", {feather_falling=4})
@@ -128,21 +125,21 @@ local village = {
                  }
 
 local wood = {
-              anyOf(Material.OAK_SIGN, 1, "Make an oak sign glow",
+              oneOf(anyOf(Material.OAK_SIGN, 1, "Make an oak sign glow",
 
-                                       interactBlock(Material.OAK_SIGN, 1, "", Material.OAK_SIGN)
-                                       :addPlayerPredicate(glow_in_hand),
-                                       interactBlock(Material.OAK_WALL_SIGN, 1, "", Material.OAK_SIGN)
-                                       :addPlayerPredicate(glow_in_hand))
-              :setReward(slowness_II_enemies_temp),
+                                             interactBlock(Material.OAK_SIGN, 1, "", Material.OAK_SIGN)
+                                             :addPlayerPredicate(glow_in_hand),
+                                             interactBlock(Material.OAK_WALL_SIGN, 1, "", Material.OAK_SIGN)
+                                             :addPlayerPredicate(glow_in_hand))
+                         :setReward(slowness_II_enemies_temp),
 
-              anyOf(Material.BIRCH_SIGN, 1, "Make a birch sign glow",
+                         anyOf(Material.BIRCH_SIGN, 1, "Make a birch sign glow",
 
-                                         interactBlock(Material.BIRCH_SIGN, 1, "", Material.BIRCH_SIGN)
-                                         :addPlayerPredicate(glow_in_hand),
-                                         interactBlock(Material.BIRCH_WALL_SIGN, 1, "", Material.BIRCH_SIGN)
-                                         :addPlayerPredicate(glow_in_hand))
-              :setReward(slowness_II_enemies_temp),
+                                                    interactBlock(Material.BIRCH_SIGN, 1, "", Material.BIRCH_SIGN)
+                                                    :addPlayerPredicate(glow_in_hand),
+                                                    interactBlock(Material.BIRCH_WALL_SIGN, 1, "", Material.BIRCH_SIGN)
+                                                    :addPlayerPredicate(glow_in_hand))
+                         :setReward(slowness_II_enemies_temp)),
 
               structure(1, "Place a trapdoor on a composter", Material.COMPOSTER,
                          function (block) local below = block:getRelative(BlockFace.DOWN)
@@ -150,7 +147,7 @@ local wood = {
                          below:getType() == Material.COMPOSTER  end)
               :setReward(rewards(slowness_II_enemies_temp, iron_chestplate)),
 
-              structure(1, "Place an iron trapdoor on a cauldron", Material.CAULDRON,
+              structure(1, "Place an iron trapdoor on a cauldron", Material.IRON_TRAPDOOR,
                          function (block) local below = block:getRelative(BlockFace.DOWN)
                          return block:getType() == Material.IRON_TRAPDOOR and
                          below:getType() == Material.CAULDRON  end)
@@ -256,11 +253,19 @@ local x_factor = {
                                             }))
                   }
 
+local clock_biome = shuffle(biomes:toArray())[1]
+
 local weird_item = {
                     obtain(Material.MOSSY_STONE_BRICK_WALL, 1, "Obtain mossy stone brick wall", Material.MOSSY_STONE_BRICK_WALL)
                     :setReward(rewards(bow, arrows)),
 
                     place(Material.CRACKED_DEEPSLATE_TILES, 1, "Place cracked deepslate tiles", Material.CRACKED_DEEPSLATE_TILES)
+                    :setReward(tp_tracked_player),
+
+                    drop(Material.CLOCK, 1, "Drop a clock in " .. string.lower(clock_biome:name():gsub("_", " ")), Material.CLOCK)
+                    :addPlayerPredicate(function (player)
+                                                 return inBiome(player, clock_biome)
+                                                 end)
                     :setReward(tp_tracked_player)
                     }
 
@@ -302,21 +307,8 @@ local rare_mob = {
                                            {
                                             [trident_loyalty]=1,
                                             [trident_riptide]=1
-                                            })),
-
-                  hit(Entity.WARDEN, 1, "Hit a warden", Material.SCULK_CATALYST)
-                  :setReward(rewards(haste, night_vision, netherite_pickaxe, resistance))
+                                            }))
                   }
-
-local explore = {
-                 --hit(Entity.GOAT, 1, "Hit a goat with ")
-
-                 kill(Entity.LLAMA, 1, "Kill a llama", Material.TRADER_LLAMA_SPAWN_EGG)
-                 :setReward(diamond_pickaxe),
-
-                 quest("org.bukkit.event.raid.RaidTriggerEvent", 1, "Start a raid", Material.TOTEM_OF_UNDYING)
-                 :setReward(totem)
-                 }
 
 local grind = {
                standOn(Material.BEDROCK, 1, "Stand on bedrock", Material.BEDROCK)
@@ -397,7 +389,7 @@ end
 ----
 local tasks = {
                village, wood, ingot, nether_mob, animal, weird_item, x_factor, day_night, weird_food,
-               rare_mob, explore, grind, fish, grass
+               rare_mob, grind, fish, grass
                }
 
 take(2, shuffle(negative))

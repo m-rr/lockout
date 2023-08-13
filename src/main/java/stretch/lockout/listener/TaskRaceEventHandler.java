@@ -10,13 +10,13 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.player.PlayerInteractEvent;
-import org.bukkit.event.world.ChunkLoadEvent;
 import stretch.lockout.event.*;
 import stretch.lockout.game.GameRule;
 import stretch.lockout.game.GameState;
 import stretch.lockout.game.RaceGameContext;
 import stretch.lockout.loot.LootManager;
 import stretch.lockout.reward.RewardComponent;
+import stretch.lockout.scoreboard.ScoreboardHandler;
 import stretch.lockout.task.TaskInvisible;
 import stretch.lockout.team.LockoutTeam;
 import stretch.lockout.team.PlayerStat;
@@ -31,11 +31,6 @@ public class TaskRaceEventHandler implements Listener {
     public TaskRaceEventHandler(RaceGameContext taskRaceContext) {
         this.taskRaceContext = taskRaceContext;
         Bukkit.getPluginManager().registerEvents(this, taskRaceContext.getPlugin());
-    }
-
-    @EventHandler
-    public void onChunkLoad(ChunkLoadEvent chunkLoadEvent) {
-
     }
 
     @EventHandler
@@ -58,10 +53,15 @@ public class TaskRaceEventHandler implements Listener {
                 player.playSound(player, Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 0.5F, 0.5F);
             });
 
-            String friendlyMessage = ChatColor.GRAY + scoredPlayerStat.getTeam().getName() + " completed task: "
+            LockoutTeam lockoutTeam = scoredPlayerStat.getTeam();
+            String playerName = lockoutTeam.playerCount() == 1 && lockoutTeam.getName().equals(scoredPlayerStat.getPlayer().getName()) ?
+                    scoredPlayerStat.getPlayer().getDisplayName() :
+                    "[" + lockoutTeam.getName() + "]" + scoredPlayerStat.getPlayer().getDisplayName();
+
+            String friendlyMessage = ChatColor.GRAY + playerName + " completed task: "
                     + ChatColor.BLUE + task.getDescription();
 
-            String enemyMessage = ChatColor.DARK_RED + scoredPlayerStat.getTeam().getName() + " completed task: "
+            String enemyMessage = ChatColor.DARK_RED + playerName + " completed task: "
                     + ChatColor.RED + task.getDescription();
 
             team.doToPlayers(player -> {
@@ -72,10 +72,6 @@ public class TaskRaceEventHandler implements Listener {
                 MessageUtil.sendActionBar(player, enemyMessage);
                 MessageUtil.sendChat(player, enemyMessage);
             });
-        }
-        else {
-            Player player = scoredPlayerStat.getPlayer();
-            player.playSound(player, Sound.BLOCK_AMETHYST_BLOCK_STEP, 1F, .8F);
         }
 
         // apply rewards
@@ -115,8 +111,6 @@ public class TaskRaceEventHandler implements Listener {
                 lootManager.spawnLootBorder();
             }
         }
-
-
     }
 
     @EventHandler
@@ -140,7 +134,12 @@ public class TaskRaceEventHandler implements Listener {
 
     @EventHandler
     public void onStartGame(StartGameEvent startGameEvent) {
-
+        // Set scoreboard for players
+        var teams = taskRaceContext.getTeamManager().getTeams();
+        teams.removeIf(lockoutTeam -> lockoutTeam.playerCount() < 1);
+        ScoreboardHandler scoreboardHandler = taskRaceContext.getScoreboardManager();
+        teams.forEach(scoreboardHandler::addTeam);
+        scoreboardHandler.update();
     }
 
     @EventHandler
@@ -149,27 +148,22 @@ public class TaskRaceEventHandler implements Listener {
             return;
         }
 
-        //taskRaceContext.pauseGame();
         taskRaceContext.setGameState(GameState.PAUSED);
         var winningTeam = gameOverEvent.getTeam();
+        float volume = 1F;
+        float pitch = 0.85F;
 
-       taskRaceContext.getTeamManager().getTeams()
-               .forEach(team -> {
-                   ChatColor chatColor = ChatColor.RED;
-                   Sound gameOverSound = Sound.ITEM_GOAT_HORN_SOUND_7;
-                   if (team == winningTeam) {
-                       chatColor = ChatColor.GREEN;
-                       gameOverSound = Sound.ITEM_GOAT_HORN_SOUND_1;
-                   }
-                   Sound finalGameOverSound = gameOverSound;
-                   //team.sendMessage(chatColor + "Team " + winningTeam.getName() + " has won!");
-                   //team.doToPlayers(player -> player.playSound(player, finalGameOverSound, 1F, 0.85F));
-                   ChatColor finalChatColor = chatColor;
-                   team.doToPlayers(player -> {
-                       player.playSound(player, finalGameOverSound, 1F, 0.85F);
-                       player.sendTitle(finalChatColor + winningTeam.getName(),  ChatColor.GOLD + "has won!", 1, 80, 10);
-                   });
-               });
+        winningTeam.doToPlayers(player -> {
+            player.playSound(player, Sound.ITEM_GOAT_HORN_SOUND_1, volume, pitch);
+            player.sendTitle(ChatColor.GREEN + winningTeam.getName(),
+                    ChatColor.GOLD + "has won!", 1, 80, 10);
+        });
+
+        winningTeam.doToOpposingTeams(player -> {
+            player.playSound(player, Sound.ITEM_GOAT_HORN_SOUND_7, volume, pitch);
+            player.sendTitle(ChatColor.RED + winningTeam.getName(),
+                    ChatColor.GOLD + "has won!", 1, 80, 10);
+        });
 
        Bukkit.getScheduler().scheduleSyncDelayedTask(taskRaceContext.getPlugin(), () -> taskRaceContext.setGameState(GameState.END), 100);
     }
@@ -177,10 +171,7 @@ public class TaskRaceEventHandler implements Listener {
     @EventHandler
     public void onPlayerJoinTeam(PlayerJoinTeamEvent playerJoinTeamEvent) {
         var playerStat = playerJoinTeamEvent.getPlayerStat();
-        // set scoreboard for players
-        taskRaceContext.getScoreboardManager().addTeam(playerStat.getTeam());
-        taskRaceContext.getScoreboardManager().update();
-        MessageUtil.sendAllChat(playerStat.getPlayer().getName() + " joined team " + ChatColor.GOLD + playerStat.getTeam().getName());
+        MessageUtil.sendChat(playerStat.getPlayer(), "You joined team " + ChatColor.GOLD + playerStat.getTeam().getName());
     }
 
     @EventHandler
@@ -195,11 +186,19 @@ public class TaskRaceEventHandler implements Listener {
             var compass = interactEvent.getItem();
             if (compass.getEnchantments().containsKey(Enchantment.LUCK)) {
                 if (interactEvent.getAction() == Action.RIGHT_CLICK_AIR || interactEvent.getAction() == Action.RIGHT_CLICK_BLOCK) {
-                    if (taskRaceContext.getTaskManager().isTasksLoaded()) {
+                    GameState gameState = taskRaceContext.getGameState();
+                    if ((!taskRaceContext.gameRules().contains(GameRule.OP_COMMANDS)
+                            || player.hasPermission("lockout.select"))
+                            && !taskRaceContext.getTaskManager().isTasksLoaded()) {
+                        player.openInventory(taskRaceContext.getTaskSelectionView().getInventory());
+                    }
+                    else if (taskRaceContext.getTaskManager().isTasksLoaded()
+                            && taskRaceContext.getTeamManager().isPlayerOnTeam(player)
+                            && gameState != GameState.READY) {
                         player.openInventory(taskRaceContext.getInventoryTaskView().getInventory());
                     }
                     else {
-                        player.openInventory(taskRaceContext.getTaskSelectionView().getInventory());
+                        player.openInventory(taskRaceContext.getTeamManager().getTeamSelectionView().getInventory());
                     }
                 }
                 if ((interactEvent.getAction() == Action.LEFT_CLICK_AIR || interactEvent.getAction() == Action.LEFT_CLICK_BLOCK)
@@ -209,6 +208,4 @@ public class TaskRaceEventHandler implements Listener {
             }
         }
     }
-//&& (interactEvent.getAction() == Action.RIGHT_CLICK_AIR ||
-           // interactEvent.getAction() == Action.RIGHT_CLICK_BLOCK)
 }

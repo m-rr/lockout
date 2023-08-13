@@ -21,20 +21,16 @@ import stretch.lockout.scoreboard.ScoreboardHandler;
 import stretch.lockout.task.IndirectTaskListener;
 import stretch.lockout.task.TaskComponent;
 import stretch.lockout.task.TaskManager;
+import stretch.lockout.team.LockoutTeam;
 import stretch.lockout.team.PlayerStat;
 import stretch.lockout.team.TeamManager;
 import stretch.lockout.tracker.PlayerTracker;
 import stretch.lockout.util.MessageUtil;
-import stretch.lockout.util.TimingUtil;
 import stretch.lockout.view.InventoryTaskView;
 import stretch.lockout.view.TaskSelectionView;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.logging.Level;
-import java.util.stream.Collectors;
 
 public class RaceGameContext {
     final private Lockout plugin;
@@ -48,7 +44,6 @@ public class RaceGameContext {
     private int maxScore;
     private GameState gameState;
     private World gameWorld;
-    private final Set<HumanEntity> readyPlayers = new HashSet<>();
     private final Set<GameRule> rules = new HashSet<>();
     private int countdownTime = 10;
 
@@ -85,7 +80,7 @@ public class RaceGameContext {
         if (itemMeta != null) {
             itemMeta.addEnchant(Enchantment.LUCK, 1, true);
             itemMeta.addItemFlags(ItemFlag.HIDE_ENCHANTS);
-            itemMeta.setDisplayName(ChatColor.LIGHT_PURPLE + "Tasks");
+            itemMeta.setDisplayName(ChatColor.LIGHT_PURPLE + "Lockout");
             compass.setItemMeta(itemMeta);
         }
 
@@ -114,68 +109,18 @@ public class RaceGameContext {
 
     public GameState getGameState() {return this.gameState;}
 
-    public void playerReady(final HumanEntity player) {
-        if (getGameState() != GameState.READY) {
-            MessageUtil.log(player, ChatColor.RED + "Unable to set you to ready");
-            return;
-        }
-
-        if (!taskManager.isTasksLoaded()) {
-            MessageUtil.log(player, ChatColor.RED + "You must select tasks with the compass before ready up.");
-            return;
-        }
-
-        if (readyPlayers.contains(player)) {
-            MessageUtil.log(player, "You are already set as ready.");
-        }
-        else {
-            readyPlayers.add(player);
-            MessageUtil.log(player, "You have been set to ready.");
-        }
-
-        if (readyPlayers.size() >= Bukkit.getOnlinePlayers().size()) {
-            setGameState(GameState.STARTING);
-        }
-    }
-
-    public void playerUnready(final HumanEntity player) {
-
-        if (readyPlayers.contains(player)) {
-            readyPlayers.remove(player);
-            MessageUtil.log(player, "You have been set to unready.");
-        }
-        else {
-            MessageUtil.log(player, "You are already unready.");
-        }
-    }
-
     public void setGameState(GameState gameState) {
         this.gameState = gameState;
         switch (gameState) {
             case PRE -> {
                 if (gameRules().contains(GameRule.AUTO_LOAD)) {
-                    //TaskList taskList = new TaskList(getPlugin().getConfig().getString("autoLoadTask"));
-                    String taskList = Optional.ofNullable(getPlugin().getConfig().getString("autoLoadTask")).orElse("test.lua");
-                    //getLuaEnvironment().loadFile(taskList);
-                    TimingUtil.timeMethod(() -> getLuaEnvironment().loadFile(taskList));
-
-                    //if (getPlugin().getTaskLists().contains(taskList)) {
-                        //loadTaskList(getPlugin().getServer().getConsoleSender(), taskList);
-                        //var reward = new RewardAction(player -> player.setFireTicks(60), "test");
-                        //reward.addAction(() -> Bukkit.getPlayer("MR_STRETCH13").sendMessage("hello"));
-
-                        //var task = new TaskMaterial(BlockBreakEvent.class, Material.STONE, 1, "Break stone");
-                        //task.setReward(reward);
-                        //task.setGuiItemStack(new ItemStack(Material.STONE));
-                        //taskManager.addTask(task);
-
-                        //var task = new TaskIndirectMob(LockoutIndirectEvent.class, EntityDamageEvent.class, EntityType.GOAT, 20D, 1, "Goat hit by freeze");
-
-                    //}
-                    //else {
-                        //MessageUtil.consoleLog(ChatColor.RED + "TaskList " + taskList.taskName() + " was not found.");
-                    //}
+                    String taskList = Optional.ofNullable(getPlugin().getConfig().getString("autoLoadTask")).orElse("default");
+                    getLuaEnvironment().loadFile(taskList);
                 }
+
+                // Add default teams
+                teamManager.addDefaultTeams();
+
                 setGameState(GameState.READY);
             }
             case READY -> {
@@ -189,8 +134,6 @@ public class RaceGameContext {
                     setGameState(GameState.READY);
                     break;
                 }
-
-                readyPlayers.clear();
 
                 // Make sure all players on are a team
                 if (gameRules().contains(GameRule.FORCE_TEAM)) {
@@ -224,7 +167,7 @@ public class RaceGameContext {
 
                 Bukkit.getScheduler().scheduleSyncDelayedTask(getPlugin(),
                         new CountDown(this, countdownTime,
-                                getTeamManager().getPlayerStats().stream().map(PlayerStat::getPlayer).collect(Collectors.toSet())), 20);
+                                getTeamManager().getPlayerStats().stream().map(PlayerStat::getPlayer).toList()), 20);
                 Bukkit.getPluginManager().callEvent(new StartGameEvent());
             }
             case RUNNING -> {
@@ -240,7 +183,7 @@ public class RaceGameContext {
                 Bukkit.getScheduler().cancelTasks(getPlugin());
                 getScoreboardManager().resetScoreboard();
                 scoreboardManager = new ScoreboardHandler();
-                teamManager = new TeamManager();
+                teamManager.destroyAllTeams();
                 taskManager = new TaskManager();
                 playerTracker = new PlayerTracker();
                 rewardScheduler = new RewardScheduler(getPlugin());
@@ -254,11 +197,11 @@ public class RaceGameContext {
     }
     public World getGameWorld() {return gameWorld;}
 
-    public void setMaxScore(int score) {
+    public void setMaxScore(final int score) {
         maxScore = score;
     }
 
-    public void setGameWorld(String worldName) {
+    public void setGameWorld(final String worldName) {
         Optional<World> world = Optional.ofNullable(Bukkit.getWorld(worldName));
         world.ifPresentOrElse(w -> gameWorld = w,
                 () -> getPlugin().getLogger().log(Level.WARNING,
@@ -266,8 +209,8 @@ public class RaceGameContext {
     }
 
     public long getRewardPotionTicks() {
-        long rewardPotionTicks = 144000;
-        return rewardPotionTicks;}
+        return 144000L;
+    }
 
     public InventoryTaskView getInventoryTaskView() {
         var inventoryTaskView = new InventoryTaskView(gameRules().contains(GameRule.ALLOW_REWARD));
@@ -293,7 +236,9 @@ public class RaceGameContext {
 
         var currentTasks = taskManager.getMappedTasks();
 
-        if (gameState == GameState.RUNNING && player.getGameMode() != GameMode.SPECTATOR && currentTasks.containsKey(event.getClass()) && teamManager.isPlayerOnTeam(player)) {
+        if (gameState == GameState.RUNNING && player.getGameMode() != GameMode.SPECTATOR
+                && currentTasks.containsKey(event.getClass()) && teamManager.isPlayerOnTeam(player)) {
+
             var potentialTasks = currentTasks.get(event.getClass());
             for (var task : potentialTasks) {
                 if (!task.isCompleted() && task.doesAccomplish(player, event)) {
@@ -309,7 +254,7 @@ public class RaceGameContext {
 
     public void gracePeriod(HumanEntity player) {
         player.setInvulnerable(true);
-        int GRACE_INVULNERABLE_TIME = 140;
+        final int GRACE_INVULNERABLE_TIME = 140;
         Bukkit.getScheduler().scheduleSyncDelayedTask(getPlugin(),
                 () -> player.setInvulnerable(false), GRACE_INVULNERABLE_TIME);
     }

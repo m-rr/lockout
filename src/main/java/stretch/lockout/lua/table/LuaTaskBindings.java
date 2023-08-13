@@ -5,8 +5,8 @@ import org.bukkit.Material;
 import org.bukkit.block.BlockFace;
 import org.bukkit.entity.EntityType;
 import org.bukkit.event.block.BlockBreakEvent;
-import org.bukkit.event.block.BlockDropItemEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
+import org.bukkit.event.block.CauldronLevelChangeEvent;
 import org.bukkit.event.entity.*;
 import org.bukkit.event.inventory.CraftItemEvent;
 import org.bukkit.event.inventory.FurnaceExtractEvent;
@@ -24,8 +24,9 @@ import stretch.lockout.lua.LuaBlockPredicate;
 import stretch.lockout.lua.LuaTaskBuilder;
 import stretch.lockout.task.Task;
 import stretch.lockout.task.TaskORComposite;
-import stretch.lockout.task.player.TaskDamageFromSource;
-import stretch.lockout.task.player.TaskPotion;
+import stretch.lockout.task.special.TaskCauldron;
+import stretch.lockout.task.special.TaskDamageFromSource;
+import stretch.lockout.task.special.TaskPotion;
 import stretch.lockout.task.structure.TaskStructure;
 
 import java.util.List;
@@ -87,7 +88,7 @@ public class LuaTaskBindings implements LuaTableBinding {
         table.set("drop", new VarArgFunction() {
             @Override
             public Varargs invoke(Varargs args) {
-                return CoerceJavaToLua.coerce(LuaTaskBuilder.createTaskMaterial(args, BlockDropItemEvent.class));
+                return CoerceJavaToLua.coerce(LuaTaskBuilder.createTaskMaterial(args, PlayerDropItemEvent.class));
             }
         });
 
@@ -95,7 +96,7 @@ public class LuaTaskBindings implements LuaTableBinding {
         table.set("dropAny", new VarArgFunction() {
             @Override
             public Varargs invoke(Varargs args) {
-                return CoerceJavaToLua.coerce(LuaTaskBuilder.createGroupTaskMaterial(args, BlockDropItemEvent.class));
+                return CoerceJavaToLua.coerce(LuaTaskBuilder.createGroupTaskMaterial(args, PlayerDropItemEvent.class));
             }
         });
 
@@ -134,6 +135,7 @@ public class LuaTaskBindings implements LuaTableBinding {
                         LuaTaskBuilder.createTaskMaterial(args, InventoryClickEvent.class),
                         LuaTaskBuilder.createTaskMaterial(args, FurnaceExtractEvent.class),
                         LuaTaskBuilder.createTaskMaterial(args, CraftItemEvent.class),
+                        LuaTaskBuilder.createTaskMaterial(args, PlayerDropItemEvent.class),
                         LuaTaskBuilder.createTaskMaterial(args, EntityPickupItemEvent.class)), value, description)
                         .setGuiItemStack(guiItem));
             }
@@ -151,6 +153,7 @@ public class LuaTaskBindings implements LuaTableBinding {
                         LuaTaskBuilder.createGroupTaskMaterial(args, InventoryClickEvent.class),
                         LuaTaskBuilder.createGroupTaskMaterial(args, FurnaceExtractEvent.class),
                         LuaTaskBuilder.createGroupTaskMaterial(args, CraftItemEvent.class),
+                        LuaTaskBuilder.createGroupTaskMaterial(args, PlayerDropItemEvent.class),
                         LuaTaskBuilder.createGroupTaskMaterial(args, EntityPickupItemEvent.class)), value, description)
                         .setGuiItemStack(guiItem));
             }
@@ -399,6 +402,21 @@ public class LuaTaskBindings implements LuaTableBinding {
 
                 return CoerceJavaToLua.coerce(new TaskStructure(BlockPlaceEvent.class,
                         new LuaBlockPredicate(blockPredicate), value, description)
+                        .setGuiItemStack(guiItem));
+            }
+        });
+
+        // cauldron(reason, value, description, guiMaterial)
+        table.set("cauldron", new VarArgFunction() {
+            @Override
+            public Varargs invoke(Varargs args) {
+                CauldronLevelChangeEvent.ChangeReason reason = (CauldronLevelChangeEvent.ChangeReason)
+                        CoerceLuaToJava.coerce(args.arg(1), CauldronLevelChangeEvent.ChangeReason.class);
+                int value = (int) CoerceLuaToJava.coerce(args.arg(2), int.class);
+                String description = (String) CoerceLuaToJava.coerce(args.arg(3), String.class);
+                ItemStack guiItem = new ItemStack((Material) CoerceLuaToJava.coerce(args.arg(4), Material.class));
+
+                return CoerceJavaToLua.coerce(new TaskCauldron(reason, value, description)
                         .setGuiItemStack(guiItem));
             }
         });

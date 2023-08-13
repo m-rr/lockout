@@ -34,6 +34,16 @@ public class LuaPredicateBindings implements LuaTableBinding {
             }
         });
 
+        // inOffHand(entity, material)
+        table.set("inOffHand", new TwoArgFunction() {
+            @Override
+            public LuaValue call(LuaValue luaValue, LuaValue luaValue1) {
+                LivingEntity entity = (LivingEntity) CoerceLuaToJava.coerce(luaValue, LivingEntity.class);
+                Material material = (Material) CoerceLuaToJava.coerce(luaValue1, Material.class);
+                return CoerceJavaToLua.coerce(entity.getEquipment().getItemInOffHand().getType() == material);
+            }
+        });
+
         // inBiome(entity, biome)
         table.set("inBiome", new TwoArgFunction() {
             @Override

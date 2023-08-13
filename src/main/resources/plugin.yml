@@ -11,10 +11,4 @@ softdepend: [AnimatedScoreboard]
 commands:
   lockout:
     description: lockout commands
-    usage: /lockout team <team name> /lockout start <file name> /lockout compass /lockout reset /lockout tasks
-  ready:
-    description: Set player pregame state to ready
-    usage: /ready
-  unready:
-    description: Set player pregame state to unready
-    usage: /unready
+    usage: /lockout team <team name> /lockout start  /lockout end /lockout compass
