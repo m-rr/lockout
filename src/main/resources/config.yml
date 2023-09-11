@@ -39,3 +39,9 @@ allowCompassTracking: true
 # Should commands require permission from permission manager. (LuckPerms etc.)
 # OP privilege will always give access to commands.
 commandsRequireOp: true
+
+# Enable/disable game timer on start. Without timer game will continue until completed.
+useTimer: true
+
+# When enabled, a tiebreaker round will be used to determine a winner when needed.
+useTieBreaker: true

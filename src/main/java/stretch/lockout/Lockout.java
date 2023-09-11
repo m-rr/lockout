@@ -63,6 +63,7 @@ public final class Lockout extends JavaPlugin {
     public void onDisable() {
         if (taskRaceContext != null) {
             taskRaceContext.getScoreboardManager().resetScoreboard();
+            taskRaceContext.destroyBars();
         }
     }
 
@@ -90,6 +91,12 @@ public final class Lockout extends JavaPlugin {
         if (config.getBoolean("commandsRequireOp")) {
             taskRaceContext.gameRules().add(GameRule.OP_COMMANDS);
         }
+        if (config.getBoolean("useTimer")) {
+            taskRaceContext.gameRules().add(GameRule.TIMER);
+        }
+        if (config.getBoolean("useTieBreaker")) {
+            taskRaceContext.gameRules().add(GameRule.TIE_BREAK);
+        }
 
         // Loot
         if (config.getBoolean("lootSpawn")) {
@@ -115,6 +122,9 @@ public final class Lockout extends JavaPlugin {
         String worldName = Optional.ofNullable(config.getString("world"))
                 .orElse("world");
         taskRaceContext.setGameWorld(worldName);
+        Long startTime = Optional.of(config.getLong("startTime"))
+                .orElse(1000L);
+        taskRaceContext.setStartTime(startTime);
 
         // Teams
         int teamCount = Optional.of(config.getInt("defaultTeams"))

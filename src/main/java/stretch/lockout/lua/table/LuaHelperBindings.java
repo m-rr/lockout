@@ -19,6 +19,7 @@ import stretch.lockout.game.RaceGameContext;
 import stretch.lockout.lua.LuaTaskBuilder;
 import stretch.lockout.task.*;
 
+import java.time.Duration;
 import java.util.*;
 
 public class LuaHelperBindings implements LuaTableBinding {
@@ -31,9 +32,18 @@ public class LuaHelperBindings implements LuaTableBinding {
     public void injectBindings(LuaTable table) {
         table.set("addTask", new OneArgFunction() {
             @Override
-            public LuaValue call(LuaValue arg) {
-                TaskComponent task = (TaskComponent) CoerceLuaToJava.coerce(arg, TaskComponent.class);
-                lockout.getTaskManager().addTask(task);
+            public LuaValue call(LuaValue luaValue) {
+                TaskComponent task = (TaskComponent) CoerceLuaToJava.coerce(luaValue, TaskComponent.class);
+                lockout.getMainTasks().addTask(task);
+                return CoerceJavaToLua.coerce(task);
+            }
+        });
+
+        table.set("addTieBreaker", new OneArgFunction() {
+            @Override
+            public LuaValue call(LuaValue luaValue) {
+                TaskComponent task = (TaskComponent) CoerceLuaToJava.coerce(luaValue, TaskComponent.class);
+                lockout.getTieBreaker().addTask(task);
                 return CoerceJavaToLua.coerce(task);
             }
         });
@@ -48,10 +58,20 @@ public class LuaHelperBindings implements LuaTableBinding {
             }
         });
 
+        //copyItem(itemStack)
+        table.set("copyItem", new OneArgFunction() {
+            @Override
+            public LuaValue call(LuaValue luaValue) {
+                ItemStack itemStack = (ItemStack) CoerceLuaToJava.coerce(luaValue, ItemStack.class);
+                return itemStack == null ?
+                        null : CoerceJavaToLua.coerce(new ItemStack(itemStack));
+            }
+        });
+
         table.set("taskCount", new ZeroArgFunction() {
             @Override
             public LuaValue call() {
-                return CoerceJavaToLua.coerce(lockout.getTaskManager().getTaskCount());
+                return CoerceJavaToLua.coerce(lockout.getCurrentTasks().getTaskCount());
             }
         });
 
@@ -60,6 +80,15 @@ public class LuaHelperBindings implements LuaTableBinding {
             public LuaValue call(LuaValue luaValue) {
                 int score = (int) CoerceLuaToJava.coerce(luaValue, int.class);
                 lockout.setMaxScore(score);
+                return null;
+            }
+        });
+
+        table.set("setTimer", new OneArgFunction() {
+            @Override
+            public LuaValue call(LuaValue luaValue) {
+                long minutes = (long) CoerceLuaToJava.coerce(luaValue, long.class);
+                lockout.getTimer().setTime(Duration.ofMinutes(minutes));
                 return null;
             }
         });

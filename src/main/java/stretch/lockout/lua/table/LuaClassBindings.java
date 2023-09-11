@@ -1,9 +1,6 @@
 package stretch.lockout.lua.table;
 
-import org.bukkit.Bukkit;
-import org.bukkit.Color;
-import org.bukkit.DyeColor;
-import org.bukkit.Material;
+import org.bukkit.*;
 import org.bukkit.block.Biome;
 import org.bukkit.block.BlockFace;
 import org.bukkit.enchantments.Enchantment;
@@ -39,6 +36,7 @@ public class LuaClassBindings implements LuaTableBinding {
         table.set("CauldronChange", CoerceJavaToLua.coerce(CauldronLevelChangeEvent.ChangeReason.class));
         table.set("DyeColor", CoerceJavaToLua.coerce(DyeColor.class));
         table.set("Color", CoerceJavaToLua.coerce(Color.class));
+        table.set("Sound", CoerceJavaToLua.coerce(Sound.class));
 
         table.set("Lockout", new LockoutWrapper(lockout));
         table.set("GameRule", CoerceJavaToLua.coerce(GameRule.class));

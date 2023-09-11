@@ -14,7 +14,6 @@ import java.util.function.Predicate;
 public class TaskMob extends Task implements EntityTask {
     private final EntityType entityType;
     private Predicate<Mob> entityPredicate = (quuz) -> true;
-    private Predicate<HumanEntity> targetPlayerCondition;
     public TaskMob(Class eventClass, EntityType entityType, int value, String description) {
         super(eventClass, value, description);
         this.entityType = entityType;
@@ -25,8 +24,7 @@ public class TaskMob extends Task implements EntityTask {
         Entity entity = (Entity) EventReflectUtil.getEntityFromEvent(event);
 
         if (entity == null ||
-                (hasEntityPredicate() && entity instanceof Mob mob && !entityPredicate.test(mob)) ||
-                (hasTargetPlayerPredicate() && entity instanceof HumanEntity humanEntity && !targetPlayerCondition.test(humanEntity))) {
+                (hasEntityPredicate() && entity instanceof Mob mob && !entityPredicate.test(mob))) {
             return false;
         }
 
@@ -36,22 +34,6 @@ public class TaskMob extends Task implements EntityTask {
 
     public boolean hasEntityPredicate() {
         return entityPredicate != null;
-    }
-    public boolean hasTargetPlayerPredicate() {return targetPlayerCondition != null;}
-
-    //public TaskComponent setEntityPredicate(Predicate<Mob> mobPredicate) {
-    //    entityPredicate = mobPredicate;
-    //    return this;
-    //}
-
-    //public TaskComponent setEntityPredicate(LuaValue predicate) {
-    //    setEntityPredicate(new LuaMobPredicate(predicate));
-    //    return this;
-    //}
-
-    public TaskComponent setTargetPlayerPredicate(Predicate<HumanEntity> playerPredicate) {
-        targetPlayerCondition = playerPredicate;
-        return this;
     }
 
     @Override

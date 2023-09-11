@@ -92,7 +92,7 @@ public class TaskRaceEventHandler implements Listener {
         Predicate<RaceGameContext> isGameOver = taskRaceContext.gameRules().contains(GameRule.MAX_SCORE) ?
                 (game) -> game.getMaxScore() > 0 && team.getScore() >= game.getMaxScore() :
                 (game) -> (long) game.getTeamManager().getTeams().size() > 1 && game.getTeamManager().getOpposingTeams(team).stream()
-                        .noneMatch(teams -> game.getTaskManager().remainingPoints() + teams.getScore() >= team.getScore());
+                        .noneMatch(teams -> game.getCurrentTasks().remainingPoints() + teams.getScore() >= team.getScore());
 
 
         if (isGameOver.test(taskRaceContext)) {
@@ -164,8 +164,8 @@ public class TaskRaceEventHandler implements Listener {
             player.sendTitle(ChatColor.RED + winningTeam.getName(),
                     ChatColor.GOLD + "has won!", 1, 80, 10);
         });
-
-       Bukkit.getScheduler().scheduleSyncDelayedTask(taskRaceContext.getPlugin(), () -> taskRaceContext.setGameState(GameState.END), 100);
+        taskRaceContext.destroyBars();
+        Bukkit.getScheduler().scheduleSyncDelayedTask(taskRaceContext.getPlugin(), () -> taskRaceContext.setGameState(GameState.END), 100);
     }
 
     @EventHandler
@@ -189,10 +189,10 @@ public class TaskRaceEventHandler implements Listener {
                     GameState gameState = taskRaceContext.getGameState();
                     if ((!taskRaceContext.gameRules().contains(GameRule.OP_COMMANDS)
                             || player.hasPermission("lockout.select"))
-                            && !taskRaceContext.getTaskManager().isTasksLoaded()) {
+                            && !taskRaceContext.getCurrentTasks().isTasksLoaded()) {
                         player.openInventory(taskRaceContext.getTaskSelectionView().getInventory());
                     }
-                    else if (taskRaceContext.getTaskManager().isTasksLoaded()
+                    else if (taskRaceContext.getCurrentTasks().isTasksLoaded()
                             && taskRaceContext.getTeamManager().isPlayerOnTeam(player)
                             && gameState != GameState.READY) {
                         player.openInventory(taskRaceContext.getInventoryTaskView().getInventory());
@@ -202,7 +202,8 @@ public class TaskRaceEventHandler implements Listener {
                     }
                 }
                 if ((interactEvent.getAction() == Action.LEFT_CLICK_AIR || interactEvent.getAction() == Action.LEFT_CLICK_BLOCK)
-                        && taskRaceContext.getGameState() == GameState.RUNNING && taskRaceContext.gameRules().contains(GameRule.COMPASS_TRACKING)) {
+                        && (taskRaceContext.getGameState() == GameState.RUNNING || taskRaceContext.getGameState() == GameState.TIEBREAKER)
+                        && taskRaceContext.gameRules().contains(GameRule.COMPASS_TRACKING)) {
                     taskRaceContext.getPlayerTracker().changeTracker(player);
                 }
             }

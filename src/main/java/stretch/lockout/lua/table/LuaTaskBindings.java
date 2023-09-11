@@ -17,6 +17,7 @@ import org.bukkit.potion.PotionEffectType;
 import org.luaj.vm2.LuaTable;
 import org.luaj.vm2.LuaValue;
 import org.luaj.vm2.Varargs;
+import org.luaj.vm2.lib.ThreeArgFunction;
 import org.luaj.vm2.lib.VarArgFunction;
 import org.luaj.vm2.lib.jse.CoerceJavaToLua;
 import org.luaj.vm2.lib.jse.CoerceLuaToJava;
@@ -24,6 +25,7 @@ import stretch.lockout.lua.LuaBlockPredicate;
 import stretch.lockout.lua.LuaTaskBuilder;
 import stretch.lockout.task.Task;
 import stretch.lockout.task.TaskORComposite;
+import stretch.lockout.task.TaskPvp;
 import stretch.lockout.task.special.TaskCauldron;
 import stretch.lockout.task.special.TaskDamageFromSource;
 import stretch.lockout.task.special.TaskPotion;
@@ -417,6 +419,19 @@ public class LuaTaskBindings implements LuaTableBinding {
                 ItemStack guiItem = new ItemStack((Material) CoerceLuaToJava.coerce(args.arg(4), Material.class));
 
                 return CoerceJavaToLua.coerce(new TaskCauldron(reason, value, description)
+                        .setGuiItemStack(guiItem));
+            }
+        });
+
+        //pvp(value, description, guiMaterial)
+        table.set("pvp", new ThreeArgFunction() {
+            @Override
+            public LuaValue call(LuaValue luaValue, LuaValue luaValue1, LuaValue luaValue2) {
+                int value = (int) CoerceLuaToJava.coerce(luaValue, int.class);
+                String description = (String) CoerceLuaToJava.coerce(luaValue1, String.class);
+                ItemStack guiItem = new ItemStack((Material) CoerceLuaToJava.coerce(luaValue2, Material.class));
+
+                return CoerceJavaToLua.coerce(new TaskPvp(value, description)
                         .setGuiItemStack(guiItem));
             }
         });

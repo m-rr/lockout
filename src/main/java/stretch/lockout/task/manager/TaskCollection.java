@@ -1,19 +1,21 @@
-package stretch.lockout.task;
+package stretch.lockout.task.manager;
 
+import stretch.lockout.task.TaskComponent;
+import stretch.lockout.task.TaskInvisible;
 import stretch.lockout.team.PlayerStat;
 
 import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-public class TaskManager {
+public class TaskCollection {
     private final Map<Class, Set<TaskComponent>> tasks = new HashMap<>();
     private final Queue<TaskComponent> completedTasks = new LinkedList<>();
 
-    public TaskManager() {
+    public TaskCollection() {
     }
 
-    public TaskManager(Collection<TaskComponent> taskComponents) {
+    public TaskCollection(Collection<TaskComponent> taskComponents) {
         taskComponents.forEach(this::addTask);
     }
 

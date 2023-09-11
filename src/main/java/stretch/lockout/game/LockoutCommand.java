@@ -1,29 +1,30 @@
 package stretch.lockout.game;
 
 import com.google.common.collect.ImmutableList;
-import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
-import org.bukkit.DyeColor;
-import org.bukkit.Material;
+import org.bukkit.*;
 import org.bukkit.command.*;
-import org.bukkit.configuration.Configuration;
 import org.bukkit.configuration.file.FileConfiguration;
-import org.bukkit.entity.Horse;
+import org.bukkit.enchantments.Enchantment;
+import org.bukkit.entity.Bat;
+import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.checkerframework.checker.nullness.qual.NonNull;
+import stretch.lockout.kit.CompassKit;
+import stretch.lockout.kit.Kit;
 import stretch.lockout.team.LockoutTeam;
 import stretch.lockout.team.TeamManager;
 import stretch.lockout.util.MessageUtil;
+import stretch.lockout.world.WorldUtil;
 
+import java.time.Duration;
 import java.util.List;
-import java.util.Locale;
-import java.util.Optional;
 
 public class LockoutCommand implements TabExecutor {
     private final RaceGameContext lockout;
     private final FileConfiguration config;
+    private final CompassKit compassKit = new CompassKit();
 
     public LockoutCommand(final RaceGameContext lockout, final FileConfiguration config) {
         this.lockout = lockout;
@@ -86,9 +87,6 @@ public class LockoutCommand implements TabExecutor {
                             MessageUtil.sendChat(player, "Team already exists!");
                         }
 
-                        if (!lockout.hasGuiCompass(player)) {
-                            player.getInventory().addItem(lockout.getGuiCompass());
-                        }
                     }
                     else {
                         return false;
@@ -99,8 +97,7 @@ public class LockoutCommand implements TabExecutor {
                         noPermissionMessage(player);
                         return true;
                     }
-                    Inventory playerInv = player.getInventory();
-                    playerInv.addItem(lockout.getGuiCompass());
+                    compassKit.apply(player);
                 }
                 case "start" -> {
                     if (lockout.gameRules().contains(GameRule.OP_COMMANDS) && !player.hasPermission("lockout.start")) {
@@ -114,7 +111,6 @@ public class LockoutCommand implements TabExecutor {
                     else {
                         lockout.setGameState(GameState.STARTING);
                     }
-
                 }
                 case "end" -> {
                     if (lockout.gameRules().contains(GameRule.OP_COMMANDS) && !player.hasPermission("lockout.end")) {
@@ -124,15 +120,8 @@ public class LockoutCommand implements TabExecutor {
                     lockout.setGameState(GameState.END);
                 }
                 case "version" -> {
-                    MessageUtil.log(sender, "Version: 2.1");
-                }
-                case "debugteam" -> {
-                    String teamName = ChatColor.AQUA + "aqua";
-                    lockout.getTeamManager().createTeam(teamName);
-                }
-                case "debug" -> {
-                    Inventory inv = lockout.getTeamManager().getTeamSelectionView().getInventory();
-                    player.openInventory(inv);
+                    MessageUtil.log(sender, "Version: 2.3");
+                    player.playSound(player, Sound.BLOCK_BELL_RESONATE, 1F, 1F);
                 }
                 default -> {return false;}
             }

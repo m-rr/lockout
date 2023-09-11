@@ -14,7 +14,8 @@ public class MaterialTypes {
     public static final Set<Material> DISC = ImmutableSet.of(Material.MUSIC_DISC_11, Material.MUSIC_DISC_5, Material.MUSIC_DISC_13,
             Material.MUSIC_DISC_OTHERSIDE, Material.MUSIC_DISC_BLOCKS, Material.MUSIC_DISC_CAT, Material.MUSIC_DISC_CHIRP,
             Material.MUSIC_DISC_FAR, Material.MUSIC_DISC_MALL, Material.MUSIC_DISC_MELLOHI, Material.MUSIC_DISC_PIGSTEP,
-            Material.MUSIC_DISC_STAL, Material.MUSIC_DISC_STRAD, Material.MUSIC_DISC_WAIT, Material.MUSIC_DISC_WARD);
+            Material.MUSIC_DISC_STAL, Material.MUSIC_DISC_STRAD, Material.MUSIC_DISC_WAIT, Material.MUSIC_DISC_WARD,
+            Material.MUSIC_DISC_RELIC);
 
     public static final Set<Material> TRAPDOOR = ImmutableSet.of(Material.OAK_TRAPDOOR, Material.SPRUCE_TRAPDOOR, Material.BIRCH_TRAPDOOR,
             Material.JUNGLE_TRAPDOOR, Material.ACACIA_TRAPDOOR, Material.DARK_OAK_TRAPDOOR, Material.MANGROVE_TRAPDOOR,

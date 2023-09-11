@@ -89,6 +89,15 @@ public class TeamManager {
                 .orElseThrow(NoSuchElementException::new);
     }
 
+    // True if teams are tied for first only.
+    public boolean isTie() {
+        int topScore = getWinningTeam().getScore();
+        return getTeams().stream()
+                .mapToInt(LockoutTeam::getScore)
+                .filter(score -> score == topScore)
+                .count() > 1;
+    }
+
     public void removeTeamByName(String teamName) {
         getTeams().removeIf(team -> team.getName().equalsIgnoreCase(teamName));
     }

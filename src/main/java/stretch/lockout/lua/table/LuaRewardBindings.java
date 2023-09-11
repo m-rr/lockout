@@ -4,7 +4,6 @@ import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.luaj.vm2.LuaFunction;
@@ -102,7 +101,7 @@ public class LuaRewardBindings implements LuaTableBinding {
                 TaskComponent taskComponent = (TaskComponent) CoerceLuaToJava.coerce(luaValue2, TaskComponent.class);
 
                 TaskInvisible taskInvisible = new TaskInvisible(taskComponent);
-                lockout.getTaskManager().addTask(taskInvisible);
+                lockout.getCurrentTasks().addTask(taskInvisible);
 
                 return CoerceJavaToLua.coerce(new RewardTask(taskInvisible, rewardType, description));
             }
