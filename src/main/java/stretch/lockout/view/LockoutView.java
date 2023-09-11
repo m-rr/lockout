@@ -6,6 +6,15 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
 public abstract class LockoutView {
+    protected ItemStack makeRegularItem(ItemStack completedItem) {
+        ItemMeta itemMeta = completedItem.getItemMeta();
+
+        if (itemMeta != null) {
+            itemMeta.removeEnchant(Enchantment.BINDING_CURSE);
+        }
+        completedItem.setItemMeta(itemMeta);
+        return completedItem;
+    }
 
     protected ItemStack makeSpecialItem(ItemStack completedItem) {
         ItemMeta itemMeta = completedItem.getItemMeta();

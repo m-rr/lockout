@@ -3,21 +3,21 @@ package stretch.lockout.listener;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
+import org.bukkit.entity.HumanEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.enchantment.EnchantItemEvent;
-import org.bukkit.event.inventory.FurnaceExtractEvent;
-import org.bukkit.event.inventory.InventoryClickEvent;
-import org.bukkit.event.inventory.InventoryDragEvent;
-import org.bukkit.event.inventory.InventoryMoveItemEvent;
+import org.bukkit.event.inventory.*;
 import org.bukkit.inventory.Inventory;
+import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
 import stretch.lockout.game.RaceGameContext;
-import stretch.lockout.task.file.TaskList;
+import stretch.lockout.team.TeamManager;
 import stretch.lockout.view.InventoryTaskView;
 import stretch.lockout.view.TaskSelectionView;
+import stretch.lockout.view.TeamSelectionView;
 
 public record InventoryEventHandler(RaceGameContext taskRaceContext) implements Listener {
 
@@ -43,17 +43,43 @@ public record InventoryEventHandler(RaceGameContext taskRaceContext) implements 
             ItemStack clickedItem = clickEvent.getCurrentItem();
             if (clickedItem.getType() == Material.PAPER) {
                 player.closeInventory();
-                if (taskRaceContext.getTaskManager().isTasksLoaded()) {
+                if (taskRaceContext.getCurrentTasks().isTasksLoaded()) {
                     player.sendMessage(ChatColor.RED + "Tasks already loaded");
                     return;
                 }
-                taskRaceContext.loadTaskList(player, new TaskList(clickedItem.getItemMeta().getDisplayName()));
+                taskRaceContext.getLuaEnvironment().loadFile(player, clickedItem.getItemMeta().getDisplayName());
             }
             clickEvent.setCancelled(true);
             return;
         }
 
+        if (clickEvent.getClickedInventory().getHolder() instanceof TeamSelectionView) {
+            ItemStack clickedItem = clickEvent.getCurrentItem();
+            TeamManager teamManager = taskRaceContext.getTeamManager();
+            String teamName = clickedItem.getItemMeta().getDisplayName();
+            if (!teamManager.isPlayerOnTeam(player)) {
+                teamManager.addPlayerToTeam(player, teamName);
+            }
+            else if (!teamManager.getMappedPlayerStats().get(player).getTeam().getName()
+                    .equals(teamName)) {
+
+                teamManager.getTeamByName(teamManager.getMappedPlayerStats().get(player).getTeam().getName())
+                        .removePlayer(player);
+
+                teamManager.addPlayerToTeam(player, teamName);
+            }
+
+            clickEvent.setCancelled(true);
+            return;
+        }
+
         taskRaceContext.checkTask(player, clickEvent);
+    }
+
+    @EventHandler
+    public void onInventoryClose(InventoryCloseEvent closeEvent) {
+        var player = (Player) closeEvent.getPlayer();
+        taskRaceContext.checkTask(player, closeEvent);
     }
 
     @EventHandler
@@ -84,7 +110,11 @@ public record InventoryEventHandler(RaceGameContext taskRaceContext) implements 
             return;
         }
 
-        if (dragEvent.getInventory().getHolder() instanceof InventoryTaskView || dragEvent.getInventory().getHolder() instanceof TaskSelectionView) {
+        InventoryHolder holder = dragEvent.getInventory().getHolder();
+
+        if (holder instanceof InventoryTaskView ||
+                holder instanceof TaskSelectionView ||
+                holder instanceof TeamSelectionView) {
             dragEvent.setCancelled(true);
         }
     }
@@ -93,5 +123,17 @@ public record InventoryEventHandler(RaceGameContext taskRaceContext) implements 
     public void onFurnaceExtract(FurnaceExtractEvent furnaceExtractEvent) {
         var player = furnaceExtractEvent.getPlayer();
         taskRaceContext.checkTask(player, furnaceExtractEvent);
+    }
+
+    @EventHandler
+    public void onCraftItem(CraftItemEvent craftItemEvent) {
+        if (craftItemEvent.isCancelled()) {
+            return;
+        }
+
+        HumanEntity humanEntity =  craftItemEvent.getWhoClicked();
+        if (humanEntity instanceof Player player) {
+            taskRaceContext.checkTask(player, craftItemEvent);
+        }
     }
 }

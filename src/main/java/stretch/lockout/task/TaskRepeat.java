@@ -3,11 +3,13 @@ package stretch.lockout.task;
 import org.bukkit.entity.HumanEntity;
 import org.bukkit.event.Event;
 import org.bukkit.inventory.ItemStack;
+import org.luaj.vm2.LuaValue;
 import stretch.lockout.reward.RewardComponent;
 import stretch.lockout.team.PlayerStat;
 
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.function.Predicate;
 
 public class TaskRepeat implements TaskComponent {
     final private TaskComponent taskComponent;
@@ -42,6 +44,18 @@ public class TaskRepeat implements TaskComponent {
     @Override
     public PlayerStat getScoredPlayer() {
         return taskComponent.getScoredPlayer();
+    }
+
+    @Override
+    public TaskComponent addPlayerPredicate(Predicate<HumanEntity> predicate) {
+        taskComponent.addPlayerPredicate(predicate);
+        return this;
+    }
+
+    @Override
+    public TaskComponent addPlayerPredicate(LuaValue predicate) {
+        taskComponent.addPlayerPredicate(predicate);
+        return this;
     }
 
     @Override

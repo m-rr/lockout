@@ -4,13 +4,18 @@ plugins {
 }
 
 group = 'stretch'
-version = '1.0-SNAPSHOT'
+version = '2.3'
 
 repositories {
     mavenCentral()
+    mavenLocal()
     maven {
         name = 'spigotmc-repo'
         url = 'https://hub.spigotmc.org/nexus/content/repositories/snapshots/'
+        content {
+            includeGroup 'org.bukkit'
+            includeGroup "org.spigotmc"
+        }
     }
     maven {
         name = 'sonatype'
@@ -25,10 +30,17 @@ repositories {
 
 dependencies {
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.0.0-M2'
-    compileOnly 'org.spigotmc:spigot-api:1.19.2-R0.1-SNAPSHOT'
-    implementation 'org.clojure:clojure:1.11.1'
+    compileOnly 'org.spigotmc:spigot-api:1.20.1-R0.1-SNAPSHOT'
+    //compileOnly 'stretch:spigot-nms:1.0'
+    //implementation 'com.google.code.gson:gson:2.8.9'
+    //implementation files('/home/michael/maven/sisc.jar')
+    //implementation 'org.clojure:clojure:1.11.1'
+    //implementation 'org.luaj:luaj-jse:3.0.1'
+    //implementation 'org.luaj:luaj-jse:3.0.1'
+    //implementation 'org.bstats:bstats-bukkit:3.0.2'
+    implementation 'stretch:luaj-jse:3.0'
+    implementation 'stretch:luaj-core:3.0'
     testImplementation 'com.github.seeseemelk:MockBukkit-v1.19:2.29.0'
-    //testImplementation 'com.github.seeseemelk:MockBukkit-v1.18:2.0.0'
 }
 
 test {

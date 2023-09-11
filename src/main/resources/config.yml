@@ -1,15 +1,47 @@
-clearInventoryStart: false
-clearInventoryEnd: true
-moveDuringCountdown: false
-countdownDuration: 5
-lootSpawn: false
-lootSpawnNearPlayers: true
-lootChance: 50
-lootSpawnRadius: 10
-autoLoad: false
+# Sets whether tasks file is loaded automatically.
+# Set to false if you wish to choose tasks file with
+# a gui inventory by right-clicking compass in game.
+# This is only useful if you have multiple tasks files.
+autoLoad: true
+
+# Only applies if "autoLoad=true".
+# Name of tasks file which should be loaded on start.
 autoLoadTask: default
-allowPlayerReady: true
+
+# Should be overworld name game will be played on.
+world: "world"
+
+# Will clear all lockout players inventory on game start or end.
+# Only set these to true if you want players to all start with
+# equal inventories.
+clearInventoryStart: false
+clearInventoryEnd: false
+# Countdown config
+moveDuringCountdown: false
+countdownDuration: 15
+
+# Number of teams. (Custom teams can be added by privileged player later)
+defaultTeams: 4
+maxTeams: 8
+# Maximum players per team.
+teamSize: 4
+
+# Enable/disable rewards from completing tasks.
+# This will override a tasks file.
 enableReward: true
-lootWorld: world
+
+# Forces all players in server to be placed on a team when game starts.
 forcePlayersOnTeam: true
+
+# Enable/disable player compass tracking.
 allowCompassTracking: true
+
+# Should commands require permission from permission manager. (LuckPerms etc.)
+# OP privilege will always give access to commands.
+commandsRequireOp: true
+
+# Enable/disable game timer on start. Without timer game will continue until completed.
+useTimer: true
+
+# When enabled, a tiebreaker round will be used to determine a winner when needed.
+useTieBreaker: true

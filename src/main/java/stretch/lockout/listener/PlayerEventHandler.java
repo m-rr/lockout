@@ -1,26 +1,31 @@
 package stretch.lockout.listener;
 
 import org.bukkit.Bukkit;
+import org.bukkit.Material;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.HumanEntity;
+import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
-import org.bukkit.event.block.BlockEvent;
 import org.bukkit.event.entity.EntityCombustEvent;
 import org.bukkit.event.entity.FoodLevelChangeEvent;
 import org.bukkit.event.player.*;
 import org.bukkit.event.raid.RaidTriggerEvent;
+import org.bukkit.inventory.Inventory;
+import org.bukkit.inventory.ItemStack;
 import stretch.lockout.game.GameRule;
 import stretch.lockout.game.GameState;
 import stretch.lockout.game.RaceGameContext;
+import stretch.lockout.kit.Kit;
 import stretch.lockout.team.PlayerStat;
 import stretch.lockout.team.TeamManager;
 
+import java.time.Duration;
 import java.util.Map;
 import java.util.UUID;
 
 public class PlayerEventHandler implements Listener {
-    private RaceGameContext taskRaceContext;
+    private final RaceGameContext taskRaceContext;
     private final int INVULNERABLE_TIME = 140;
     public PlayerEventHandler(RaceGameContext taskRaceContext) {
         this.taskRaceContext = taskRaceContext;
@@ -59,6 +64,11 @@ public class PlayerEventHandler implements Listener {
     @EventHandler
     public void onDropItem(PlayerDropItemEvent dropItemEvent) {
         if (dropItemEvent.isCancelled()) {
+            return;
+        }
+
+        if (taskRaceContext.getGameState() == GameState.STARTING && !taskRaceContext.gameRules().contains(GameRule.COUNTDOWN_MOVE)) {
+            dropItemEvent.setCancelled(true);
             return;
         }
 
@@ -168,10 +178,6 @@ public class PlayerEventHandler implements Listener {
     @EventHandler
     public void onRespawn(PlayerRespawnEvent respawnEvent) {
         var player = respawnEvent.getPlayer();
-        if (taskRaceContext.getTeamManager().getMappedPlayerStats().containsKey(player)) {
-            taskRaceContext.gracePeriod(player);
-            player.getInventory().addItem(taskRaceContext.getGuiCompass());
-        }
         taskRaceContext.checkTask(player, respawnEvent);
     }
 
@@ -218,9 +224,12 @@ public class PlayerEventHandler implements Listener {
 
     @EventHandler
     public void onHungerChange(FoodLevelChangeEvent foodLevelChangeEvent) {
-        HumanEntity player = foodLevelChangeEvent.getEntity();
-        if (player.isInvulnerable()) {
+        HumanEntity humanEntity = foodLevelChangeEvent.getEntity();
+        if (humanEntity.isInvulnerable()) {
             foodLevelChangeEvent.setCancelled(true);
+        }
+        if (humanEntity instanceof Player player) {
+            taskRaceContext.checkTask(player, foodLevelChangeEvent);
         }
     }
 
@@ -254,15 +263,33 @@ public class PlayerEventHandler implements Listener {
                 player.setScoreboard(taskRaceContext.getScoreboardManager().getBoard());
                 var playerStat = mappedPlayerStats.get(player.getUniqueId());
                 playerStat.setPlayer(player);
+                taskRaceContext.getPlayerTracker().setPlayer(playerStat);
             }
+        }
+
+        // Update bossbars
+        switch (taskRaceContext.getGameState()) {
+            case READY -> {
+                taskRaceContext.getPreGameBar().activate();
+            }
+            case RUNNING -> {
+                if (taskRaceContext.gameRules().contains(GameRule.TIMER)) {
+                    taskRaceContext.getTimer().activate();
+                }
+            }
+            case TIEBREAKER -> {
+                if (taskRaceContext.gameRules().contains(GameRule.TIE_BREAK)) {
+                    taskRaceContext.getTieBar().activate();
+                }
+            }
+            default -> {}
         }
     }
 
     @EventHandler
     public void onPlayerLeave(PlayerQuitEvent quitEvent) {
         // Game should end if all players are disconnected
-        // This is called before they are really disconnected, and they may rejoin, so we wait a minute first.
-
+        // This is when the last player disconnects, and they may rejoin, so we wait a minute first.
         if (Bukkit.getOnlinePlayers().size() < 2) {
             Bukkit.getScheduler().scheduleSyncDelayedTask(taskRaceContext.getPlugin(), () -> {
                 if (Bukkit.getOnlinePlayers().size() < 1) {

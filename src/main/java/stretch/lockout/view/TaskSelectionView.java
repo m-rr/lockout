@@ -6,7 +6,6 @@ import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
-import stretch.lockout.task.file.TaskList;
 
 public class TaskSelectionView extends LockoutView implements InventoryHolder {
 
@@ -27,10 +26,10 @@ public class TaskSelectionView extends LockoutView implements InventoryHolder {
         return makeSpecialItem(item);
     }
 
-    public void addTaskListEntry(TaskList taskList) {
+    public void addTaskListEntry(String taskListName) {
         ItemStack guiItemStack = entryItemFactory();
         ItemMeta itemMeta = guiItemStack.getItemMeta();
-        itemMeta.setDisplayName(taskList.taskName());
+        itemMeta.setDisplayName(taskListName);
         guiItemStack.setItemMeta(itemMeta);
 
         inventory.addItem(guiItemStack);

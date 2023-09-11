@@ -25,4 +25,21 @@ public class WorldUtil {
 
         return y > world.getMinHeight() ? highestBlockAt(world, x, y - 1, z) : null;
     }
+
+    private static void createLine(World world, final Material material, final Location start, final Location delta, final int length) {
+        Location curr = start.clone();
+        for (int i = 0; i < length; i++) {
+            world.getBlockAt(curr).setType(material);
+            curr = curr.add(delta);
+        }
+    }
+
+    public static void createGlassSquare(final Location center, final int size, World world) {
+        Location curr = center.subtract((double) size / 2, 0, (double) size / 2);
+        final Location delta = new Location(world, 1D, 0D, 0D);
+        for (int i = 0; i < size; i++) {
+            createLine(world, Material.GLASS, curr, delta, size);
+            curr = curr.add(0D, 0D, 1D);
+        }
+    }
 }

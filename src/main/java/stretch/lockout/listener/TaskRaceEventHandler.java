@@ -5,6 +5,7 @@ import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.enchantments.Enchantment;
+import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
@@ -14,9 +15,16 @@ import stretch.lockout.game.GameRule;
 import stretch.lockout.game.GameState;
 import stretch.lockout.game.RaceGameContext;
 import stretch.lockout.loot.LootManager;
+import stretch.lockout.reward.RewardComponent;
+import stretch.lockout.scoreboard.ScoreboardHandler;
+import stretch.lockout.task.TaskInvisible;
 import stretch.lockout.team.LockoutTeam;
+import stretch.lockout.team.PlayerStat;
 import stretch.lockout.team.TeamManager;
 import stretch.lockout.util.MessageUtil;
+
+import java.util.function.Consumer;
+import java.util.function.Predicate;
 
 public class TaskRaceEventHandler implements Listener {
     private final RaceGameContext taskRaceContext;
@@ -37,31 +45,59 @@ public class TaskRaceEventHandler implements Listener {
         // update board for all teams
         taskRaceContext.getScoreboardManager().update();
         TeamManager teamManager = taskRaceContext.getTeamManager();
+        LockoutTeam team = taskCompletedEvent.getPlayer().getTeam();
 
-        // Send message to all players and play sound for all players
-        teamManager.doToAllPlayers(player -> {
-            player.playSound(player, Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 0.5F, 0.5F);
-        });
+        if (!(task instanceof TaskInvisible)) {
+            // Play sound for all players
+            teamManager.doToAllPlayers(player -> {
+                player.playSound(player, Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 0.5F, 0.5F);
+            });
 
-        MessageUtil.sendAllActionBar(ChatColor.GRAY + scoredPlayerStat.getTeam().getName() + " completed task: "
-                + ChatColor.BLUE + task.getDescription());
+            LockoutTeam lockoutTeam = scoredPlayerStat.getTeam();
+            String playerName = lockoutTeam.playerCount() == 1 && lockoutTeam.getName().equals(scoredPlayerStat.getPlayer().getName()) ?
+                    scoredPlayerStat.getPlayer().getDisplayName() :
+                    "[" + lockoutTeam.getName() + "]" + scoredPlayerStat.getPlayer().getDisplayName();
+
+            String friendlyMessage = ChatColor.GRAY + playerName + " completed task: "
+                    + ChatColor.BLUE + task.getDescription();
+
+            String enemyMessage = ChatColor.DARK_RED + playerName + " completed task: "
+                    + ChatColor.RED + task.getDescription();
+
+            team.doToPlayers(player -> {
+                MessageUtil.sendActionBar(player, friendlyMessage);
+                MessageUtil.sendChat(player, friendlyMessage);
+            });
+            team.doToOpposingTeams(player -> {
+                MessageUtil.sendActionBar(player, enemyMessage);
+                MessageUtil.sendChat(player, enemyMessage);
+            });
+        }
 
         // apply rewards
         if (task.hasReward() && taskRaceContext.gameRules().contains(GameRule.ALLOW_REWARD)) {
             var reward = task.getReward();
             reward.applyReward(scoredPlayerStat);
-            var rewardEvent = new RewardApplyEvent(scoredPlayerStat, reward);
-            Bukkit.getPluginManager().callEvent(rewardEvent);
+            if (!(task instanceof TaskInvisible)) {
+                var rewardEvent = new RewardApplyEvent(scoredPlayerStat, reward);
+                Bukkit.getPluginManager().callEvent(rewardEvent);
+            }
+
+            var actions = reward.getActions();
+            if (!actions.isEmpty()) {
+                taskRaceContext.getRewardScheduler().scheduleRewardActions(reward);
+            }
         }
 
+        Predicate<RaceGameContext> isGameOver = taskRaceContext.gameRules().contains(GameRule.MAX_SCORE) ?
+                (game) -> game.getMaxScore() > 0 && team.getScore() >= game.getMaxScore() :
+                (game) -> (long) game.getTeamManager().getTeams().size() > 1 && game.getTeamManager().getOpposingTeams(team).stream()
+                        .noneMatch(teams -> game.getCurrentTasks().remainingPoints() + teams.getScore() >= team.getScore());
 
-        LockoutTeam team = taskCompletedEvent.getPlayer().getTeam();
 
-        int remainingPoints = taskRaceContext.getTaskManager().remainingPoints();
-        // If max score is not set, then check if it is possible for other team to come back
-        if (taskRaceContext.getMaxScore() > 0 && team.getScore() >= taskRaceContext.getMaxScore()) {
-            Bukkit.getPluginManager().callEvent(new GameOverEvent(team));
-            return;
+        if (isGameOver.test(taskRaceContext)) {
+          Bukkit.getPluginManager().callEvent(new GameOverEvent(team));
+          return;
         }
 
         LootManager lootManager = taskRaceContext.getLootManager();
@@ -75,42 +111,35 @@ public class TaskRaceEventHandler implements Listener {
                 lootManager.spawnLootBorder();
             }
         }
-
-
     }
 
     @EventHandler
     public void onRewardApply(RewardApplyEvent rewardApplyEvent) {
-        var scoredPlayerStat = rewardApplyEvent.getPlayerStat();
-        var reward = rewardApplyEvent.getReward();
-        String messagePrefix = "";
-        switch (reward.getRewardType()) {
-            case POSITIVE -> messagePrefix = scoredPlayerStat.getPlayer().getName() + " received: ";
-            case TEAM_POSITIVE -> messagePrefix = "Team " + scoredPlayerStat.getTeam().getName() + " received: ";
-            case ENEMY_NEGATIVE -> messagePrefix = "Team " + scoredPlayerStat.getTeam().getName() + " caused debuff: ";
-        }
+        PlayerStat scoredPlayerStat = rewardApplyEvent.getPlayerStat();
+        RewardComponent reward = rewardApplyEvent.getReward();
 
-        String finalMessagePrefix = messagePrefix;
+        Consumer<Player> sendMessage = (player) -> {
+            String messagePrefix = switch (reward.getRewardType()) {
+                case SOLO -> scoredPlayerStat.getPlayer().getName() + " received: ";
+                case TEAM, COMPOSITE -> "Team " + scoredPlayerStat.getTeam().getName() + " received: ";
+                case ENEMY -> "Team " + scoredPlayerStat.getTeam().getName() + " caused debuff: ";
+            };
+            String message = messagePrefix + ChatColor.LIGHT_PURPLE + reward.getDescription();
+            MessageUtil.sendChat(player, ChatColor.GRAY + message);
+        };
 
-        taskRaceContext.getTeamManager().getTeams().forEach(team -> {
-            ChatColor nameColor = ChatColor.GREEN;
-            if (team != scoredPlayerStat.getTeam()) {
-                nameColor = ChatColor.RED;
-                team.doToPlayers(player -> player.playSound(player, Sound.ENTITY_WARDEN_SONIC_CHARGE, 1, 0.5F));
-            }
-            //team.sendMessage(nameColor + finalMessagePrefix + ChatColor.LIGHT_PURPLE + reward.getDescription());
-            //ChatColor finalNameColor = nameColor;
-            //team.doToPlayers(player -> taskRaceContext.getPlugin().consoleLogMessage(player, finalNameColor +
-              //      finalMessagePrefix + ChatColor.LIGHT_PURPLE + reward.getDescription()));
-            //team.doToPlayers(player -> player.spigot().sendMessage(ChatMessageType.ACTION_BAR, new TextComponent(finalNameColor +
-              //      finalMessagePrefix + ChatColor.LIGHT_PURPLE + reward.getDescription())));
-            //MessageUtil.sendAllChat(finalNameColor + finalMessagePrefix + ChatColor.LIGHT_PURPLE + reward.getDescription());
-        });
+        scoredPlayerStat.getTeam().doToPlayers(sendMessage);
+        scoredPlayerStat.getTeam().doToOpposingTeams(sendMessage.andThen(player -> player.playSound(player, Sound.ENTITY_WARDEN_SONIC_CHARGE, 1, 0.5F)));
     }
 
     @EventHandler
     public void onStartGame(StartGameEvent startGameEvent) {
-
+        // Set scoreboard for players
+        var teams = taskRaceContext.getTeamManager().getTeams();
+        teams.removeIf(lockoutTeam -> lockoutTeam.playerCount() < 1);
+        ScoreboardHandler scoreboardHandler = taskRaceContext.getScoreboardManager();
+        teams.forEach(scoreboardHandler::addTeam);
+        scoreboardHandler.update();
     }
 
     @EventHandler
@@ -119,38 +148,30 @@ public class TaskRaceEventHandler implements Listener {
             return;
         }
 
-        //taskRaceContext.pauseGame();
         taskRaceContext.setGameState(GameState.PAUSED);
         var winningTeam = gameOverEvent.getTeam();
+        float volume = 1F;
+        float pitch = 0.85F;
 
-       taskRaceContext.getTeamManager().getTeams()
-               .forEach(team -> {
-                   ChatColor chatColor = ChatColor.RED;
-                   Sound gameOverSound = Sound.ITEM_GOAT_HORN_SOUND_7;
-                   if (team == winningTeam) {
-                       chatColor = ChatColor.GREEN;
-                       gameOverSound = Sound.ITEM_GOAT_HORN_SOUND_1;
-                   }
-                   Sound finalGameOverSound = gameOverSound;
-                   //team.sendMessage(chatColor + "Team " + winningTeam.getName() + " has won!");
-                   //team.doToPlayers(player -> player.playSound(player, finalGameOverSound, 1F, 0.85F));
-                   ChatColor finalChatColor = chatColor;
-                   team.doToPlayers(player -> {
-                       player.playSound(player, finalGameOverSound, 1F, 0.85F);
-                       player.sendTitle(finalChatColor + winningTeam.getName(),  ChatColor.GOLD + "has won!", 1, 80, 10);
-                   });
-               });
+        winningTeam.doToPlayers(player -> {
+            player.playSound(player, Sound.ITEM_GOAT_HORN_SOUND_1, volume, pitch);
+            player.sendTitle(ChatColor.GREEN + winningTeam.getName(),
+                    ChatColor.GOLD + "has won!", 1, 80, 10);
+        });
 
-       Bukkit.getScheduler().scheduleSyncDelayedTask(taskRaceContext.getPlugin(), () -> taskRaceContext.setGameState(GameState.END), 100);
+        winningTeam.doToOpposingTeams(player -> {
+            player.playSound(player, Sound.ITEM_GOAT_HORN_SOUND_7, volume, pitch);
+            player.sendTitle(ChatColor.RED + winningTeam.getName(),
+                    ChatColor.GOLD + "has won!", 1, 80, 10);
+        });
+        taskRaceContext.destroyBars();
+        Bukkit.getScheduler().scheduleSyncDelayedTask(taskRaceContext.getPlugin(), () -> taskRaceContext.setGameState(GameState.END), 100);
     }
 
     @EventHandler
     public void onPlayerJoinTeam(PlayerJoinTeamEvent playerJoinTeamEvent) {
         var playerStat = playerJoinTeamEvent.getPlayerStat();
-        // set scoreboard for players
-        taskRaceContext.getScoreboardManager().addTeam(playerStat.getTeam());
-        taskRaceContext.getScoreboardManager().update();
-        MessageUtil.sendAllChat(playerStat.getPlayer().getName() + " joined team " + ChatColor.GOLD + playerStat.getTeam().getName());
+        MessageUtil.sendChat(playerStat.getPlayer(), "You joined team " + ChatColor.GOLD + playerStat.getTeam().getName());
     }
 
     @EventHandler
@@ -165,20 +186,27 @@ public class TaskRaceEventHandler implements Listener {
             var compass = interactEvent.getItem();
             if (compass.getEnchantments().containsKey(Enchantment.LUCK)) {
                 if (interactEvent.getAction() == Action.RIGHT_CLICK_AIR || interactEvent.getAction() == Action.RIGHT_CLICK_BLOCK) {
-                    if (taskRaceContext.getTaskManager().isTasksLoaded()) {
+                    GameState gameState = taskRaceContext.getGameState();
+                    if ((!taskRaceContext.gameRules().contains(GameRule.OP_COMMANDS)
+                            || player.hasPermission("lockout.select"))
+                            && !taskRaceContext.getCurrentTasks().isTasksLoaded()) {
+                        player.openInventory(taskRaceContext.getTaskSelectionView().getInventory());
+                    }
+                    else if (taskRaceContext.getCurrentTasks().isTasksLoaded()
+                            && taskRaceContext.getTeamManager().isPlayerOnTeam(player)
+                            && gameState != GameState.READY) {
                         player.openInventory(taskRaceContext.getInventoryTaskView().getInventory());
                     }
                     else {
-                        player.openInventory(taskRaceContext.getTaskSelectionView().getInventory());
+                        player.openInventory(taskRaceContext.getTeamManager().getTeamSelectionView().getInventory());
                     }
                 }
                 if ((interactEvent.getAction() == Action.LEFT_CLICK_AIR || interactEvent.getAction() == Action.LEFT_CLICK_BLOCK)
-                        && taskRaceContext.getGameState() == GameState.RUNNING && taskRaceContext.gameRules().contains(GameRule.COMPASS_TRACKING)) {
+                        && (taskRaceContext.getGameState() == GameState.RUNNING || taskRaceContext.getGameState() == GameState.TIEBREAKER)
+                        && taskRaceContext.gameRules().contains(GameRule.COMPASS_TRACKING)) {
                     taskRaceContext.getPlayerTracker().changeTracker(player);
                 }
             }
         }
     }
-//&& (interactEvent.getAction() == Action.RIGHT_CLICK_AIR ||
-           // interactEvent.getAction() == Action.RIGHT_CLICK_BLOCK)
 }

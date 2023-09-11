@@ -3,6 +3,7 @@ package stretch.lockout.task;
 import org.bukkit.entity.HumanEntity;
 import org.bukkit.event.Event;
 import org.bukkit.inventory.ItemStack;
+import org.luaj.vm2.LuaValue;
 import stretch.lockout.reward.RewardComponent;
 import stretch.lockout.team.PlayerStat;
 
@@ -10,6 +11,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.function.Predicate;
 
 public sealed abstract class TaskComposite implements TaskComponent permits TaskANDComposite, TaskORComposite, TaskTHENComposite {
     final protected List<TaskComponent> taskComponents = new ArrayList<>();
@@ -27,6 +29,12 @@ public sealed abstract class TaskComposite implements TaskComponent permits Task
 
     public TaskComposite(List<TaskComponent> taskComponents, int value) {
         this.value = value;
+        taskComponents.forEach(this::addTaskComponent);
+    }
+
+    public TaskComposite(List<TaskComponent> taskComponents, int value, String description) {
+        this.value = value;
+        this.description = description;
         taskComponents.forEach(this::addTaskComponent);
     }
 
@@ -58,10 +66,22 @@ public sealed abstract class TaskComposite implements TaskComponent permits Task
     @Override
     public String getDescription() {
         if (description == null) {
-            return getDescriptionRecursive();
+            description = getDescriptionRecursive();
         }
 
         return description;
+    }
+
+    @Override
+    public TaskComponent addPlayerPredicate(Predicate<HumanEntity> predicate) {
+        taskComponents.forEach(taskComponent -> taskComponent.addPlayerPredicate(predicate));
+        return this;
+    }
+
+    @Override
+    public TaskComponent addPlayerPredicate(LuaValue predicate) {
+        taskComponents.forEach(taskComponent -> taskComponent.addPlayerPredicate(predicate));
+        return this;
     }
 
     public void setDescriptionEntryPrefix(String str) {

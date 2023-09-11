@@ -5,14 +5,15 @@ import org.bukkit.entity.EntityType;
 import org.bukkit.entity.HumanEntity;
 import org.bukkit.entity.Mob;
 import org.bukkit.event.Event;
+import org.luaj.vm2.LuaValue;
+import stretch.lockout.lua.LuaMobPredicate;
 import stretch.lockout.util.EventReflectUtil;
 
 import java.util.function.Predicate;
 
-public class TaskMob extends Task {
+public class TaskMob extends Task implements EntityTask {
     private final EntityType entityType;
-    private Predicate<Mob> condition;
-    private Predicate<HumanEntity> targetPlayerCondition;
+    private Predicate<Mob> entityPredicate = (quuz) -> true;
     public TaskMob(Class eventClass, EntityType entityType, int value, String description) {
         super(eventClass, value, description);
         this.entityType = entityType;
@@ -23,8 +24,7 @@ public class TaskMob extends Task {
         Entity entity = (Entity) EventReflectUtil.getEntityFromEvent(event);
 
         if (entity == null ||
-                (hasEntityPredicate() && entity instanceof Mob mob && !condition.test(mob)) ||
-                (hasTargetPlayerPredicate() && entity instanceof HumanEntity humanEntity && !targetPlayerCondition.test(humanEntity))) {
+                (hasEntityPredicate() && entity instanceof Mob mob && !entityPredicate.test(mob))) {
             return false;
         }
 
@@ -33,15 +33,18 @@ public class TaskMob extends Task {
     }
 
     public boolean hasEntityPredicate() {
-        return condition != null;
-    }
-    public boolean hasTargetPlayerPredicate() {return targetPlayerCondition != null;}
-
-    public void setEntityPredicate(Predicate<Mob> mobPredicate) {
-        condition = mobPredicate;
+        return entityPredicate != null;
     }
 
-    public void setTargetPlayerPredicate(Predicate<HumanEntity> playerPredicate) {
-        targetPlayerCondition = playerPredicate;
+    @Override
+    public TaskComponent addEntityPredicate(Predicate<Mob> condition) {
+        entityPredicate = entityPredicate.and(condition);
+        return this;
+    }
+
+    @Override
+    public TaskComponent addEntityPredicate(LuaValue condition) {
+        addEntityPredicate(new LuaMobPredicate(condition));
+        return this;
     }
 }

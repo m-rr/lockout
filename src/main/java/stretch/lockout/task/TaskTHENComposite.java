@@ -2,16 +2,20 @@ package stretch.lockout.task;
 
 import org.bukkit.entity.HumanEntity;
 import org.bukkit.event.Event;
-import stretch.lockout.util.MessageUtil;
 
 import java.util.HashSet;
-import java.util.Iterator;
+import java.util.List;
 import java.util.Optional;
 
 // Ordered List of tasks must be completed in succession.
 public final class TaskTHENComposite extends TaskComposite {
     public TaskTHENComposite(int value) {
         super(value);
+    }
+
+    public TaskTHENComposite(List<TaskComponent> taskComponents, int value, String description) {
+        super(taskComponents, value, description);
+        setDescriptionEntryPrefix(" then ");
     }
 
     @Override

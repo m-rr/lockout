@@ -12,6 +12,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockGrowEvent;
 import org.bukkit.event.entity.EntityCombustByBlockEvent;
 import org.bukkit.event.entity.EntityCombustEvent;
+import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.util.BoundingBox;
 import stretch.lockout.event.indirect.LockoutIndirectEvent;
@@ -62,7 +63,6 @@ public class IndirectTaskListener implements Listener {
             Player player = playerOptional.get();
             double distance = block.getLocation().distance(player.getLocation());
             Bukkit.getPluginManager().callEvent(new LockoutIndirectEvent(player, blockGrowEvent, distance));
-            MessageUtil.sendChat(player, "Closest player.");
         }
     }
 
@@ -75,6 +75,17 @@ public class IndirectTaskListener implements Listener {
             Player player = playerOptional.get();
             double distance = entity.getLocation().distance(player.getLocation());
             Bukkit.getPluginManager().callEvent(new LockoutIndirectEvent(player, entityDeathEvent, distance));
+        }
+    }
+
+    @EventHandler
+    public void onEntityDamage(EntityDamageEvent entityDamageEvent) {
+        Entity entity = entityDamageEvent.getEntity();
+        Optional<Player> playerOptional = closestPlayer(entity.getLocation());
+        if (playerOptional.isPresent()) {
+            Player player = playerOptional.get();
+            double distance = entity.getLocation().distance(player.getLocation());
+            Bukkit.getPluginManager().callEvent(new LockoutIndirectEvent(player, entityDamageEvent, distance));
         }
     }
 

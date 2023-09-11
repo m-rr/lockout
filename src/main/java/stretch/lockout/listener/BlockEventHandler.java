@@ -1,11 +1,16 @@
 package stretch.lockout.listener;
 
 import org.bukkit.Bukkit;
+import org.bukkit.entity.HumanEntity;
+import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockIgniteEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
+import org.bukkit.event.block.CauldronLevelChangeEvent;
+import stretch.lockout.game.GameRule;
+import stretch.lockout.game.GameState;
 import stretch.lockout.game.RaceGameContext;
 
 public record BlockEventHandler(RaceGameContext taskRaceContext) implements Listener {
@@ -17,6 +22,11 @@ public record BlockEventHandler(RaceGameContext taskRaceContext) implements List
     @EventHandler
     public void onBlockBreak(BlockBreakEvent blockBreakEvent) {
         if (blockBreakEvent.isCancelled()) {
+            return;
+        }
+
+        if (taskRaceContext.getGameState() == GameState.STARTING && !taskRaceContext.gameRules().contains(GameRule.COUNTDOWN_MOVE)) {
+            blockBreakEvent.setCancelled(true);
             return;
         }
 
@@ -45,5 +55,17 @@ public record BlockEventHandler(RaceGameContext taskRaceContext) implements List
             return;
         }
         taskRaceContext.checkTask(player, igniteEvent);
+    }
+
+    @EventHandler
+    public void onCauldronLevelChange(CauldronLevelChangeEvent cauldronLevelChangeEvent) {
+        if (cauldronLevelChangeEvent.isCancelled()) {
+            return;
+        }
+
+        var entity = cauldronLevelChangeEvent.getEntity();
+        if (entity instanceof Player player) {
+            taskRaceContext.checkTask(player, cauldronLevelChangeEvent);
+        }
     }
 }
