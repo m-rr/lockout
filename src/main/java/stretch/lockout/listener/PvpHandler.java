@@ -25,6 +25,10 @@ public class PvpHandler implements Listener {
 
         Player deadPlayer = playerDeathEvent.getEntity();
         Player killer = deadPlayer.getKiller();
+        if (killer == null || deadPlayer == null) {
+            return;
+        }
+
         var playerStats = lockout.getTeamManager().getMappedPlayerStats();
         if (playerStats.get(deadPlayer).getTeam() == playerStats.get(killer).getTeam()) {
             return;
