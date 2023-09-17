@@ -12,7 +12,7 @@ import org.bukkit.event.block.Action;
 import org.bukkit.event.player.PlayerInteractEvent;
 import stretch.lockout.event.*;
 import stretch.lockout.game.GameRule;
-import stretch.lockout.game.GameState;
+import stretch.lockout.game.state.GameState;
 import stretch.lockout.game.RaceGameContext;
 import stretch.lockout.loot.LootManager;
 import stretch.lockout.reward.RewardComponent;
@@ -27,9 +27,9 @@ import java.util.function.Consumer;
 import java.util.function.Predicate;
 
 public class TaskRaceEventHandler implements Listener {
-    private final RaceGameContext taskRaceContext;
+    private final RaceGameContext lockout;
     public TaskRaceEventHandler(RaceGameContext taskRaceContext) {
-        this.taskRaceContext = taskRaceContext;
+        this.lockout = taskRaceContext;
         Bukkit.getPluginManager().registerEvents(this, taskRaceContext.getPlugin());
     }
 
@@ -43,8 +43,8 @@ public class TaskRaceEventHandler implements Listener {
         var scoredPlayerStat = task.getScoredPlayer();
 
         // update board for all teams
-        taskRaceContext.getScoreboardManager().update();
-        TeamManager teamManager = taskRaceContext.getTeamManager();
+        lockout.getScoreboardManager().update();
+        TeamManager teamManager = lockout.getTeamManager();
         LockoutTeam team = taskCompletedEvent.getPlayer().getTeam();
 
         if (!(task instanceof TaskInvisible)) {
@@ -75,7 +75,7 @@ public class TaskRaceEventHandler implements Listener {
         }
 
         // apply rewards
-        if (task.hasReward() && taskRaceContext.gameRules().contains(GameRule.ALLOW_REWARD)) {
+        if (task.hasReward() && lockout.gameRules().contains(GameRule.ALLOW_REWARD)) {
             var reward = task.getReward();
             reward.applyReward(scoredPlayerStat);
             if (!(task instanceof TaskInvisible)) {
@@ -85,26 +85,26 @@ public class TaskRaceEventHandler implements Listener {
 
             var actions = reward.getActions();
             if (!actions.isEmpty()) {
-                taskRaceContext.getRewardScheduler().scheduleRewardActions(reward);
+                lockout.getRewardScheduler().scheduleRewardActions(reward);
             }
         }
 
-        Predicate<RaceGameContext> isGameOver = taskRaceContext.gameRules().contains(GameRule.MAX_SCORE) ?
+        Predicate<RaceGameContext> isGameOver = lockout.gameRules().contains(GameRule.MAX_SCORE) ?
                 (game) -> game.getMaxScore() > 0 && team.getScore() >= game.getMaxScore() :
                 (game) -> (long) game.getTeamManager().getTeams().size() > 1 && game.getTeamManager().getOpposingTeams(team).stream()
                         .noneMatch(teams -> game.getCurrentTasks().remainingPoints() + teams.getScore() >= team.getScore());
 
 
-        if (isGameOver.test(taskRaceContext)) {
+        if (isGameOver.test(lockout)) {
           Bukkit.getPluginManager().callEvent(new GameOverEvent(team));
           return;
         }
 
-        LootManager lootManager = taskRaceContext.getLootManager();
-        if (taskRaceContext.gameRules().contains(GameRule.SPAWN_LOOT) &&
+        LootManager lootManager = lockout.getLootManager();
+        if (lockout.gameRules().contains(GameRule.SPAWN_LOOT) &&
                 Math.random() <= lootManager.getLootSpawnChance()) {
 
-            if (taskRaceContext.gameRules().contains(GameRule.LOOT_NEAR)) {
+            if (lockout.gameRules().contains(GameRule.LOOT_NEAR)) {
                 lootManager.spawnNearPlayer(scoredPlayerStat.getPlayer());
             }
             else {
@@ -135,9 +135,9 @@ public class TaskRaceEventHandler implements Listener {
     @EventHandler
     public void onStartGame(StartGameEvent startGameEvent) {
         // Set scoreboard for players
-        var teams = taskRaceContext.getTeamManager().getTeams();
+        var teams = lockout.getTeamManager().getTeams();
         teams.removeIf(lockoutTeam -> lockoutTeam.playerCount() < 1);
-        ScoreboardHandler scoreboardHandler = taskRaceContext.getScoreboardManager();
+        ScoreboardHandler scoreboardHandler = lockout.getScoreboardManager();
         teams.forEach(scoreboardHandler::addTeam);
         scoreboardHandler.update();
     }
@@ -148,7 +148,7 @@ public class TaskRaceEventHandler implements Listener {
             return;
         }
 
-        taskRaceContext.setGameState(GameState.PAUSED);
+        lockout.getGameStateHandler().setGameState(GameState.PAUSED);
         var winningTeam = gameOverEvent.getTeam();
         float volume = 1F;
         float pitch = 0.85F;
@@ -164,8 +164,8 @@ public class TaskRaceEventHandler implements Listener {
             player.sendTitle(ChatColor.RED + winningTeam.getName(),
                     ChatColor.GOLD + "has won!", 1, 80, 10);
         });
-        taskRaceContext.destroyBars();
-        Bukkit.getScheduler().scheduleSyncDelayedTask(taskRaceContext.getPlugin(), () -> taskRaceContext.setGameState(GameState.END), 100);
+        lockout.destroyBars();
+        Bukkit.getScheduler().scheduleSyncDelayedTask(lockout.getPlugin(), () -> lockout.getGameStateHandler().setGameState(GameState.END), 100);
     }
 
     @EventHandler
@@ -176,7 +176,7 @@ public class TaskRaceEventHandler implements Listener {
 
     @EventHandler
     public void onResetGame(ResetGameEvent resetGameEvent) {
-        taskRaceContext.setGameState(GameState.END);
+        lockout.getGameStateHandler().setGameState(GameState.END);
     }
 
     @EventHandler
@@ -186,25 +186,25 @@ public class TaskRaceEventHandler implements Listener {
             var compass = interactEvent.getItem();
             if (compass.getEnchantments().containsKey(Enchantment.LUCK)) {
                 if (interactEvent.getAction() == Action.RIGHT_CLICK_AIR || interactEvent.getAction() == Action.RIGHT_CLICK_BLOCK) {
-                    GameState gameState = taskRaceContext.getGameState();
-                    if ((!taskRaceContext.gameRules().contains(GameRule.OP_COMMANDS)
+                    GameState gameState = lockout.getGameStateHandler().getGameState();
+                    if ((!lockout.gameRules().contains(GameRule.OP_COMMANDS)
                             || player.hasPermission("lockout.select"))
-                            && !taskRaceContext.getCurrentTasks().isTasksLoaded()) {
-                        player.openInventory(taskRaceContext.getTaskSelectionView().getInventory());
+                            && !lockout.getCurrentTasks().isTasksLoaded()) {
+                        player.openInventory(lockout.getTaskSelectionView().getInventory());
                     }
-                    else if (taskRaceContext.getCurrentTasks().isTasksLoaded()
-                            && taskRaceContext.getTeamManager().isPlayerOnTeam(player)
+                    else if (lockout.getCurrentTasks().isTasksLoaded()
+                            && lockout.getTeamManager().isPlayerOnTeam(player)
                             && gameState != GameState.READY) {
-                        player.openInventory(taskRaceContext.getInventoryTaskView().getInventory());
+                        player.openInventory(lockout.getInventoryTaskView().getInventory());
                     }
                     else {
-                        player.openInventory(taskRaceContext.getTeamManager().getTeamSelectionView().getInventory());
+                        player.openInventory(lockout.getTeamManager().getTeamSelectionView().getInventory());
                     }
                 }
                 if ((interactEvent.getAction() == Action.LEFT_CLICK_AIR || interactEvent.getAction() == Action.LEFT_CLICK_BLOCK)
-                        && (taskRaceContext.getGameState() == GameState.RUNNING || taskRaceContext.getGameState() == GameState.TIEBREAKER)
-                        && taskRaceContext.gameRules().contains(GameRule.COMPASS_TRACKING)) {
-                    taskRaceContext.getPlayerTracker().changeTracker(player);
+                        && (lockout.getGameStateHandler().getGameState() == GameState.RUNNING || lockout.getGameStateHandler().getGameState() == GameState.TIEBREAKER)
+                        && lockout.gameRules().contains(GameRule.COMPASS_TRACKING)) {
+                    lockout.getPlayerTracker().changeTracker(player);
                 }
             }
         }

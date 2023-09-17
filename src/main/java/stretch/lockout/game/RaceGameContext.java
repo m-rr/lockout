@@ -1,40 +1,34 @@
 package stretch.lockout.game;
 
-import org.bukkit.*;
-import org.bukkit.boss.BarColor;
-import org.bukkit.boss.BarStyle;
-import org.bukkit.boss.BossBar;
+import org.bukkit.Bukkit;
+import org.bukkit.GameMode;
+import org.bukkit.World;
 import org.bukkit.entity.HumanEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
-import org.bukkit.event.block.BlockBreakEvent;
 import stretch.lockout.Lockout;
-import stretch.lockout.event.GameOverEvent;
-import stretch.lockout.event.ReadyGameEvent;
-import stretch.lockout.event.StartGameEvent;
 import stretch.lockout.event.TaskCompletedEvent;
+import stretch.lockout.game.state.DefaultStateHandler;
+import stretch.lockout.game.state.GameState;
+import stretch.lockout.game.state.GameStateHandler;
 import stretch.lockout.kit.KitHandler;
 import stretch.lockout.listener.*;
 import stretch.lockout.loot.LootManager;
 import stretch.lockout.lua.LuaEnvironment;
 import stretch.lockout.reward.scheduler.RewardScheduler;
-import stretch.lockout.scoreboard.bar.LockoutTimer;
 import stretch.lockout.scoreboard.ScoreboardHandler;
+import stretch.lockout.scoreboard.bar.LockoutTimer;
 import stretch.lockout.scoreboard.bar.PreGameBar;
 import stretch.lockout.scoreboard.bar.TieBar;
 import stretch.lockout.task.IndirectTaskListener;
 import stretch.lockout.task.TaskComponent;
-import stretch.lockout.task.TaskMaterial;
 import stretch.lockout.task.manager.TaskCollection;
 import stretch.lockout.team.PlayerStat;
 import stretch.lockout.team.TeamManager;
-import stretch.lockout.team.TestTeam;
 import stretch.lockout.tracker.PlayerTracker;
-import stretch.lockout.util.MessageUtil;
 import stretch.lockout.view.InventoryTaskView;
 import stretch.lockout.view.TaskSelectionView;
 
-import java.time.Duration;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -55,17 +49,13 @@ public class RaceGameContext {
     private final TieBar tieBar = new TieBar();
     private final PreGameBar preGameBar = new PreGameBar();
     private RewardScheduler rewardScheduler;
+    private GameStateHandler gameStateHandler;
     private final LuaEnvironment luaEnvironment;
     private int maxScore;
-    private GameState gameState;
     private World gameWorld;
     private long startTime;
     private final Set<GameRule> rules = new HashSet<>();
     private int countdownTime = 10;
-
-    public void setCountdownTime(int time) {
-        this.countdownTime = time;
-    }
 
     public RaceGameContext(final Lockout injectedPlugin) {
         this.plugin = injectedPlugin;
@@ -83,7 +73,7 @@ public class RaceGameContext {
         luaEnvironment = new LuaEnvironment(this);
         lootManager.setWorld(Bukkit.getWorld("world"));
 
-        setGameState(GameState.UNINIT);
+        gameStateHandler = new DefaultStateHandler(this);
     }
 
     public Set<GameRule> gameRules() {
@@ -95,9 +85,18 @@ public class RaceGameContext {
     }
     public TaskCollection getMainTasks() {return mainTasks;}
     public TaskCollection getTieBreaker() {return tieBreaker;}
+    public GameStateHandler getGameStateHandler() {return gameStateHandler;}
+    public void setGameStateHandler(GameStateHandler gameStateHandler) {
+        this.gameStateHandler = gameStateHandler;
+    }
+    public void setCountdownTime(int time) {
+        this.countdownTime = time;
+    }
+
+    public int getCountdownTime() {return countdownTime;}
 
     public TaskCollection getCurrentTasks() {
-        return gameState == GameState.TIEBREAKER ? tieBreaker : mainTasks;
+        return getGameStateHandler().getGameState() == GameState.TIEBREAKER ? tieBreaker : mainTasks;
     }
     public LockoutTimer getTimer() {return timer;}
     public PreGameBar getPreGameBar() {return preGameBar;}
@@ -114,124 +113,23 @@ public class RaceGameContext {
 
     public LuaEnvironment getLuaEnvironment() {return luaEnvironment;}
 
-    public GameState getGameState() {return this.gameState;}
-
-    public void setGameState(GameState gameState) {
-        this.gameState = gameState;
-        switch (gameState) {
-            case PRE -> {
-                timer.setTime(Duration.ofHours(1));
-                if (gameRules().contains(GameRule.AUTO_LOAD)) {
-                    String taskList = Optional.ofNullable(getPlugin().getConfig()
-                            .getString("autoLoadTask"))
-                            .orElse("default");
-                    getLuaEnvironment().loadFile(taskList);
-                }
-
-                // Add default teams
-                teamManager.addDefaultTeams();
-
-                setGameState(GameState.READY);
-            }
-            case READY -> {
-                preGameBar.activate();
-                Bukkit.getPluginManager().callEvent(new ReadyGameEvent());
-            }
-            case STARTING -> {
-                preGameBar.deactivate();
-                if (!getCurrentTasks().isTasksLoaded()) {
-                    String message = ChatColor.RED + "You can not start without loading tasks!";
-                    MessageUtil.consoleLog(message);
-                    MessageUtil.sendAllChat(message);
-                    setGameState(GameState.READY);
-                    break;
-                }
-
-                // Make sure all players are on a team
-                if (gameRules().contains(GameRule.FORCE_TEAM)) {
-                    Bukkit.getOnlinePlayers().forEach(player -> {
-                        if (!teamManager.isPlayerOnTeam(player)) {
-                            teamManager.createTeam(player.getName());
-                            teamManager.addPlayerToTeam(player, player.getName());
-                        }
-                    });
-                }
-
-                if (gameRules().contains(GameRule.CLEAR_INV_START)) {
-                    getTeamManager().clearAllPlayerEffectAndItems();
-                }
-
-                playerTracker.setAllPlayers(getTeamManager().getPlayerStats());
-
-                Bukkit.getScheduler().scheduleSyncRepeatingTask(getPlugin(), playerTracker, 0, 3);
-
-                MessageUtil.sendAllChat("Game Starting!");
-
-                getGameWorld().setTime(getStartTime());
-
-                Bukkit.getScheduler().scheduleSyncDelayedTask(getPlugin(),
-                        new CountDown(this, countdownTime,
-                                getTeamManager().getPlayerStats().stream().map(PlayerStat::getPlayer).toList()), 20);
-                Bukkit.getPluginManager().callEvent(new StartGameEvent());
-            }
-            case RUNNING -> {
-                Bukkit.getOnlinePlayers().forEach(player -> {
-                    player.setInvulnerable(false);
-                });
-                if (gameRules().contains(GameRule.TIMER)) {
-                    timer.activate();
-                    timer.startTimer(getPlugin(), () -> {
-                        if (getTeamManager().isTie()) {
-                            setGameState(GameState.TIEBREAKER);
-                        }
-                        else {
-                            Bukkit.getPluginManager().callEvent(new GameOverEvent(getTeamManager().getWinningTeam()));
-                        }
-                    });
-                }
-            }
-            case TIEBREAKER -> {
-                timer.deactivate();
-                if (gameRules().contains(GameRule.TIE_BREAK) && tieBreaker.isTasksLoaded()) {
-                    tieBar.activate();
-                    String message = ChatColor.DARK_RED + "Tie breaker!";
-                    MessageUtil.sendAllActionBar(message);
-                    MessageUtil.sendAllChat(message);
-
-                    getTeamManager().doToAllPlayers(player -> player.playSound(player, Sound.ENTITY_BLAZE_SHOOT, 1F, 1F));
-                }
-                else {
-                    String message = ChatColor.YELLOW + "Draw";
-                    MessageUtil.sendAllActionBar(message);
-                    MessageUtil.sendAllChat(message);
-                    setGameState(GameState.END);
-                }
-            }
-            case END -> {
-                if (gameRules().contains(GameRule.CLEAN_INV_END)) {
-                    getTeamManager().clearAllPlayerEffectAndItems();
-                }
-
-                MessageUtil.sendAllChat("Game ending.");
-
-                Bukkit.getScheduler().cancelTasks(getPlugin());
-                getScoreboardManager().resetScoreboard();
-                destroyBars();
-                scoreboardManager = new ScoreboardHandler();
-                teamManager.destroyAllTeams();
-                mainTasks = new TaskCollection();
-                tieBreaker = new TaskCollection();
-                playerTracker = new PlayerTracker();
-                rewardScheduler = new RewardScheduler(getPlugin());
-                setGameState(GameState.PRE);
-            }
-        }
-    }
-
     public void destroyBars() {
         timer.deactivate();
         tieBar.deactivate();
         preGameBar.deactivate();
+    }
+
+
+    public void reset() {
+        Bukkit.getScheduler().cancelTasks(getPlugin());
+        getScoreboardManager().resetScoreboard();
+        destroyBars();
+        getTeamManager().destroyAllTeams();
+        scoreboardManager = new ScoreboardHandler();
+        mainTasks = new TaskCollection();
+        tieBreaker = new TaskCollection();
+        playerTracker = new PlayerTracker();
+        rewardScheduler = new RewardScheduler(getPlugin());
     }
 
     public int getMaxScore() {
@@ -274,11 +172,12 @@ public class RaceGameContext {
 
   // Events must be player completable
     public void checkTask(Player player, Event event) {
-        if (getGameState() == GameState.PAUSED) {
+        if (getGameStateHandler().getGameState() == GameState.PAUSED) {
             return;
         }
 
         var currentTasks = getCurrentTasks().getMappedTasks();
+        GameState gameState = getGameStateHandler().getGameState();
 
         if ((gameState == GameState.RUNNING || gameState == GameState.TIEBREAKER) && player.getGameMode() != GameMode.SPECTATOR
                 && currentTasks.containsKey(event.getClass()) && teamManager.isPlayerOnTeam(player)) {

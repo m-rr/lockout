@@ -1,24 +1,21 @@
 package stretch.lockout.game;
 
 import com.google.common.collect.ImmutableList;
-import org.bukkit.*;
-import org.bukkit.command.*;
+import org.bukkit.ChatColor;
+import org.bukkit.Material;
+import org.bukkit.command.Command;
+import org.bukkit.command.CommandSender;
+import org.bukkit.command.TabExecutor;
 import org.bukkit.configuration.file.FileConfiguration;
-import org.bukkit.enchantments.Enchantment;
-import org.bukkit.entity.Bat;
-import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
-import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.checkerframework.checker.nullness.qual.NonNull;
+import stretch.lockout.game.state.GameState;
 import stretch.lockout.kit.CompassKit;
-import stretch.lockout.kit.Kit;
 import stretch.lockout.team.LockoutTeam;
 import stretch.lockout.team.TeamManager;
 import stretch.lockout.util.MessageUtil;
-import stretch.lockout.world.WorldUtil;
 
-import java.time.Duration;
 import java.util.List;
 
 public class LockoutCommand implements TabExecutor {
@@ -58,7 +55,7 @@ public class LockoutCommand implements TabExecutor {
                         return true;
                     }
 
-                    if (lockout.getGameState() != GameState.READY) {
+                    if (lockout.getGameStateHandler().getGameState() != GameState.READY) {
                         MessageUtil.sendChat(player, "Cannot create team; Lockout has already started.");
                         return true;
                     }
@@ -93,10 +90,6 @@ public class LockoutCommand implements TabExecutor {
                     }
                 }
                 case "compass" -> {
-                    if (lockout.gameRules().contains(GameRule.OP_COMMANDS) && !player.hasPermission("lockout.compass")) {
-                        noPermissionMessage(player);
-                        return true;
-                    }
                     compassKit.apply(player);
                 }
                 case "start" -> {
@@ -105,11 +98,11 @@ public class LockoutCommand implements TabExecutor {
                         return true;
                     }
 
-                    if (lockout.getGameState() != GameState.READY) {
+                    if (lockout.getGameStateHandler().getGameState() != GameState.READY) {
                         MessageUtil.sendChat(player, "The game is already started!");
                     }
                     else {
-                        lockout.setGameState(GameState.STARTING);
+                        lockout.getGameStateHandler().setGameState(GameState.STARTING);
                     }
                 }
                 case "end" -> {
@@ -117,11 +110,10 @@ public class LockoutCommand implements TabExecutor {
                         noPermissionMessage(player);
                         return true;
                     }
-                    lockout.setGameState(GameState.END);
+                    lockout.getGameStateHandler().setGameState(GameState.END);
                 }
                 case "version" -> {
-                    MessageUtil.log(sender, "Version: 2.3");
-                    player.playSound(player, Sound.BLOCK_BELL_RESONATE, 1F, 1F);
+                    MessageUtil.log(sender, "Version: 2.3.1");
                 }
                 default -> {return false;}
             }

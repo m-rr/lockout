@@ -7,7 +7,6 @@ load: POSTWORLD
 description: Race to complete tasks.
 website: https://github.com/m-rr/lockout
 author: m-rr
-softdepend: [AnimatedScoreboard]
 commands:
   lockout:
     description: lockout commands

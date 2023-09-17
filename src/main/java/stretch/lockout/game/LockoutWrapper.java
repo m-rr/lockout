@@ -29,7 +29,7 @@ public class LockoutWrapper extends LuaTable {
         this.set("getGameState", new ZeroArgFunction() {
             @Override
             public LuaValue call() {
-                return CoerceJavaToLua.coerce(lockout.getGameState());
+                return CoerceJavaToLua.coerce(lockout.getGameStateHandler().getGameState());
             }
         });
         this.set("getWorld", new ZeroArgFunction() {
