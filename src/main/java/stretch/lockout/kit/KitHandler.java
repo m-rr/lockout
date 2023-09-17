@@ -6,9 +6,8 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
-import stretch.lockout.event.PlayerJoinTeamEvent;
 import stretch.lockout.event.StartGameEvent;
-import stretch.lockout.game.GameState;
+import stretch.lockout.game.state.GameState;
 import stretch.lockout.game.RaceGameContext;
 
 import java.time.Duration;
@@ -35,7 +34,7 @@ public class KitHandler implements Listener {
 
     @EventHandler
     public void onRespawn(PlayerRespawnEvent playerRespawnEvent) {
-        if (lockout.getGameState() != GameState.RUNNING) {
+        if (lockout.getGameStateHandler().getGameState() != GameState.RUNNING) {
             return;
         }
 

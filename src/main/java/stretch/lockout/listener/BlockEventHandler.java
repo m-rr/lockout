@@ -1,7 +1,6 @@
 package stretch.lockout.listener;
 
 import org.bukkit.Bukkit;
-import org.bukkit.entity.HumanEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -10,7 +9,7 @@ import org.bukkit.event.block.BlockIgniteEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.block.CauldronLevelChangeEvent;
 import stretch.lockout.game.GameRule;
-import stretch.lockout.game.GameState;
+import stretch.lockout.game.state.GameState;
 import stretch.lockout.game.RaceGameContext;
 
 public record BlockEventHandler(RaceGameContext taskRaceContext) implements Listener {
@@ -25,7 +24,7 @@ public record BlockEventHandler(RaceGameContext taskRaceContext) implements List
             return;
         }
 
-        if (taskRaceContext.getGameState() == GameState.STARTING && !taskRaceContext.gameRules().contains(GameRule.COUNTDOWN_MOVE)) {
+        if (taskRaceContext.getGameStateHandler().getGameState() == GameState.STARTING && !taskRaceContext.gameRules().contains(GameRule.COUNTDOWN_MOVE)) {
             blockBreakEvent.setCancelled(true);
             return;
         }

@@ -5,9 +5,8 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.PlayerDeathEvent;
-import stretch.lockout.game.GameState;
+import stretch.lockout.game.state.GameState;
 import stretch.lockout.game.RaceGameContext;
-import stretch.lockout.team.TeamManager;
 
 public class PvpHandler implements Listener {
     private final RaceGameContext lockout;
@@ -19,7 +18,7 @@ public class PvpHandler implements Listener {
 
     @EventHandler
     public void onPlayerDeath(PlayerDeathEvent playerDeathEvent) {
-        if (lockout.getGameState() != GameState.RUNNING && lockout.getGameState() != GameState.TIEBREAKER) {
+        if (lockout.getGameStateHandler().getGameState() != GameState.RUNNING && lockout.getGameStateHandler().getGameState() != GameState.TIEBREAKER) {
             return;
         }
 

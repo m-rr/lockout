@@ -11,7 +11,7 @@ import org.bukkit.potion.PotionEffectType;
 import org.luaj.vm2.LuaTable;
 import org.luaj.vm2.lib.jse.CoerceJavaToLua;
 import stretch.lockout.game.GameRule;
-import stretch.lockout.game.GameState;
+import stretch.lockout.game.state.GameState;
 import stretch.lockout.game.LockoutWrapper;
 import stretch.lockout.game.RaceGameContext;
 import stretch.lockout.reward.RewardType;

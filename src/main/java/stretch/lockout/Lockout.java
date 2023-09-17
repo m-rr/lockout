@@ -7,7 +7,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.plugin.java.JavaPluginLoader;
 import stretch.lockout.metrics.Metrics;
 import stretch.lockout.game.GameRule;
-import stretch.lockout.game.GameState;
+import stretch.lockout.game.state.GameState;
 import stretch.lockout.game.LockoutCommand;
 import stretch.lockout.game.RaceGameContext;
 import stretch.lockout.util.MessageUtil;
@@ -56,7 +56,7 @@ public final class Lockout extends JavaPlugin {
 
         Metrics metrics = new Metrics(this, pluginId);
 
-        taskRaceContext.setGameState(GameState.PRE);
+        taskRaceContext.getGameStateHandler().setGameState(GameState.PRE);
     }
 
     @Override

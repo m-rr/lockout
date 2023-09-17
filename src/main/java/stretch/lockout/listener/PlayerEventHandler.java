@@ -1,7 +1,6 @@
 package stretch.lockout.listener;
 
 import org.bukkit.Bukkit;
-import org.bukkit.Material;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.HumanEntity;
 import org.bukkit.entity.Player;
@@ -11,24 +10,20 @@ import org.bukkit.event.entity.EntityCombustEvent;
 import org.bukkit.event.entity.FoodLevelChangeEvent;
 import org.bukkit.event.player.*;
 import org.bukkit.event.raid.RaidTriggerEvent;
-import org.bukkit.inventory.Inventory;
-import org.bukkit.inventory.ItemStack;
 import stretch.lockout.game.GameRule;
-import stretch.lockout.game.GameState;
+import stretch.lockout.game.state.GameState;
 import stretch.lockout.game.RaceGameContext;
-import stretch.lockout.kit.Kit;
 import stretch.lockout.team.PlayerStat;
 import stretch.lockout.team.TeamManager;
 
-import java.time.Duration;
 import java.util.Map;
 import java.util.UUID;
 
 public class PlayerEventHandler implements Listener {
-    private final RaceGameContext taskRaceContext;
+    private final RaceGameContext lockout;
     private final int INVULNERABLE_TIME = 140;
     public PlayerEventHandler(RaceGameContext taskRaceContext) {
-        this.taskRaceContext = taskRaceContext;
+        this.lockout = taskRaceContext;
         Bukkit.getPluginManager().registerEvents(this, taskRaceContext.getPlugin());
     }
 
@@ -38,7 +33,7 @@ public class PlayerEventHandler implements Listener {
             return;
         }
         var player = armorStandManipulateEvent.getPlayer();
-        taskRaceContext.checkTask(player, armorStandManipulateEvent);
+        lockout.checkTask(player, armorStandManipulateEvent);
     }
 
     @EventHandler
@@ -48,7 +43,7 @@ public class PlayerEventHandler implements Listener {
         }
 
         var player = bucketEntityEvent.getPlayer();
-        taskRaceContext.checkTask(player, bucketEntityEvent);
+        lockout.checkTask(player, bucketEntityEvent);
     }
 
     @EventHandler
@@ -58,7 +53,7 @@ public class PlayerEventHandler implements Listener {
         }
 
         var player = bucketFillEvent.getPlayer();
-        taskRaceContext.checkTask(player, bucketFillEvent);
+        lockout.checkTask(player, bucketFillEvent);
     }
 
     @EventHandler
@@ -67,13 +62,13 @@ public class PlayerEventHandler implements Listener {
             return;
         }
 
-        if (taskRaceContext.getGameState() == GameState.STARTING && !taskRaceContext.gameRules().contains(GameRule.COUNTDOWN_MOVE)) {
+        if (lockout.getGameStateHandler().getGameState() == GameState.STARTING && !lockout.gameRules().contains(GameRule.COUNTDOWN_MOVE)) {
             dropItemEvent.setCancelled(true);
             return;
         }
 
         var player = dropItemEvent.getPlayer();
-        taskRaceContext.checkTask(player, dropItemEvent);
+        lockout.checkTask(player, dropItemEvent);
     }
 
     @EventHandler
@@ -83,14 +78,14 @@ public class PlayerEventHandler implements Listener {
         }
 
         var player = editBookEvent.getPlayer();
-        taskRaceContext.checkTask(player, editBookEvent);
+        lockout.checkTask(player, editBookEvent);
 
     }
 
     @EventHandler
     public void onEggThrow(PlayerEggThrowEvent eggThrowEvent) {
         var player = eggThrowEvent.getPlayer();
-        taskRaceContext.checkTask(player, eggThrowEvent);
+        lockout.checkTask(player, eggThrowEvent);
     }
 
     @EventHandler
@@ -100,7 +95,7 @@ public class PlayerEventHandler implements Listener {
         }
 
         var player = fishEvent.getPlayer();
-        taskRaceContext.checkTask(player, fishEvent);
+        lockout.checkTask(player, fishEvent);
     }
 
     @EventHandler
@@ -110,7 +105,7 @@ public class PlayerEventHandler implements Listener {
         }
 
         var player = harvestBlockEvent.getPlayer();
-        taskRaceContext.checkTask(player, harvestBlockEvent);
+        lockout.checkTask(player, harvestBlockEvent);
     }
 
     @EventHandler
@@ -120,13 +115,13 @@ public class PlayerEventHandler implements Listener {
         }
 
         var player = interactEntityEvent.getPlayer();
-        taskRaceContext.checkTask(player, interactEntityEvent);
+        lockout.checkTask(player, interactEntityEvent);
     }
 
     @EventHandler
     public void onItemBreak(PlayerItemBreakEvent itemBreakEvent) {
         var player = itemBreakEvent.getPlayer();
-        taskRaceContext.checkTask(player, itemBreakEvent);
+        lockout.checkTask(player, itemBreakEvent);
     }
 
     @EventHandler
@@ -136,7 +131,7 @@ public class PlayerEventHandler implements Listener {
         }
 
         var player = itemConsumeEvent.getPlayer();
-        taskRaceContext.checkTask(player, itemConsumeEvent);
+        lockout.checkTask(player, itemConsumeEvent);
     }
 
     @EventHandler
@@ -146,13 +141,13 @@ public class PlayerEventHandler implements Listener {
         }
 
         var player = raidTriggerEvent.getPlayer();
-        taskRaceContext.checkTask(player, raidTriggerEvent);
+        lockout.checkTask(player, raidTriggerEvent);
     }
 
     @EventHandler
     public void onLevelChange(PlayerLevelChangeEvent levelChangeEvent) {
         var player = levelChangeEvent.getPlayer();
-        taskRaceContext.checkTask(player, levelChangeEvent);
+        lockout.checkTask(player, levelChangeEvent);
     }
 
     @EventHandler
@@ -162,7 +157,7 @@ public class PlayerEventHandler implements Listener {
         }
 
         var player = pickupArrowEvent.getPlayer();
-        taskRaceContext.checkTask(player, pickupArrowEvent);
+        lockout.checkTask(player, pickupArrowEvent);
     }
 
     @EventHandler
@@ -172,19 +167,19 @@ public class PlayerEventHandler implements Listener {
         }
 
         var player = portalEvent.getPlayer();
-        taskRaceContext.checkTask(player, portalEvent);
+        lockout.checkTask(player, portalEvent);
     }
 
     @EventHandler
     public void onRespawn(PlayerRespawnEvent respawnEvent) {
         var player = respawnEvent.getPlayer();
-        taskRaceContext.checkTask(player, respawnEvent);
+        lockout.checkTask(player, respawnEvent);
     }
 
     @EventHandler
     public void onRiptide(PlayerRiptideEvent riptideEvent) {
         var player = riptideEvent.getPlayer();
-        taskRaceContext.checkTask(player, riptideEvent);
+        lockout.checkTask(player, riptideEvent);
     }
 
     @EventHandler
@@ -194,7 +189,7 @@ public class PlayerEventHandler implements Listener {
         }
 
         var player = shearEntityEvent.getPlayer();
-        taskRaceContext.checkTask(player, shearEntityEvent);
+        lockout.checkTask(player, shearEntityEvent);
     }
 
     @EventHandler
@@ -204,7 +199,7 @@ public class PlayerEventHandler implements Listener {
         }
 
         var player = unleashEntityEvent.getPlayer();
-        taskRaceContext.checkTask(player, unleashEntityEvent);
+        lockout.checkTask(player, unleashEntityEvent);
 
     }
 
@@ -213,13 +208,13 @@ public class PlayerEventHandler implements Listener {
         if (moveEvent.isCancelled()) {
             return;
         }
-        if (taskRaceContext.getGameState() == GameState.STARTING && !taskRaceContext.gameRules().contains(GameRule.COUNTDOWN_MOVE)) {
+        if (lockout.getGameStateHandler().getGameState() == GameState.STARTING && !lockout.gameRules().contains(GameRule.COUNTDOWN_MOVE)) {
             moveEvent.setCancelled(true);
             return;
         }
 
         var player = moveEvent.getPlayer();
-        taskRaceContext.checkTask(player, moveEvent);
+        lockout.checkTask(player, moveEvent);
     }
 
     @EventHandler
@@ -229,7 +224,7 @@ public class PlayerEventHandler implements Listener {
             foodLevelChangeEvent.setCancelled(true);
         }
         if (humanEntity instanceof Player player) {
-            taskRaceContext.checkTask(player, foodLevelChangeEvent);
+            lockout.checkTask(player, foodLevelChangeEvent);
         }
     }
 
@@ -246,40 +241,40 @@ public class PlayerEventHandler implements Listener {
     public void onPlayerInteractEvent(PlayerInteractEvent interactEvent) {
         var player = interactEvent.getPlayer();
 
-        taskRaceContext.checkTask(player, interactEvent);
+        lockout.checkTask(player, interactEvent);
     }
 
     @EventHandler
     public void onPlayerJoin(PlayerJoinEvent joinEvent) {
 
         var player = joinEvent.getPlayer();
-        TeamManager teamManager = taskRaceContext.getTeamManager();
+        TeamManager teamManager = lockout.getTeamManager();
 
         // Reattach pointer to appropriate PlayerStat
         if (teamManager.isPlayerOnTeam(player)) {
             Map<UUID, PlayerStat> mappedPlayerStats = teamManager.getUUIDMappedPlayerStats();
 
             if (mappedPlayerStats.containsKey(player.getUniqueId())) {
-                player.setScoreboard(taskRaceContext.getScoreboardManager().getBoard());
+                player.setScoreboard(lockout.getScoreboardManager().getBoard());
                 var playerStat = mappedPlayerStats.get(player.getUniqueId());
                 playerStat.setPlayer(player);
-                taskRaceContext.getPlayerTracker().setPlayer(playerStat);
+                lockout.getPlayerTracker().setPlayer(playerStat);
             }
         }
 
         // Update bossbars
-        switch (taskRaceContext.getGameState()) {
+        switch (lockout.getGameStateHandler().getGameState()) {
             case READY -> {
-                taskRaceContext.getPreGameBar().activate();
+                lockout.getPreGameBar().activate();
             }
             case RUNNING -> {
-                if (taskRaceContext.gameRules().contains(GameRule.TIMER)) {
-                    taskRaceContext.getTimer().activate();
+                if (lockout.gameRules().contains(GameRule.TIMER)) {
+                    lockout.getTimer().activate();
                 }
             }
             case TIEBREAKER -> {
-                if (taskRaceContext.gameRules().contains(GameRule.TIE_BREAK)) {
-                    taskRaceContext.getTieBar().activate();
+                if (lockout.gameRules().contains(GameRule.TIE_BREAK)) {
+                    lockout.getTieBar().activate();
                 }
             }
             default -> {}
@@ -291,9 +286,9 @@ public class PlayerEventHandler implements Listener {
         // Game should end if all players are disconnected
         // This is when the last player disconnects, and they may rejoin, so we wait a minute first.
         if (Bukkit.getOnlinePlayers().size() < 2) {
-            Bukkit.getScheduler().scheduleSyncDelayedTask(taskRaceContext.getPlugin(), () -> {
+            Bukkit.getScheduler().scheduleSyncDelayedTask(lockout.getPlugin(), () -> {
                 if (Bukkit.getOnlinePlayers().size() < 1) {
-                    taskRaceContext.setGameState(GameState.END);
+                    lockout.getGameStateHandler().setGameState(GameState.END);
                 }
             }, 1200);
         }

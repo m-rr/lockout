@@ -4,18 +4,17 @@ import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Sound;
 import org.bukkit.entity.Player;
-
-import java.util.Set;
+import stretch.lockout.game.state.GameState;
 
 public class CountDown implements Runnable {
 
     private final int time;
     private final Iterable<Player> players;
-    private final RaceGameContext raceGameContext;
+    private final RaceGameContext lockout;
     public CountDown(RaceGameContext raceGameContext, int time, Iterable<Player> players) {
         this.time = time;
         this.players = players;
-        this.raceGameContext = raceGameContext;
+        this.lockout = raceGameContext;
     }
     @Override
     public void run() {
@@ -25,14 +24,14 @@ public class CountDown implements Runnable {
                 player.sendTitle("", ChatColor.GOLD + String.valueOf(time), 5, 1, 5);
                 player.playSound(player, Sound.ENTITY_FIREWORK_ROCKET_BLAST, 1F, pitch);
             });
-            Bukkit.getScheduler().scheduleSyncDelayedTask(raceGameContext.getPlugin(), new CountDown(raceGameContext, time - 1, players), 20);
+            Bukkit.getScheduler().scheduleSyncDelayedTask(lockout.getPlugin(), new CountDown(lockout, time - 1, players), 20);
         }
         else {
             players.forEach(player -> {
                 player.sendTitle(ChatColor.AQUA + "Start!", "", 1, 5, 10);
                 player.playSound(player, Sound.ENTITY_FIREWORK_ROCKET_LAUNCH, 1F, 1F);
             });
-            raceGameContext.setGameState(GameState.RUNNING);
+            lockout.getGameStateHandler().setGameState(GameState.RUNNING);
         }
     }
 }
