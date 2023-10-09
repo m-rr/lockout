@@ -172,14 +172,14 @@ public class RaceGameContext {
 
   // Events must be player completable
     public void checkTask(Player player, Event event) {
-        if (getGameStateHandler().getGameState() == GameState.PAUSED) {
+        GameState gamestate = getGameStateHandler().getGameState();
+        if (gamestate == GameState.PAUSED) {
             return;
         }
 
         var currentTasks = getCurrentTasks().getMappedTasks();
-        GameState gameState = getGameStateHandler().getGameState();
 
-        if ((gameState == GameState.RUNNING || gameState == GameState.TIEBREAKER) && player.getGameMode() != GameMode.SPECTATOR
+        if ((gamestate == GameState.RUNNING || gamestate == GameState.TIEBREAKER) && player.getGameMode() != GameMode.SPECTATOR
                 && currentTasks.containsKey(event.getClass()) && teamManager.isPlayerOnTeam(player)) {
 
             var potentialTasks = currentTasks.get(event.getClass());

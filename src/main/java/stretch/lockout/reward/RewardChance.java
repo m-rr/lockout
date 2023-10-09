@@ -36,7 +36,6 @@ public class RewardChance implements RewardComponent {
         for (int i = 0; i < length; i++) {
             sum += weightedRewards.get(i).weight;
             partitions[i] = sum;
-
         }
 
         int finalSum = sum;

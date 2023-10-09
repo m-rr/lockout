@@ -89,14 +89,16 @@ public class TaskRaceEventHandler implements Listener {
             }
         }
 
+        LockoutTeam winningTeam = teamManager.getWinningTeam();
+
         Predicate<RaceGameContext> isGameOver = lockout.gameRules().contains(GameRule.MAX_SCORE) ?
                 (game) -> game.getMaxScore() > 0 && team.getScore() >= game.getMaxScore() :
-                (game) -> (long) game.getTeamManager().getTeams().size() > 1 && game.getTeamManager().getOpposingTeams(team).stream()
-                        .noneMatch(teams -> game.getCurrentTasks().remainingPoints() + teams.getScore() >= team.getScore());
+                (game) -> (long) game.getTeamManager().getTeams().size() > 1 && teamManager.getOpposingTeams(winningTeam).stream()
+                        .noneMatch(teams -> game.getCurrentTasks().remainingPoints() + teams.getScore() >= winningTeam.getScore());
 
 
         if (isGameOver.test(lockout)) {
-          Bukkit.getPluginManager().callEvent(new GameOverEvent(team));
+          Bukkit.getPluginManager().callEvent(new GameOverEvent(winningTeam));
           return;
         }
 
