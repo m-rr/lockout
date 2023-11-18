@@ -1,6 +1,7 @@
 package stretch.lockout.game;
 
 import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
 import org.bukkit.GameMode;
 import org.bukkit.World;
 import org.bukkit.entity.HumanEntity;
@@ -17,9 +18,8 @@ import stretch.lockout.loot.LootManager;
 import stretch.lockout.lua.LuaEnvironment;
 import stretch.lockout.reward.scheduler.RewardScheduler;
 import stretch.lockout.scoreboard.ScoreboardHandler;
-import stretch.lockout.scoreboard.bar.LockoutTimer;
-import stretch.lockout.scoreboard.bar.PreGameBar;
-import stretch.lockout.scoreboard.bar.TieBar;
+import stretch.lockout.scoreboard.bar.*;
+import stretch.lockout.task.TimeCompletableTask;
 import stretch.lockout.task.IndirectTaskListener;
 import stretch.lockout.task.TaskComponent;
 import stretch.lockout.task.manager.TaskCollection;
@@ -48,6 +48,7 @@ public class RaceGameContext {
     private final LockoutTimer timer = new LockoutTimer();
     private final TieBar tieBar = new TieBar();
     private final PreGameBar preGameBar = new PreGameBar();
+    private final CycleBar cycleBar;
     private RewardScheduler rewardScheduler;
     private GameStateHandler gameStateHandler;
     private final LuaEnvironment luaEnvironment;
@@ -73,6 +74,10 @@ public class RaceGameContext {
         luaEnvironment = new LuaEnvironment(this);
         lootManager.setWorld(Bukkit.getWorld("world"));
 
+        this.cycleBar = new CycleBar(this, 60, List.of(
+                ChatColor.GREEN + "RIGHT CLICK COMPASS TO SELECT TEAM",
+                ChatColor.GOLD + "LOCKOUT " + getPlugin().getDescription().getVersion()));
+
         gameStateHandler = new DefaultStateHandler(this);
     }
 
@@ -95,11 +100,11 @@ public class RaceGameContext {
 
     public int getCountdownTime() {return countdownTime;}
 
-    public TaskCollection getCurrentTasks() {
+    public TaskCollection getCurrentTaskCollection() {
         return getGameStateHandler().getGameState() == GameState.TIEBREAKER ? tieBreaker : mainTasks;
     }
     public LockoutTimer getTimer() {return timer;}
-    public PreGameBar getPreGameBar() {return preGameBar;}
+    public LockoutBar getPreGameBar() {return cycleBar;}
     public TieBar getTieBar() {return tieBar;}
 
     public LootManager getLootManager() {return lootManager;}
@@ -117,6 +122,7 @@ public class RaceGameContext {
         timer.deactivate();
         tieBar.deactivate();
         preGameBar.deactivate();
+        cycleBar.deactivate();
     }
 
 
@@ -156,7 +162,7 @@ public class RaceGameContext {
 
     public InventoryTaskView getInventoryTaskView() {
         var inventoryTaskView = new InventoryTaskView(gameRules().contains(GameRule.ALLOW_REWARD));
-        HashSet<TaskComponent> guiTaskComponents = new HashSet<>(getCurrentTasks().getTasks());
+        HashSet<TaskComponent> guiTaskComponents = new HashSet<>(getCurrentTaskCollection().getTasks());
         guiTaskComponents.forEach(inventoryTaskView::addTaskEntry);
 
         return inventoryTaskView;
@@ -177,7 +183,7 @@ public class RaceGameContext {
             return;
         }
 
-        var currentTasks = getCurrentTasks().getMappedTasks();
+        var currentTasks = getCurrentTaskCollection().getMappedTasks();
 
         if ((gamestate == GameState.RUNNING || gamestate == GameState.TIEBREAKER) && player.getGameMode() != GameMode.SPECTATOR
                 && currentTasks.containsKey(event.getClass()) && teamManager.isPlayerOnTeam(player)) {
@@ -186,7 +192,11 @@ public class RaceGameContext {
             for (var task : potentialTasks) {
                 if (!task.isCompleted() && task.doesAccomplish(player, event)) {
                     PlayerStat playerStat = teamManager.getMappedPlayerStats().get(player);
-                    getCurrentTasks().setTaskCompleted(playerStat, task);
+                    getCurrentTaskCollection().setTaskCompleted(playerStat, task);
+                    if (task instanceof TimeCompletableTask completableTask) {
+                        completableTask.setTimeCompleted(getTimer().elapsedTime());
+                        completableTask.setLocation(player.getLocation());
+                    }
 
                     TaskCompletedEvent taskEvent = new TaskCompletedEvent(task);
                     Bukkit.getPluginManager().callEvent(taskEvent);

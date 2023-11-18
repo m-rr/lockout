@@ -101,7 +101,7 @@ public class LuaRewardBindings implements LuaTableBinding {
                 TaskComponent taskComponent = (TaskComponent) CoerceLuaToJava.coerce(luaValue2, TaskComponent.class);
 
                 TaskInvisible taskInvisible = new TaskInvisible(taskComponent);
-                lockout.getCurrentTasks().addTask(taskInvisible);
+                lockout.getCurrentTaskCollection().addTask(taskInvisible);
 
                 return CoerceJavaToLua.coerce(new RewardTask(taskInvisible, rewardType, description));
             }

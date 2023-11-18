@@ -1,5 +1,6 @@
 package stretch.lockout.listener;
 
+import com.google.gson.JsonObject;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
@@ -15,12 +16,15 @@ import stretch.lockout.game.GameRule;
 import stretch.lockout.game.state.GameState;
 import stretch.lockout.game.RaceGameContext;
 import stretch.lockout.loot.LootManager;
+import stretch.lockout.platform.Platform;
 import stretch.lockout.reward.RewardComponent;
 import stretch.lockout.scoreboard.ScoreboardHandler;
+import stretch.lockout.task.TimeCompletableTask;
 import stretch.lockout.task.TaskInvisible;
 import stretch.lockout.team.LockoutTeam;
 import stretch.lockout.team.PlayerStat;
 import stretch.lockout.team.TeamManager;
+import stretch.lockout.util.JsonUtil;
 import stretch.lockout.util.MessageUtil;
 
 import java.util.function.Consumer;
@@ -94,8 +98,7 @@ public class TaskRaceEventHandler implements Listener {
         Predicate<RaceGameContext> isGameOver = lockout.gameRules().contains(GameRule.MAX_SCORE) ?
                 (game) -> game.getMaxScore() > 0 && team.getScore() >= game.getMaxScore() :
                 (game) -> (long) game.getTeamManager().getTeams().size() > 1 && teamManager.getOpposingTeams(winningTeam).stream()
-                        .noneMatch(teams -> game.getCurrentTasks().remainingPoints() + teams.getScore() >= winningTeam.getScore());
-
+                        .noneMatch(teams -> game.getCurrentTaskCollection().remainingPoints() + teams.getScore() >= winningTeam.getScore());
 
         if (isGameOver.test(lockout)) {
           Bukkit.getPluginManager().callEvent(new GameOverEvent(winningTeam));
@@ -113,6 +116,7 @@ public class TaskRaceEventHandler implements Listener {
                 lootManager.spawnLootBorder();
             }
         }
+
     }
 
     @EventHandler
@@ -166,8 +170,12 @@ public class TaskRaceEventHandler implements Listener {
             player.sendTitle(ChatColor.RED + winningTeam.getName(),
                     ChatColor.GOLD + "has won!", 1, 80, 10);
         });
+        JsonObject report = JsonUtil.generateReport(lockout);
+        Bukkit.getScheduler().runTaskAsynchronously(lockout.getPlugin(), () -> Platform.collectReport(report));
+
         lockout.destroyBars();
-        Bukkit.getScheduler().scheduleSyncDelayedTask(lockout.getPlugin(), () -> lockout.getGameStateHandler().setGameState(GameState.END), 100);
+        Bukkit.getScheduler().scheduleSyncDelayedTask(lockout.getPlugin(),
+                () -> lockout.getGameStateHandler().setGameState(GameState.END), 100);
     }
 
     @EventHandler
@@ -191,10 +199,10 @@ public class TaskRaceEventHandler implements Listener {
                     GameState gameState = lockout.getGameStateHandler().getGameState();
                     if ((!lockout.gameRules().contains(GameRule.OP_COMMANDS)
                             || player.hasPermission("lockout.select"))
-                            && !lockout.getCurrentTasks().isTasksLoaded()) {
+                            && !lockout.getCurrentTaskCollection().isTasksLoaded()) {
                         player.openInventory(lockout.getTaskSelectionView().getInventory());
                     }
-                    else if (lockout.getCurrentTasks().isTasksLoaded()
+                    else if (lockout.getCurrentTaskCollection().isTasksLoaded()
                             && lockout.getTeamManager().isPlayerOnTeam(player)
                             && gameState != GameState.READY) {
                         player.openInventory(lockout.getInventoryTaskView().getInventory());

@@ -1,6 +1,10 @@
 package stretch.lockout.game;
 
 import com.google.common.collect.ImmutableList;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParseException;
+import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.command.Command;
@@ -10,12 +14,22 @@ import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.checkerframework.checker.nullness.qual.NonNull;
+import stretch.lockout.event.GameOverEvent;
 import stretch.lockout.game.state.GameState;
 import stretch.lockout.kit.CompassKit;
+import stretch.lockout.platform.Platform;
 import stretch.lockout.team.LockoutTeam;
 import stretch.lockout.team.TeamManager;
+import stretch.lockout.util.JsonUtil;
 import stretch.lockout.util.MessageUtil;
+import stretch.lockout.util.TimingUtil;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.List;
 
 public class LockoutCommand implements TabExecutor {
@@ -113,7 +127,7 @@ public class LockoutCommand implements TabExecutor {
                     lockout.getGameStateHandler().setGameState(GameState.END);
                 }
                 case "version" -> {
-                    MessageUtil.log(sender, "Version: 2.3.1");
+                    MessageUtil.log(sender, lockout.getPlugin().getDescription().getVersion());
                 }
                 default -> {return false;}
             }

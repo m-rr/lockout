@@ -43,7 +43,7 @@ public record InventoryEventHandler(RaceGameContext taskRaceContext) implements 
             ItemStack clickedItem = clickEvent.getCurrentItem();
             if (clickedItem.getType() == Material.PAPER) {
                 player.closeInventory();
-                if (taskRaceContext.getCurrentTasks().isTasksLoaded()) {
+                if (taskRaceContext.getCurrentTaskCollection().isTasksLoaded()) {
                     player.sendMessage(ChatColor.RED + "Tasks already loaded");
                     return;
                 }

@@ -1,5 +1,6 @@
 package stretch.lockout.task;
 
+import org.bukkit.Location;
 import org.bukkit.entity.HumanEntity;
 import org.bukkit.event.Event;
 import org.bukkit.inventory.ItemStack;
@@ -8,16 +9,20 @@ import stretch.lockout.reward.RewardComponent;
 import stretch.lockout.lua.LuaHumanEntityPredicate;
 import stretch.lockout.team.PlayerStat;
 
+import javax.annotation.Nullable;
+import java.time.Duration;
 import java.util.HashSet;
 import java.util.function.Predicate;
 
-public class Task implements TaskComponent {
+public class Task implements TimeCompletableTask {
     protected Class eventClass;
     protected int value;
     protected String description;
     protected RewardComponent reward;
     protected ItemStack guiItemStack;
     protected PlayerStat scoredPlayer;
+    protected Duration timeCompleted;
+    protected Location location;
     protected Predicate<HumanEntity> playerStatePredicate = (bar) -> true;
 
     // Class should be of type org.bukkit.event.Event
@@ -42,6 +47,22 @@ public class Task implements TaskComponent {
     public boolean isCompleted() {
         return scoredPlayer != null;
     }
+    public void setTimeCompleted(Duration time) {
+        this.timeCompleted = time;
+    }
+    public Duration getTimeCompleted() {return this.timeCompleted;}
+
+    @Override
+    public void setLocation(Location loc) {
+        this.location = loc;
+    }
+
+    @Override
+    @Nullable
+    public Location getLocation() {
+        return location;
+    }
+
     public boolean hasReward() {return reward != null;}
     public TaskComponent setReward(RewardComponent rewardComponent) {
         this.reward = rewardComponent;

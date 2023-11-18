@@ -1,5 +1,6 @@
 package stretch.lockout.task.manager;
 
+import stretch.lockout.task.TimeCompletableTask;
 import stretch.lockout.task.TaskComponent;
 import stretch.lockout.task.TaskInvisible;
 import stretch.lockout.team.PlayerStat;
@@ -10,7 +11,7 @@ import java.util.stream.Collectors;
 
 public class TaskCollection {
     private final Map<Class, Set<TaskComponent>> tasks = new HashMap<>();
-    private final Queue<TaskComponent> completedTasks = new LinkedList<>();
+    private final Queue<TimeCompletableTask> completedTasks = new LinkedList<>();
 
     public TaskCollection() {
     }
@@ -71,11 +72,13 @@ public class TaskCollection {
                 .count();
     }
 
-    public Queue<TaskComponent> getCompletedTasks() {return completedTasks;}
+    public Queue<TimeCompletableTask> getCompletedTasks() {return completedTasks;}
 
     public void setTaskCompleted(PlayerStat playerStat, TaskComponent task) {
         playerStat.setCompletedTask(task);
-        completedTasks.offer(task);
+        if (task instanceof TimeCompletableTask timeCompletableTask) {
+            completedTasks.offer(timeCompletableTask);
+        }
     }
 
     public boolean isTasksLoaded() {

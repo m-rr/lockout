@@ -9,6 +9,7 @@ import stretch.lockout.event.StartGameEvent;
 import stretch.lockout.game.CountDown;
 import stretch.lockout.game.GameRule;
 import stretch.lockout.game.RaceGameContext;
+import stretch.lockout.scoreboard.bar.CycleBar;
 import stretch.lockout.scoreboard.bar.LockoutTimer;
 import stretch.lockout.team.TeamManager;
 import stretch.lockout.team.PlayerStat;
@@ -24,7 +25,7 @@ public class DefaultStateHandler extends GameStateHandler {
 
     @Override
     protected void preGame() {
-        lockout.getTimer().setTime(Duration.ofHours(1));
+        lockout.getTimer().setTime(Duration.ofDays(610));
         if (lockout.gameRules().contains(GameRule.AUTO_LOAD)) {
             String taskList = Optional.ofNullable(lockout.getPlugin().getConfig()
                             .getString("autoLoadTask"))
@@ -47,7 +48,7 @@ public class DefaultStateHandler extends GameStateHandler {
     @Override
     protected void starting() {
         lockout.getPreGameBar().deactivate();
-        if (!lockout.getCurrentTasks().isTasksLoaded()) {
+        if (!lockout.getCurrentTaskCollection().isTasksLoaded()) {
             String message = ChatColor.RED + "You can not start without loading tasks!";
             MessageUtil.consoleLog(message);
             MessageUtil.sendAllChat(message);
@@ -69,6 +70,10 @@ public class DefaultStateHandler extends GameStateHandler {
 
         if (lockout.gameRules().contains(GameRule.CLEAR_INV_START)) {
             teamManager.clearAllPlayerEffectAndItems();
+        }
+
+        if (lockout.gameRules().contains(GameRule.START_SPAWN)) {
+            teamManager.doToAllPlayers(player -> player.teleport(lockout.getGameWorld().getSpawnLocation()));
         }
 
         // Set player tracker
@@ -96,17 +101,23 @@ public class DefaultStateHandler extends GameStateHandler {
 
         teamManager.doToAllPlayers(player -> player.setInvulnerable(false));
 
+        Runnable timerCallback;
         if (lockout.gameRules().contains(GameRule.TIMER)) {
             timer.activate();
-            timer.startTimer(lockout.getPlugin(), () -> {
+            timerCallback = () -> {
                 if (teamManager.isTie()) {
                     setGameState(GameState.TIEBREAKER);
                 }
                 else {
                     Bukkit.getPluginManager().callEvent(new GameOverEvent(teamManager.getWinningTeam()));
                 }
-            });
+            };
         }
+        else {
+            timerCallback = () -> setGameState(GameState.END);
+        }
+
+        timer.startTimer(lockout.getPlugin(), timerCallback);
     }
 
     @Override

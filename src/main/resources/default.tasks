@@ -89,6 +89,7 @@ local rabbit = item(Material.COOKED_RABBIT, 15, RewardType.TEAM, "15 cooked rabb
 local netherite_shovel = item(Material.NETHERITE_SHOVEL, 1, RewardType.SOLO, "Netherite shovel", {efficiency=4})
 local iron_chestplate = item(Material.IRON_CHESTPLATE, 1, RewardType.TEAM, "Iron chestplate")
 local blind_enemies = potion(Effect.BLINDNESS, 1, RewardType.ENEMY, "Blind your enemies", 1200)
+local blindness = potion(Effect.BLINDNESS, 1, RewardType.TEAM, "Blind your team", 1200)
 local gapple = item(Material.ENCHANTED_GOLDEN_APPLE, 1, RewardType.SOLO, "Gapple")
 local diamond_chestplate = item(Material.DIAMOND_CHESTPLATE, 1, RewardType.SOLO, "Diamond chestplate")
 local tnt = item(Material.TNT, 20, RewardType.SOLO, "20 tnt")
@@ -346,7 +347,12 @@ local negative = {
                   :setReward(weakness),
 
                   destroy(Material.DIRT, -1, "Don't break dirt", Material.DIRT)
-                  :setReward(rewardFire)
+                  :setReward(rewardFire),
+
+                  anyOf(Material.TORCH, -1, "Don't place a torch",
+                                        place(Material.TORCH, -1, "", Material.TORCH),
+                                        place(Material.WALL_TORCH, -1, "", Material.TORCH))
+                  :setReward(blindness)
                   }
 
 local animal = {
@@ -495,7 +501,7 @@ local desert_tasks = {
                       interactBlock(Material.FLOWER_POT, 1, "Pot a cactus", Material.FLOWER_POT)
                       :addPlayerPredicate(function (player)
                                                    return inMainHand(player, Material.CACTUS) end)
-
+                      :setReward(night_vision)
                       }
 
 local snow_tasks = {

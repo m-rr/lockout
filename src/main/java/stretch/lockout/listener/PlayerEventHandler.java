@@ -1,6 +1,7 @@
 package stretch.lockout.listener;
 
 import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.HumanEntity;
 import org.bukkit.entity.Player;
@@ -13,8 +14,10 @@ import org.bukkit.event.raid.RaidTriggerEvent;
 import stretch.lockout.game.GameRule;
 import stretch.lockout.game.state.GameState;
 import stretch.lockout.game.RaceGameContext;
+import stretch.lockout.platform.Platform;
 import stretch.lockout.team.PlayerStat;
 import stretch.lockout.team.TeamManager;
+import stretch.lockout.util.MessageUtil;
 
 import java.util.Map;
 import java.util.UUID;
@@ -278,6 +281,22 @@ public class PlayerEventHandler implements Listener {
                 }
             }
             default -> {}
+        }
+
+        // If op, check for update
+        if (player.isOp() && lockout.gameRules().contains(GameRule.CHECK_UPDATE)) {
+            Bukkit.getScheduler().runTaskAsynchronously(lockout.getPlugin(), () -> {
+                String version = lockout.getPlugin().getDescription().getVersion();
+                String latest = Platform.latestUpdate();
+                if (latest == null || !latest.equals(version)) {
+                    MessageUtil.sendChat(player, "Plugin version " +
+                            ChatColor.BLUE + latest +
+                            ChatColor.DARK_GRAY + " is available; this server is using " +
+                            ChatColor.DARK_RED + version);
+                    MessageUtil.sendLink(player, Platform.Resource.LOCKOUT_DOWNLOAD_URL,
+                            ChatColor.UNDERLINE + "Click here to download the latest update.");
+                }
+            });
         }
     }
 

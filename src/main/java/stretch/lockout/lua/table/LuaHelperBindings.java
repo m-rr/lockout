@@ -15,6 +15,7 @@ import org.luaj.vm2.lib.VarArgFunction;
 import org.luaj.vm2.lib.ZeroArgFunction;
 import org.luaj.vm2.lib.jse.CoerceJavaToLua;
 import org.luaj.vm2.lib.jse.CoerceLuaToJava;
+import stretch.lockout.game.GameRule;
 import stretch.lockout.game.RaceGameContext;
 import stretch.lockout.lua.LuaTaskBuilder;
 import stretch.lockout.task.*;
@@ -71,7 +72,7 @@ public class LuaHelperBindings implements LuaTableBinding {
         table.set("taskCount", new ZeroArgFunction() {
             @Override
             public LuaValue call() {
-                return CoerceJavaToLua.coerce(lockout.getCurrentTasks().getTaskCount());
+                return CoerceJavaToLua.coerce(lockout.getCurrentTaskCollection().getTaskCount());
             }
         });
 
@@ -88,7 +89,9 @@ public class LuaHelperBindings implements LuaTableBinding {
             @Override
             public LuaValue call(LuaValue luaValue) {
                 long minutes = (long) CoerceLuaToJava.coerce(luaValue, long.class);
-                lockout.getTimer().setTime(Duration.ofMinutes(minutes));
+                if (lockout.gameRules().contains(GameRule.TIMER)) {
+                    lockout.getTimer().setTime(Duration.ofMinutes(minutes));
+                }
                 return null;
             }
         });
@@ -197,7 +200,7 @@ public class LuaHelperBindings implements LuaTableBinding {
             @Override
             public LuaValue call(LuaValue luaValue, LuaValue luaValue1) {
                 int times = (int) CoerceLuaToJava.coerce(luaValue, int.class);
-                TaskComponent task = (TaskComponent) CoerceLuaToJava.coerce(luaValue1, TaskComponent.class);
+                TimeCompletableTask task = (TimeCompletableTask) CoerceLuaToJava.coerce(luaValue1, TimeCompletableTask.class);
                 return CoerceJavaToLua.coerce(new TaskRepeat(task, times));
             }
         });

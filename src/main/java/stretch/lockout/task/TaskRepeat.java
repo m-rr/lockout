@@ -1,5 +1,6 @@
 package stretch.lockout.task;
 
+import org.bukkit.Location;
 import org.bukkit.entity.HumanEntity;
 import org.bukkit.event.Event;
 import org.bukkit.inventory.ItemStack;
@@ -7,33 +8,34 @@ import org.luaj.vm2.LuaValue;
 import stretch.lockout.reward.RewardComponent;
 import stretch.lockout.team.PlayerStat;
 
+import java.time.Duration;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.function.Predicate;
 
-public class TaskRepeat implements TaskComponent {
-    final private TaskComponent taskComponent;
+public class TaskRepeat implements TimeCompletableTask {
+    final private TimeCompletableTask taskComponent;
     final private int times;
-    final private HashMap<HumanEntity, Integer> timesCompleted = new HashMap<>();
-    public TaskRepeat(TaskComponent taskComponent, int times) {
+    final private HashMap<HumanEntity, Integer> completionCount = new HashMap<>();
+    public TaskRepeat(TimeCompletableTask taskComponent, int times) {
         this.taskComponent = taskComponent;
         this.times = times;
     }
 
     public boolean playerHasCompletedTaskEnoughTimes(HumanEntity player) {
-        return timesCompleted.containsKey(player) && timesCompleted.get(player) >= times;
+        return completionCount.containsKey(player) && completionCount.get(player) >= times;
     }
 
     public void setPlayerCompletedTask(HumanEntity player) {
-        if (!timesCompleted.containsKey(player)) {
-            timesCompleted.put(player, 0);
+        if (!completionCount.containsKey(player)) {
+            completionCount.put(player, 0);
         }
 
-        timesCompleted.put(player, timesCompleted.get(player) + 1);
+        completionCount.put(player, completionCount.get(player) + 1);
     }
 
     public int getPlayerScore(HumanEntity player) {
-        return timesCompleted.get(player);
+        return completionCount.get(player);
     }
 
     @Override
@@ -61,6 +63,26 @@ public class TaskRepeat implements TaskComponent {
     @Override
     public void setCompletedBy(PlayerStat scoringPlayer) {
         taskComponent.setCompletedBy(scoringPlayer);
+    }
+
+    @Override
+    public Duration getTimeCompleted() {
+        return taskComponent.getTimeCompleted();
+    }
+
+    @Override
+    public void setLocation(Location loc) {
+        taskComponent.setLocation(loc);
+    }
+
+    @Override
+    public Location getLocation() {
+        return taskComponent.getLocation();
+    }
+
+    @Override
+    public void setTimeCompleted(Duration time) {
+        taskComponent.setTimeCompleted(time);
     }
 
     @Override

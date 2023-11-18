@@ -1,5 +1,6 @@
 package stretch.lockout.task;
 
+import org.bukkit.Location;
 import org.bukkit.entity.HumanEntity;
 import org.bukkit.event.Event;
 import org.bukkit.inventory.ItemStack;
@@ -7,13 +8,14 @@ import org.luaj.vm2.LuaValue;
 import stretch.lockout.reward.RewardComponent;
 import stretch.lockout.team.PlayerStat;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.function.Predicate;
 
-public sealed abstract class TaskComposite implements TaskComponent permits TaskANDComposite, TaskORComposite, TaskTHENComposite {
+public sealed abstract class TaskComposite implements TimeCompletableTask permits TaskANDComposite, TaskORComposite, TaskTHENComposite {
     final protected List<TaskComponent> taskComponents = new ArrayList<>();
     final protected HashMap<HumanEntity, HashSet<TaskComponent>> playerCompletedTasks = new HashMap<>();
     final protected int value;
@@ -23,6 +25,8 @@ public sealed abstract class TaskComposite implements TaskComponent permits Task
     protected ItemStack guiItemStack;
     protected RewardComponent reward;
     protected PlayerStat scoredPlayer;
+    protected Duration timeCompleted;
+    protected Location location;
     public TaskComposite(int value) {
         this.value = value;
     }
@@ -113,6 +117,25 @@ public sealed abstract class TaskComposite implements TaskComponent permits Task
 
     @Override
     public PlayerStat getScoredPlayer() {return scoredPlayer;}
+    @Override
+    public void setTimeCompleted(Duration time) {
+        this.timeCompleted = time;
+    }
+
+    @Override
+    public Duration getTimeCompleted() {
+        return this.timeCompleted;
+    }
+
+    @Override
+    public void setLocation(Location loc) {
+        this.location = loc;
+    }
+
+    @Override
+    public Location getLocation() {
+        return location;
+    }
 
     @Override
     public void setCompletedBy(PlayerStat scoringPlayer) {

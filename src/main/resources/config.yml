@@ -30,6 +30,9 @@ teamSize: 4
 # This will override a tasks file.
 enableReward: true
 
+# Teleports all players to spawn on game start
+startAtSpawn: false
+
 # Forces all players in server to be placed on a team when game starts.
 forcePlayersOnTeam: true
 
@@ -48,3 +51,6 @@ useTieBreaker: true
 
 # World time in ticks on game start
 startTime: 1000
+
+# Should OPs be notified of available plugin update
+checkUpdate: true

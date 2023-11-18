@@ -17,12 +17,15 @@ public class LockoutTimer extends LockoutBar {
     private BukkitTask timerTask;
     public LockoutTimer() {
         this.bossBar = Bukkit.createBossBar(ChatColor.GOLD + "LOCKOUT", BarColor.BLUE, BarStyle.SOLID);
+        this.time = Duration.ofDays(610);
     }
 
     public void setTime(Duration time) {
         this.time = time;
         this.currTime = Duration.ZERO.plus(time);
     }
+
+    public Duration getTime() {return time;}
 
     private String readableTime() {
         return String.format("%02d:%02d",
@@ -49,6 +52,10 @@ public class LockoutTimer extends LockoutBar {
 
     public boolean hasTimeElapsed(Duration proposedTime) {
         return time.minus(proposedTime).toSeconds() >= currTime.toSeconds();
+    }
+
+    public Duration elapsedTime() {
+        return time.minus(currTime);
     }
 
     @Override
