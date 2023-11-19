@@ -57,6 +57,7 @@ public final class Lockout extends JavaPlugin {
         Metrics metrics = new Metrics(this, pluginId);
 
         taskRaceContext.getGameStateHandler().setGameState(GameState.PRE);
+        MessageUtil.debugLog(taskRaceContext, "Lockout initialized in debug mode.");
     }
 
     @Override
@@ -103,6 +104,9 @@ public final class Lockout extends JavaPlugin {
         }
         if (config.getBoolean("useTieBreaker")) {
             taskRaceContext.gameRules().add(GameRule.TIE_BREAK);
+        }
+        if (config.getBoolean("debug")) {
+            taskRaceContext.gameRules().add(GameRule.DEBUG);
         }
 
         // Loot

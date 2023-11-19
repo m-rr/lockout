@@ -1,6 +1,7 @@
 package stretch.lockout.game.state;
 
 import stretch.lockout.game.RaceGameContext;
+import stretch.lockout.util.MessageUtil;
 
 public abstract class GameStateHandler {
     protected GameState gameState;
@@ -14,6 +15,7 @@ public abstract class GameStateHandler {
     public GameState getGameState() {return gameState;}
     public void setGameState(GameState gameState) {
         this.gameState = gameState;
+        MessageUtil.debugLog(lockout, "Entering gamestate " + gameState.name());
         switch (gameState) {
             case PRE -> preGame();
             case READY -> ready();

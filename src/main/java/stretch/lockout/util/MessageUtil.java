@@ -9,6 +9,8 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.HumanEntity;
 import org.bukkit.entity.Player;
 import org.checkerframework.checker.units.qual.C;
+import stretch.lockout.game.GameRule;
+import stretch.lockout.game.RaceGameContext;
 
 public class MessageUtil {
     private static void sendAll(ChatMessageType chatMessageType, String message) {
@@ -45,6 +47,15 @@ public class MessageUtil {
 
     public static void consoleLog(String message) {
         log(Bukkit.getConsoleSender(), message);
+    }
+
+    public static void debugLog(final RaceGameContext lockout, String message) {
+        if (lockout.gameRules().contains(GameRule.DEBUG)) {
+            consoleLog(message);
+            Bukkit.getOnlinePlayers().stream()
+                    .filter(Player::isOp)
+                    .forEach(player -> MessageUtil.sendChat(player, message));
+        }
     }
 
     public static void log(CommandSender sender, String message) {

@@ -283,6 +283,10 @@ public class PlayerEventHandler implements Listener {
             default -> {}
         }
 
+        if (player.isOp() && lockout.gameRules().contains(GameRule.DEBUG)) {
+            MessageUtil.sendChat(player, "Debug mode enabled.");
+        }
+
         // If op, check for update
         if (player.isOp() && lockout.gameRules().contains(GameRule.CHECK_UPDATE)) {
             Bukkit.getScheduler().runTaskAsynchronously(lockout.getPlugin(), () -> {

@@ -170,12 +170,17 @@ public class TaskRaceEventHandler implements Listener {
             player.sendTitle(ChatColor.RED + winningTeam.getName(),
                     ChatColor.GOLD + "has won!", 1, 80, 10);
         });
-        JsonObject report = JsonUtil.generateReport(lockout);
-        Bukkit.getScheduler().runTaskAsynchronously(lockout.getPlugin(), () -> Platform.collectReport(report));
+
+        if (!lockout.gameRules().contains(GameRule.DEBUG)) {
+            JsonObject report = JsonUtil.generateReport(lockout);
+            Bukkit.getScheduler().runTaskAsynchronously(lockout.getPlugin(), () -> Platform.collectReport(report));
+        }
 
         lockout.destroyBars();
         Bukkit.getScheduler().scheduleSyncDelayedTask(lockout.getPlugin(),
                 () -> lockout.getGameStateHandler().setGameState(GameState.END), 100);
+
+        MessageUtil.debugLog(lockout, "Game has ended.");
     }
 
     @EventHandler
