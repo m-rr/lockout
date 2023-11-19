@@ -284,7 +284,7 @@ public class PlayerEventHandler implements Listener {
         }
 
         if (player.isOp() && lockout.gameRules().contains(GameRule.DEBUG)) {
-            MessageUtil.sendChat(player, "Debug mode enabled.");
+            MessageUtil.sendChat(player, ChatColor.DARK_RED + "Debug mode enabled.");
         }
 
         // If op, check for update
