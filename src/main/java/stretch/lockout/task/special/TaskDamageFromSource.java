@@ -22,6 +22,7 @@ public class TaskDamageFromSource extends Task implements EntityTask, BlockTask 
     private Predicate<Mob> entityPredicate = (quuz) -> true;
     private Predicate<Block> blockPredicate = (quuz) -> true;
     private final EntityDamageEvent.DamageCause damageCause;
+
     public TaskDamageFromSource(Class<? extends Event> eventClass, EntityDamageEvent.DamageCause damageCause, int value, String description) {
         super(eventClass, value, description);
         this.damageCause = damageCause;
@@ -60,8 +61,13 @@ public class TaskDamageFromSource extends Task implements EntityTask, BlockTask 
         return cause == damageCause;
     }
 
-    public boolean hasEntityPredicate() {return entityPredicate != null;}
-    public boolean hasBlockPredicate() {return blockPredicate != null;}
+    public boolean hasEntityPredicate() {
+        return entityPredicate != null;
+    }
+
+    public boolean hasBlockPredicate() {
+        return blockPredicate != null;
+    }
 
     @Override
     public TaskComponent addBlockCondition(Predicate<Block> condition) {

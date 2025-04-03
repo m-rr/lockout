@@ -8,8 +8,8 @@ import org.bukkit.event.Event;
 import org.bukkit.inventory.ItemStack;
 import org.luaj.vm2.LuaValue;
 import stretch.lockout.event.executor.LockoutWrappedEvent;
-import stretch.lockout.reward.RewardComponent;
 import stretch.lockout.lua.LuaHumanEntityPredicate;
+import stretch.lockout.reward.RewardComponent;
 import stretch.lockout.team.player.PlayerStat;
 
 import javax.annotation.Nullable;
@@ -37,7 +37,7 @@ public class Task implements TimeCompletableTask {
     }
 
     @Override
-    public boolean doesAccomplish(final LockoutWrappedEvent lockoutEvent)  {
+    public boolean doesAccomplish(final LockoutWrappedEvent lockoutEvent) {
         Optional<Player> optionalPlayer = lockoutEvent.getPlayer();
 
         if (optionalPlayer.isEmpty()) {
@@ -51,17 +51,26 @@ public class Task implements TimeCompletableTask {
 
         return lockoutEvent.matches(eventClass);
     }
+
     public void setCompletedBy(PlayerStat scoringPlayer) {
         this.scoredPlayer = scoringPlayer;
     }
-    public PlayerStat getScoredPlayer() {return this.scoredPlayer;}
+
+    public PlayerStat getScoredPlayer() {
+        return this.scoredPlayer;
+    }
+
     public boolean isCompleted() {
         return scoredPlayer != null;
     }
+
     public void setTimeCompleted(Duration time) {
         this.timeCompleted = time;
     }
-    public Duration getTimeCompleted() {return this.timeCompleted;}
+
+    public Duration getTimeCompleted() {
+        return this.timeCompleted;
+    }
 
     @Override
     public void setLocation(Location loc) {
@@ -74,22 +83,36 @@ public class Task implements TimeCompletableTask {
         return location;
     }
 
-    public boolean hasReward() {return reward != null;}
+    public boolean hasReward() {
+        return reward != null;
+    }
+
     public TaskComponent setReward(RewardComponent rewardComponent) {
         this.reward = rewardComponent;
         return this;
     }
-    public RewardComponent getReward() {return this.reward;}
-    public boolean hasPlayerPredicate() {return playerStatePredicate != null;}
+
+    public RewardComponent getReward() {
+        return this.reward;
+    }
+
+    public boolean hasPlayerPredicate() {
+        return playerStatePredicate != null;
+    }
+
     public TaskComponent addPlayerCondition(Predicate<HumanEntity> predicate) {
         playerStatePredicate = playerStatePredicate.and(predicate);
         return this;
     }
+
     public TaskComponent addPlayerCondition(LuaValue predicate) {
         addPlayerCondition(new LuaHumanEntityPredicate(predicate));
         return this;
     }
-    public int getValue() {return this.value;}
+
+    public int getValue() {
+        return this.value;
+    }
 
     @Override
     public TaskComponent setValue(int value) {
@@ -103,9 +126,13 @@ public class Task implements TimeCompletableTask {
         return result;
     }
 
-    public Class<? extends Event> getEventClass() {return eventClass;}
+    public Class<? extends Event> getEventClass() {
+        return eventClass;
+    }
 
-    public String getDescription() {return this.description;}
+    public String getDescription() {
+        return this.description;
+    }
 
     @Override
     public TaskComponent setDescription(String description) {
@@ -113,8 +140,14 @@ public class Task implements TimeCompletableTask {
         return this;
     }
 
-    public ItemStack getGuiItemStack() {return this.guiItemStack;}
-    public boolean hasGuiItemStack() {return this.guiItemStack != null;}
+    public ItemStack getGuiItemStack() {
+        return this.guiItemStack;
+    }
+
+    public boolean hasGuiItemStack() {
+        return this.guiItemStack != null;
+    }
+
     public TaskComponent setGuiItemStack(ItemStack itemStack) {
         this.guiItemStack = itemStack;
         return this;

@@ -1,9 +1,9 @@
 package stretch.lockout.task.manager;
 
 import org.bukkit.event.Event;
-import stretch.lockout.task.TimeCompletableTask;
 import stretch.lockout.task.TaskComponent;
 import stretch.lockout.task.TaskInvisible;
+import stretch.lockout.task.TimeCompletableTask;
 import stretch.lockout.team.player.PlayerStat;
 
 import java.util.*;
@@ -14,7 +14,8 @@ public class TaskCollection {
     private final Map<Class<? extends Event>, Set<TaskComponent>> tasks = new HashMap<>();
     private final Queue<TimeCompletableTask> completedTasks = new LinkedList<>();
 
-    public TaskCollection() {}
+    public TaskCollection() {
+    }
 
     public TaskCollection(Collection<TaskComponent> taskComponents) {
         taskComponents.forEach(this::addTask);
@@ -45,8 +46,7 @@ public class TaskCollection {
         for (var eventClass : eventClasses) {
             if (!tasks.containsKey(eventClass)) {
                 tasks.put(eventClass, new HashSet<TaskComponent>(Set.of(taskComponent)));
-            }
-            else {
+            } else {
                 Set<TaskComponent> taskSet = tasks.get(eventClass);
                 taskSet.add(taskComponent);
             }
@@ -76,7 +76,9 @@ public class TaskCollection {
                 .count();
     }
 
-    public Queue<TimeCompletableTask> getCompletedTasks() {return completedTasks;}
+    public Queue<TimeCompletableTask> getCompletedTasks() {
+        return completedTasks;
+    }
 
     public void setTaskCompleted(PlayerStat playerStat, TaskComponent task) {
         playerStat.setCompletedTask(task);

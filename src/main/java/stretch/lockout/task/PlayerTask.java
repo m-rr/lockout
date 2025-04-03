@@ -7,5 +7,6 @@ import java.util.function.Predicate;
 
 public interface PlayerTask {
     TaskComponent addPlayerCondition(Predicate<HumanEntity> condition);
+
     TaskComponent addPlayerCondition(LuaValue condition);
 }

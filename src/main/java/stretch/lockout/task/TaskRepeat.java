@@ -21,6 +21,7 @@ public class TaskRepeat implements TimeCompletableTask {
     final private TimeCompletableTask taskComponent;
     final private int times;
     final private HashMap<HumanEntity, Integer> completionCount = new HashMap<>();
+
     public TaskRepeat(TimeCompletableTask taskComponent, int times) {
         this.taskComponent = taskComponent;
         this.times = times;

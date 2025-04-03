@@ -10,7 +10,9 @@ import stretch.lockout.event.executor.LockoutWrappedEvent;
 import stretch.lockout.reward.RewardComponent;
 import stretch.lockout.team.player.PlayerStat;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.Predicate;
@@ -118,7 +120,7 @@ public class TaskInvisible implements TaskComponent {
 
     /**
      * An invisible task never has a value.
-     * */
+     */
     @Override
     public int getValue() {
         return 0;

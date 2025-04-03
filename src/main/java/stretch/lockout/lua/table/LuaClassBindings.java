@@ -49,6 +49,6 @@ public class LuaClassBindings implements LuaTableBinding {
         table.set("GameState", CoerceJavaToLua.coerce(GameState.class));
         table.set("BiomeType", CoerceJavaToLua.coerce(BiomeTypes.class));
         table.set("MaterialType", CoerceJavaToLua.coerce(MaterialTypes.class));
-        table.set("MessageUtil", CoerceJavaToLua.coerce(MessageUtil.class));
+        table.set("log", CoerceJavaToLua.coerce(MessageUtil.class));
     }
 }

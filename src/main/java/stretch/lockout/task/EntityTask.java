@@ -7,5 +7,6 @@ import java.util.function.Predicate;
 
 public interface EntityTask {
     TaskComponent addEntityCondition(Predicate<Mob> condition);
+
     TaskComponent addEntityCondition(LuaValue condition);
 }

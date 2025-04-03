@@ -6,6 +6,7 @@ import java.util.function.Predicate;
 
 public class MoveAboveYPredicate implements Predicate<Location> {
     final private double targetY;
+
     public MoveAboveYPredicate(double y) {
         this.targetY = y;
     }

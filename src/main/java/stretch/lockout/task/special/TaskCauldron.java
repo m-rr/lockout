@@ -1,19 +1,13 @@
 package stretch.lockout.task.special;
 
-import org.bukkit.block.Block;
-import org.bukkit.entity.HumanEntity;
 import org.bukkit.event.Event;
 import org.bukkit.event.block.CauldronLevelChangeEvent;
-import org.luaj.vm2.LuaValue;
 import stretch.lockout.event.executor.LockoutWrappedEvent;
-import stretch.lockout.task.BlockTask;
 import stretch.lockout.task.Task;
-import stretch.lockout.task.TaskComponent;
-
-import java.util.function.Predicate;
 
 public class TaskCauldron extends Task {
     private CauldronLevelChangeEvent.ChangeReason changeReason;
+
     private TaskCauldron(Class<? extends Event> eventClass, int value, String description) {
         super(eventClass, value, description);
     }

@@ -27,6 +27,7 @@ public sealed abstract class TaskComposite implements TimeCompletableTask permit
     protected PlayerStat scoredPlayer;
     protected Duration timeCompleted;
     protected Location location;
+
     public TaskComposite(int value) {
         this.value = value;
     }
@@ -49,10 +50,14 @@ public sealed abstract class TaskComposite implements TimeCompletableTask permit
     }
 
     @Override
-    public boolean hasGuiItemStack() {return guiItemStack != null;}
+    public boolean hasGuiItemStack() {
+        return guiItemStack != null;
+    }
 
     @Override
-    public ItemStack getGuiItemStack() {return guiItemStack;}
+    public ItemStack getGuiItemStack() {
+        return guiItemStack;
+    }
 
     private String getDescriptionRecursive() {
         StringBuilder result = new StringBuilder();
@@ -104,7 +109,9 @@ public sealed abstract class TaskComposite implements TimeCompletableTask permit
     }
 
     @Override
-    public int getValue() {return value;}
+    public int getValue() {
+        return value;
+    }
 
     @Override
     public TaskComponent setValue(final int value) {
@@ -124,7 +131,9 @@ public sealed abstract class TaskComposite implements TimeCompletableTask permit
     }
 
     @Override
-    public RewardComponent getReward() {return reward;}
+    public RewardComponent getReward() {
+        return reward;
+    }
 
     @Override
     public TaskComponent setReward(RewardComponent rewardComponent) {
@@ -133,13 +142,20 @@ public sealed abstract class TaskComposite implements TimeCompletableTask permit
     }
 
     @Override
-    public boolean hasReward() {return reward != null;}
+    public boolean hasReward() {
+        return reward != null;
+    }
 
     @Override
-    public boolean isCompleted() {return scoredPlayer != null;}
+    public boolean isCompleted() {
+        return scoredPlayer != null;
+    }
 
     @Override
-    public PlayerStat getScoredPlayer() {return scoredPlayer;}
+    public PlayerStat getScoredPlayer() {
+        return scoredPlayer;
+    }
+
     @Override
     public void setTimeCompleted(Duration time) {
         this.timeCompleted = time;

@@ -36,6 +36,7 @@ public class DefaultStateHandler extends GameStateHandler {
             String boardName = Optional.ofNullable(lockout.getPlugin().getConfig()
                             .getString("autoLoadTask"))
                     .orElse("default");
+            
             lockout.getBoardManager().loadBoard(boardName);
         }
 

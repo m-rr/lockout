@@ -1,7 +1,6 @@
 package stretch.lockout.task;
 
 import org.bukkit.entity.HumanEntity;
-import org.bukkit.event.Event;
 import org.bukkit.entity.Player;
 import stretch.lockout.event.executor.LockoutWrappedEvent;
 

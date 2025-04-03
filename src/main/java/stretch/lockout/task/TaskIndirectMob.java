@@ -16,7 +16,8 @@ public class TaskIndirectMob extends Task implements EntityTask {
     private final double radius;
     private final EntityType entityType;
     private final Class chainedEventClass;
-    private Predicate<Mob> entityPredicate = (quuz) -> true;
+    private final Predicate<Mob> entityPredicate = (quuz) -> true;
+
     public TaskIndirectMob(Class<? extends Event> eventClass, Class chainedEventClass, EntityType entityType, double radius, int value, String description) {
         super(eventClass, value, description);
         this.radius = radius;

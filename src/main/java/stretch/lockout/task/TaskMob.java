@@ -13,6 +13,7 @@ import java.util.function.Predicate;
 public class TaskMob extends Task implements EntityTask {
     private final EntityType entityType;
     private Predicate<Mob> entityPredicate = (quuz) -> true;
+
     public TaskMob(Class eventClass, EntityType entityType, int value, String description) {
         super(eventClass, value, description);
         this.entityType = entityType;
@@ -34,7 +35,7 @@ public class TaskMob extends Task implements EntityTask {
         return entity.getType() == entityType
                 && super.doesAccomplish(lockoutEvent);
         //return super.doesAccomplish(player, event)
-                //&& entity.getType() == entityType;
+        //&& entity.getType() == entityType;
     }
 
     public boolean hasEntityPredicate() {

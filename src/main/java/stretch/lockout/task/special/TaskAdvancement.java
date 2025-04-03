@@ -2,9 +2,8 @@ package stretch.lockout.task.special;
 
 import io.papermc.paper.advancement.AdvancementDisplay;
 import org.bukkit.event.player.PlayerAdvancementDoneEvent;
-
-import stretch.lockout.task.Task;
 import stretch.lockout.event.executor.LockoutWrappedEvent;
+import stretch.lockout.task.Task;
 
 import java.util.Optional;
 

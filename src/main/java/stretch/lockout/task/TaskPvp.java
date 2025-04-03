@@ -11,7 +11,7 @@ import stretch.lockout.lua.LuaHumanEntityPredicate;
 import java.util.Optional;
 import java.util.function.Predicate;
 
-public class TaskPvp extends Task implements PlayerTargetTask{
+public class TaskPvp extends Task implements PlayerTargetTask {
 
     private Predicate<HumanEntity> targetPlayerPredicate = (quuz) -> true;
 

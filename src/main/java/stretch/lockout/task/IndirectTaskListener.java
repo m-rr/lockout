@@ -19,7 +19,8 @@ import java.util.Optional;
 
 public class IndirectTaskListener implements Listener {
     private final LockoutContext taskRaceContext;
-    private double radius;
+    private final double radius;
+
     public IndirectTaskListener(LockoutContext taskRaceContext, double radius) {
         this.taskRaceContext = taskRaceContext;
         Bukkit.getPluginManager().registerEvents(this, taskRaceContext.getPlugin());

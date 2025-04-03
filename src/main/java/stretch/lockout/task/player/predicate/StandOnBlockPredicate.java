@@ -8,6 +8,7 @@ import java.util.function.Predicate;
 
 public class StandOnBlockPredicate implements Predicate<Location> {
     final private Material targetBlockMaterial;
+
     public StandOnBlockPredicate(Material blockMaterial) {
         this.targetBlockMaterial = blockMaterial;
     }
