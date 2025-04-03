@@ -2,7 +2,7 @@ package stretch.lockout.reward;
 
 import org.bukkit.entity.Player;
 import org.luaj.vm2.LuaValue;
-import stretch.lockout.team.PlayerStat;
+import stretch.lockout.team.player.PlayerStat;
 
 import java.util.*;
 

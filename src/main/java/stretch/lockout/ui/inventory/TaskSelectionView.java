@@ -1,4 +1,4 @@
-package stretch.lockout.view;
+package stretch.lockout.ui.inventory;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Material;

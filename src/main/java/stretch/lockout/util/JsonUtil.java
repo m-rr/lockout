@@ -7,10 +7,10 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
-import stretch.lockout.game.RaceGameContext;
+import stretch.lockout.game.LockoutContext;
 import stretch.lockout.task.TimeCompletableTask;
 import stretch.lockout.team.LockoutTeam;
-import stretch.lockout.team.PlayerStat;
+import stretch.lockout.team.player.PlayerStat;
 
 import java.time.Instant;
 import java.util.*;
@@ -45,10 +45,10 @@ public class JsonUtil {
         return ImmutableMap.copyOf(result);
     }
 
-    public static JsonObject generateReport(final RaceGameContext lockout) {
+    public static JsonObject generateReport(final LockoutContext lockout) {
         var teams = lockout.getTeamManager().getTeams();
-        var uuids = lockout.getTeamManager().getPlayerStats()
-                .stream().map(PlayerStat::getPlayer)
+        var uuids = lockout.getTeamManager().getPlayerStats().stream()
+                .map(PlayerStat::getPlayer)
                 .map(Player::getUniqueId)
                 .toList();
         var teamMapping = obfuscateCollection(teams);
@@ -72,7 +72,6 @@ public class JsonUtil {
 
         JsonArray tasksArr = new JsonArray();
         var tasks = lockout.getMainTasks().getTasks();
-        //tasks.addAll(lockout.getTieBreaker().getTasks());
         for (var t : tasks) {
             if (t instanceof TimeCompletableTask completableTask) {
                 tasksArr.add(JsonUtil.fromTask(completableTask, playerMapping));
@@ -92,7 +91,7 @@ public class JsonUtil {
         return result;
     }
 
-    public static JsonObject generateTeamInfo(final RaceGameContext lockout, final String teamMappingData) {
+    public static JsonObject generateTeamInfo(final LockoutContext lockout, final String teamMappingData) {
         JsonObject teamInfo = new JsonObject();
         teamInfo.addProperty("teamCount", lockout.getTeamManager().teamCount());
         teamInfo.addProperty("playerCount", (long) lockout.getTeamManager().getPlayerStats().size());
@@ -101,15 +100,15 @@ public class JsonUtil {
         return teamInfo;
     }
 
-    public static JsonObject generateGameInfo(final RaceGameContext lockout) {
+    public static JsonObject generateGameInfo(final LockoutContext lockout) {
         JsonObject gameInfo = new JsonObject();
 
-        gameInfo.addProperty("seed", lockout.getGameWorld().getSeed());
-        gameInfo.add("spawn", generateLocation(lockout.getGameWorld().getSpawnLocation()));
+        gameInfo.addProperty("seed", lockout.settings().getGameWorld().getSeed());
+        gameInfo.add("spawn", generateLocation(lockout.settings().getGameWorld().getSpawnLocation()));
         gameInfo.addProperty("version", lockout.getPlugin().getDescription().getVersion());
         gameInfo.addProperty("server", lockout.getPlugin().getServer().getVersion());
-        gameInfo.addProperty("elapsedTime", lockout.getTimer().elapsedTime().getSeconds());
-        gameInfo.addProperty("timeLimit", lockout.getTimer().getTime().getSeconds());
+        gameInfo.addProperty("elapsedTime", lockout.getUiManager().getTimer().elapsedTime().getSeconds());
+        gameInfo.addProperty("timeLimit", lockout.getUiManager().getTimer().getTime().getSeconds());
 
         return gameInfo;
     }
@@ -124,14 +123,14 @@ public class JsonUtil {
         return locJson;
     }
 
-    public static JsonObject generateConfig(final RaceGameContext lockout) {
+    public static JsonObject generateConfig(final LockoutContext lockout) {
         JsonObject config = new JsonObject();
-        config.addProperty("rules", lockout.gameRules().toString());
-        config.addProperty("startTime", lockout.getStartTime());
-        config.addProperty("countdownTime", lockout.getCountdownTime());
-        config.addProperty("defaultTeams", lockout.getTeamManager().getDefaultTeams());
-        config.addProperty("maxTeams", lockout.getTeamManager().getMaxTeams());
-        config.addProperty("teamSize", lockout.getTeamManager().getTeamSize());
+        config.addProperty("rules", lockout.settings().gameRules().toString());
+        config.addProperty("startTime", lockout.settings().getStartTime());
+        config.addProperty("countdownTime", lockout.settings().getCountdownTime());
+        config.addProperty("defaultTeams", lockout.settings().getDefaultTeams());
+        config.addProperty("maxTeams", lockout.settings().getMaxTeams());
+        config.addProperty("teamSize", lockout.settings().getTeamSize());
         config.addProperty("taskList", Optional.ofNullable(lockout.getPlugin().getConfig()
                         .getString("autoLoadTask"))
                 .orElse("default"));

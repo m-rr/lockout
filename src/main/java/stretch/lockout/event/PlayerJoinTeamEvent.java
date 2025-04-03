@@ -6,7 +6,7 @@ package stretch.lockout.event;
 
 import org.bukkit.event.Event;
 import org.bukkit.event.HandlerList;
-import stretch.lockout.team.PlayerStat;
+import stretch.lockout.team.player.PlayerStat;
 
 public class PlayerJoinTeamEvent extends Event {
     final static private HandlerList handlers = new HandlerList();

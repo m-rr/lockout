@@ -21,7 +21,7 @@ public class LootManager {
     private double lootSpawnChance = 0D;
     private int spawnRadius;
     public LootManager() {
-
+        throw new UnsupportedOperationException();
     }
 
     public void setSpawnRadius(int radius) {

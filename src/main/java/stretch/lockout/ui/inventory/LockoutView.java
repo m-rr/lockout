@@ -1,4 +1,4 @@
-package stretch.lockout.view;
+package stretch.lockout.ui.inventory;
 
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.inventory.ItemFlag;

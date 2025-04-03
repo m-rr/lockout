@@ -2,6 +2,7 @@ package stretch.lockout.lua.table;
 
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
+import org.bukkit.Registry;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.potion.PotionEffect;
@@ -15,19 +16,22 @@ import org.luaj.vm2.lib.TwoArgFunction;
 import org.luaj.vm2.lib.VarArgFunction;
 import org.luaj.vm2.lib.jse.CoerceJavaToLua;
 import org.luaj.vm2.lib.jse.CoerceLuaToJava;
-import stretch.lockout.game.RaceGameContext;
+import stretch.lockout.game.LockoutContext;
 import stretch.lockout.lua.LuaPlayerConsumer;
-import stretch.lockout.reward.*;
+import stretch.lockout.lua.LuaPotionEffect;
+import stretch.lockout.lua.Compatability;
 import stretch.lockout.task.TaskComponent;
 import stretch.lockout.task.TaskInvisible;
+import stretch.lockout.util.MessageUtil;
+import stretch.lockout.reward.*;
 
 import java.util.*;
 
 public class LuaRewardBindings implements LuaTableBinding {
 
-    private final RaceGameContext lockout;
+    private final LockoutContext lockout;
 
-    public LuaRewardBindings(final RaceGameContext lockout) {
+    public LuaRewardBindings(final LockoutContext lockout) {
         this.lockout = lockout;
     }
 
@@ -47,9 +51,14 @@ public class LuaRewardBindings implements LuaTableBinding {
                 if (args.arg(5).istable()) {
                     LuaTable enchantmentTable = args.arg(5).checktable();
                     Map<Enchantment, Integer> enchantments = new HashMap<>();
-                    for (var key : enchantmentTable.keys()) {
-                        Enchantment enchantment = Enchantment.getByKey(NamespacedKey.minecraft(key.tojstring().toLowerCase()));
-                        int value = (int) CoerceLuaToJava.coerce(enchantmentTable.get(key), int.class);
+                    for (var keyName : enchantmentTable.keys()) {
+                        String key = Compatability.ENCHANT.keySet().contains(keyName.tojstring().toLowerCase()) ?
+                            Compatability.ENCHANT.get(keyName.tojstring().toLowerCase())
+                            : keyName.tojstring().toLowerCase();
+
+                        Enchantment enchantment = Registry.ENCHANTMENT.get(NamespacedKey.minecraft(key.toLowerCase()));
+
+                        int value = (int) CoerceLuaToJava.coerce(enchantmentTable.get(keyName.tojstring().toLowerCase()), int.class);
                         enchantments.put(enchantment, value);
                     }
                     item.addUnsafeEnchantments(enchantments);
@@ -67,14 +76,16 @@ public class LuaRewardBindings implements LuaTableBinding {
         table.set("potion", new VarArgFunction() {
             @Override
             public Varargs invoke(Varargs args) {
-                PotionEffectType potionEffectType = (PotionEffectType) CoerceLuaToJava.coerce(args.arg(1), PotionEffectType.class);
+                LuaPotionEffect effect = (LuaPotionEffect) CoerceLuaToJava.coerce(args.arg(1), LuaPotionEffect.class);
+                PotionEffectType potionEffectType = effect.getEffect();
+
                 int amplifier = (int) CoerceLuaToJava.coerce(args.arg(2), int.class);
                 RewardType rewardType = (RewardType) CoerceLuaToJava.coerce(args.arg(3), RewardType.class);
                 String description = (String) CoerceLuaToJava.coerce(args.arg(4), String.class);
 
-                int potionTime = args.arg(5).isint() ?
-                        args.arg(5).checkint() :
-                        (int) lockout.getRewardPotionTicks();
+                int potionTime = args.arg(5).isint()
+                        ? args.arg(5).checkint()
+                        : (int) lockout.settings().getRewardPotionTicks();
 
                 PotionEffect potionEffect = new PotionEffect(potionEffectType, potionTime, amplifier - 1);
                 return CoerceJavaToLua.coerce(new RewardPotion(potionEffect, rewardType, description));

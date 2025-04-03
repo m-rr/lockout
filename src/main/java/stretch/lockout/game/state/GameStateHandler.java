@@ -1,13 +1,13 @@
 package stretch.lockout.game.state;
 
-import stretch.lockout.game.RaceGameContext;
+import stretch.lockout.game.LockoutContext;
 import stretch.lockout.util.MessageUtil;
 
 public abstract class GameStateHandler {
     protected GameState gameState;
-    protected final RaceGameContext lockout;
+    protected final LockoutContext lockout;
 
-    protected GameStateHandler(final RaceGameContext lockout) {
+    protected GameStateHandler(final LockoutContext lockout) {
         this.lockout = lockout;
         gameState = GameState.UNINIT;
     }
@@ -15,7 +15,7 @@ public abstract class GameStateHandler {
     public GameState getGameState() {return gameState;}
     public void setGameState(GameState gameState) {
         this.gameState = gameState;
-        MessageUtil.debugLog(lockout, "Entering gamestate " + gameState.name());
+        MessageUtil.debugLog(lockout.settings(), "Entering gamestate " + gameState.name());
         switch (gameState) {
             case PRE -> preGame();
             case READY -> ready();

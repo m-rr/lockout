@@ -7,16 +7,21 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
 import stretch.lockout.event.StartGameEvent;
+import stretch.lockout.game.LockoutGameRule;
 import stretch.lockout.game.state.GameState;
-import stretch.lockout.game.RaceGameContext;
+import stretch.lockout.game.LockoutContext;
 
+import java.util.Map;
+import java.util.HashMap;
 import java.time.Duration;
 
 public class KitHandler implements Listener {
-    private final RaceGameContext lockout;
+    private final LockoutContext lockout;
     private final StarterKit starterKit = new StarterKit();
     private final CompassKit compassKit = new CompassKit();
-    public KitHandler(RaceGameContext lockout) {
+    private Map<Player, Long> lastRespawn = new HashMap<Player, Long>();
+
+    public KitHandler(LockoutContext lockout) {
         this.lockout = lockout;
         Bukkit.getPluginManager().registerEvents(this, lockout.getPlugin());
     }
@@ -24,6 +29,10 @@ public class KitHandler implements Listener {
     @EventHandler
     public void onStarting(StartGameEvent startGameEvent) {
         lockout.getTeamManager().doToAllPlayers(compassKit::apply);
+        lockout.getTeamManager().doToAllPlayers(player -> {
+                compassKit.apply(player);
+                lastRespawn.put(player, System.currentTimeMillis());
+            });
     }
 
     @EventHandler
@@ -40,12 +49,21 @@ public class KitHandler implements Listener {
 
         Player player = playerRespawnEvent.getPlayer();
         if (lockout.getTeamManager().getMappedPlayerStats().containsKey(player)) {
-            lockout.gracePeriod(player);
             compassKit.apply(player);
 
-            if (lockout.getTimer().hasTimeElapsed(Duration.ofMinutes(5))) {
+            if (lockout.settings().hasRule(LockoutGameRule.RESPAWN_INVULNERABLE)) {
+                lockout.gracePeriod(player);
+            }
+
+            if (lockout.settings().hasRule(LockoutGameRule.RESPAWN_KIT)
+                    && System.currentTimeMillis() - lastRespawn.get(player)
+                        > lockout.settings().getRespawnCooldownTime()
+                    && lockout.getUiManager().getTimer()
+                .hasTimeElapsed(Duration.ofSeconds(lockout.settings().getRespawnKitTime() / 20))) {
                 starterKit.apply(player);
             }
+
+            lastRespawn.put(player, System.currentTimeMillis());
         }
     }
 }

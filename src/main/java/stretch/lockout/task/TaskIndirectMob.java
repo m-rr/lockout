@@ -1,14 +1,12 @@
 package stretch.lockout.task;
 
-import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
-import org.bukkit.entity.HumanEntity;
 import org.bukkit.entity.Mob;
 import org.bukkit.event.Event;
 import org.bukkit.event.entity.EntityEvent;
 import org.luaj.vm2.LuaValue;
+import stretch.lockout.event.executor.LockoutWrappedEvent;
 import stretch.lockout.event.indirect.LockoutIndirectEvent;
-import stretch.lockout.lua.LuaEntityPredicate;
 import stretch.lockout.lua.LuaMobPredicate;
 
 import java.util.function.Predicate;
@@ -19,7 +17,7 @@ public class TaskIndirectMob extends Task implements EntityTask {
     private final EntityType entityType;
     private final Class chainedEventClass;
     private Predicate<Mob> entityPredicate = (quuz) -> true;
-    public TaskIndirectMob(Class eventClass, Class chainedEventClass, EntityType entityType, double radius, int value, String description) {
+    public TaskIndirectMob(Class<? extends Event> eventClass, Class chainedEventClass, EntityType entityType, double radius, int value, String description) {
         super(eventClass, value, description);
         this.radius = radius;
         this.entityType = entityType;
@@ -27,7 +25,8 @@ public class TaskIndirectMob extends Task implements EntityTask {
     }
 
     @Override
-    public boolean doesAccomplish(HumanEntity player, Event event) {
+    public boolean doesAccomplish(final LockoutWrappedEvent lockoutEvent) {
+        Event event = lockoutEvent.getEvent();
         if (!(event instanceof LockoutIndirectEvent indirectEvent)
                 || !(indirectEvent.getChainedEvent() instanceof EntityEvent entityEvent)) {
             return false;
@@ -35,21 +34,21 @@ public class TaskIndirectMob extends Task implements EntityTask {
 
         EntityType chainedEntityType = entityEvent.getEntityType();
 
-        return super.doesAccomplish(player, event)
+        return super.doesAccomplish(lockoutEvent)
                 && chainedEntityType == entityType
                 && indirectEvent.getChainedEvent().getClass().isAssignableFrom(chainedEventClass)
                 && radius >= indirectEvent.getDistance();
     }
 
     @Override
-    public TaskComponent addEntityPredicate(Predicate<Mob> condition) {
+    public TaskComponent addEntityCondition(Predicate<Mob> condition) {
         playerStatePredicate = playerStatePredicate.and(playerStatePredicate);
         return this;
     }
 
     @Override
-    public TaskComponent addEntityPredicate(LuaValue condition) {
-        addEntityPredicate(new LuaMobPredicate(condition));
+    public TaskComponent addEntityCondition(LuaValue condition) {
+        addEntityCondition(new LuaMobPredicate(condition));
         return this;
     }
 }

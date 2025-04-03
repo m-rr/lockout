@@ -2,6 +2,8 @@ package stretch.lockout.task;
 
 import org.bukkit.entity.HumanEntity;
 import org.bukkit.event.Event;
+import org.bukkit.entity.Player;
+import stretch.lockout.event.executor.LockoutWrappedEvent;
 
 import java.util.HashSet;
 import java.util.List;
@@ -25,7 +27,13 @@ public final class TaskTHENComposite extends TaskComposite {
     }
 
     @Override
-    public boolean doesAccomplish(HumanEntity player, Event event) {
+    public boolean doesAccomplish(final LockoutWrappedEvent lockoutEvent) {
+        Optional<Player> optionalPlayer = lockoutEvent.getPlayer();
+        if (optionalPlayer.isEmpty()) {
+            return false;
+        }
+        Player player = optionalPlayer.get();
+
         if (!playerCompletedTasks.containsKey(player)) {
             playerCompletedTasks.put(player, new HashSet<>());
         }
@@ -39,7 +47,7 @@ public final class TaskTHENComposite extends TaskComposite {
         }
 
         TaskComponent nextTask = optionalTaskComponent.get();
-        if (nextTask.getEventClasses().contains(event.getClass()) && nextTask.doesAccomplish(player, event)) {
+        if (nextTask.getEventClasses().contains(lockoutEvent.getEventClass()) && nextTask.doesAccomplish(lockoutEvent)) {
             setPlayerCompletedTasks(player, nextTask);
         }
 

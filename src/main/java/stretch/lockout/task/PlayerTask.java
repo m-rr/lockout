@@ -6,6 +6,6 @@ import org.luaj.vm2.LuaValue;
 import java.util.function.Predicate;
 
 public interface PlayerTask {
-    TaskComponent addPlayerPredicate(Predicate<HumanEntity> condition);
-    TaskComponent addPlayerPredicate(LuaValue condition);
+    TaskComponent addPlayerCondition(Predicate<HumanEntity> condition);
+    TaskComponent addPlayerCondition(LuaValue condition);
 }

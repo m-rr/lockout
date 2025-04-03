@@ -3,7 +3,7 @@ package stretch.lockout.event;
 import org.bukkit.event.Event;
 import org.bukkit.event.HandlerList;
 import stretch.lockout.reward.RewardComponent;
-import stretch.lockout.team.PlayerStat;
+import stretch.lockout.team.player.PlayerStat;
 
 public class RewardApplyEvent extends Event {
     final private static HandlerList handlers = new HandlerList();

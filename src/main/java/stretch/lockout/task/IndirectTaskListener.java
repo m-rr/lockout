@@ -5,28 +5,22 @@ import org.bukkit.Location;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
-import org.bukkit.entity.HumanEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockGrowEvent;
 import org.bukkit.event.entity.EntityCombustByBlockEvent;
-import org.bukkit.event.entity.EntityCombustEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.EntityDeathEvent;
-import org.bukkit.util.BoundingBox;
 import stretch.lockout.event.indirect.LockoutIndirectEvent;
-import stretch.lockout.game.RaceGameContext;
-import stretch.lockout.util.MessageUtil;
+import stretch.lockout.game.LockoutContext;
 
-import java.util.Comparator;
-import java.util.List;
 import java.util.Optional;
 
 public class IndirectTaskListener implements Listener {
-    private final RaceGameContext taskRaceContext;
+    private final LockoutContext taskRaceContext;
     private double radius;
-    public IndirectTaskListener(RaceGameContext taskRaceContext, double radius) {
+    public IndirectTaskListener(LockoutContext taskRaceContext, double radius) {
         this.taskRaceContext = taskRaceContext;
         Bukkit.getPluginManager().registerEvents(this, taskRaceContext.getPlugin());
         this.radius = radius;
@@ -48,7 +42,7 @@ public class IndirectTaskListener implements Listener {
 
     @EventHandler
     public void onIndirectEvent(LockoutIndirectEvent indirectEvent) {
-        taskRaceContext.checkTask(indirectEvent.getPlayer(), indirectEvent);
+        //lockout.checkTask(indirectEvent.getPlayer(), indirectEvent);
     }
 
     @EventHandler

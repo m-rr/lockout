@@ -1,4 +1,4 @@
-package stretch.lockout.scoreboard.bar;
+package stretch.lockout.ui.bar;
 
 import org.bukkit.Bukkit;
 import org.bukkit.boss.BossBar;

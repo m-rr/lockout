@@ -16,7 +16,7 @@ public class CompassKit implements Kit {
         ItemMeta itemMeta = compass.getItemMeta();
 
         if (itemMeta != null) {
-            itemMeta.addEnchant(Enchantment.LUCK, 1, true);
+            itemMeta.addEnchant(Enchantment.VANISHING_CURSE, 1, true);
             itemMeta.addItemFlags(ItemFlag.HIDE_ENCHANTS);
             itemMeta.setDisplayName(ChatColor.LIGHT_PURPLE + "Lockout");
             compass.setItemMeta(itemMeta);

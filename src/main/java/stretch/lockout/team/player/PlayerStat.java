@@ -1,14 +1,16 @@
-package stretch.lockout.team;
+package stretch.lockout.team.player;
 
 import org.bukkit.entity.Player;
 import org.bukkit.scoreboard.Scoreboard;
 import stretch.lockout.task.TaskComponent;
+import stretch.lockout.team.LockoutTeam;
 
 import java.util.HashSet;
 
 public class PlayerStat {
     private Player player;
     final private HashSet<TaskComponent> completedTasks = new HashSet<>();
+
     private LockoutTeam lockoutTeam;
     private Scoreboard board;
 
@@ -20,6 +22,10 @@ public class PlayerStat {
     public void setCompletedTask(TaskComponent completedTask) {
         completedTasks.add(completedTask);
         completedTask.setCompletedBy(this);
+    }
+
+    public void enqueueState() {
+
     }
 
     public Player getPlayer() {return this.player;}

@@ -1,16 +1,20 @@
 package stretch.lockout.task;
 
 import org.bukkit.Location;
+import org.bukkit.Material;
 import org.bukkit.entity.HumanEntity;
+import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
 import org.bukkit.inventory.ItemStack;
 import org.luaj.vm2.LuaValue;
+import stretch.lockout.event.executor.LockoutWrappedEvent;
 import stretch.lockout.reward.RewardComponent;
-import stretch.lockout.team.PlayerStat;
+import stretch.lockout.team.player.PlayerStat;
 
 import java.time.Duration;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Optional;
 import java.util.function.Predicate;
 
 public class TaskRepeat implements TimeCompletableTask {
@@ -39,7 +43,7 @@ public class TaskRepeat implements TimeCompletableTask {
     }
 
     @Override
-    public HashSet<Class> getEventClasses() {
+    public HashSet<Class<? extends Event>> getEventClasses() {
         return taskComponent.getEventClasses();
     }
 
@@ -49,14 +53,14 @@ public class TaskRepeat implements TimeCompletableTask {
     }
 
     @Override
-    public TaskComponent addPlayerPredicate(Predicate<HumanEntity> predicate) {
-        taskComponent.addPlayerPredicate(predicate);
+    public TaskComponent addPlayerCondition(Predicate<HumanEntity> predicate) {
+        taskComponent.addPlayerCondition(predicate);
         return this;
     }
 
     @Override
-    public TaskComponent addPlayerPredicate(LuaValue predicate) {
-        taskComponent.addPlayerPredicate(predicate);
+    public TaskComponent addPlayerCondition(LuaValue predicate) {
+        taskComponent.addPlayerCondition(predicate);
         return this;
     }
 
@@ -102,6 +106,16 @@ public class TaskRepeat implements TimeCompletableTask {
     }
 
     @Override
+    public Material getDisplay() {
+        return taskComponent.getDisplay();
+    }
+
+    @Override
+    public TaskComponent setDisplay(Material display) {
+        return taskComponent.setDisplay(display);
+    }
+
+    @Override
     public boolean hasGuiItemStack() {
         return taskComponent.hasGuiItemStack();
     }
@@ -109,6 +123,12 @@ public class TaskRepeat implements TimeCompletableTask {
     @Override
     public String getDescription() {
         return taskComponent.getDescription();
+    }
+
+    @Override
+    public TaskComponent setDescription(String description) {
+        description = description;
+        return this;
     }
 
     @Override
@@ -133,8 +153,20 @@ public class TaskRepeat implements TimeCompletableTask {
     }
 
     @Override
-    public boolean doesAccomplish(HumanEntity player, Event event) {
-        if (taskComponent.doesAccomplish(player, event)) {
+    public TaskComponent setValue(int value) {
+        taskComponent.setValue(value);
+        return this;
+    }
+
+    @Override
+    public boolean doesAccomplish(final LockoutWrappedEvent lockoutEvent) {
+        Optional<Player> optionalPlayer = lockoutEvent.getPlayer();
+        if (optionalPlayer.isEmpty()) {
+            return false;
+        }
+        Player player = optionalPlayer.get();
+
+        if (taskComponent.doesAccomplish(lockoutEvent)) {
             setPlayerCompletedTask(player);
         }
 

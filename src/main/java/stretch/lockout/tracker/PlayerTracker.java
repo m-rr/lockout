@@ -4,7 +4,7 @@ import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
-import stretch.lockout.team.PlayerStat;
+import stretch.lockout.team.player.PlayerStat;
 import stretch.lockout.util.MessageUtil;
 
 import java.util.Collection;

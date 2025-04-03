@@ -1,20 +1,20 @@
-package stretch.lockout.scoreboard.bar;
+package stretch.lockout.ui.bar;
 
 import org.bukkit.Bukkit;
 import org.bukkit.boss.BarColor;
 import org.bukkit.boss.BarStyle;
 import org.bukkit.boss.BossBar;
-import stretch.lockout.game.RaceGameContext;
+import stretch.lockout.game.LockoutContext;
 
 import java.util.List;
 
 public class CycleBar extends LockoutBar {
-    private final RaceGameContext lockout;
+    private final LockoutContext lockout;
     private final List<String> barTitles;
     private final BossBar cycleBar;
     private final int cycleTime;
     private int cycleTask = -1;
-    public CycleBar(final RaceGameContext lockout, final int cycleTime, List<String> bars) {
+    public CycleBar(final LockoutContext lockout, final int cycleTime, List<String> bars) {
         this.lockout = lockout;
         this.barTitles = bars;
         this.cycleTime = cycleTime;

@@ -6,19 +6,21 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import stretch.lockout.game.state.GameState;
-import stretch.lockout.game.RaceGameContext;
+import stretch.lockout.game.LockoutContext;
 
 public class PvpHandler implements Listener {
-    private final RaceGameContext lockout;
+    private final LockoutContext lockout;
 
-    public PvpHandler(final RaceGameContext taskRaceContext) {
+    public PvpHandler(final LockoutContext taskRaceContext) {
         this.lockout = taskRaceContext;
         Bukkit.getPluginManager().registerEvents(this, lockout.getPlugin());
     }
 
+    // TODO pretty sure this will not work correctly
     @EventHandler
     public void onPlayerDeath(PlayerDeathEvent playerDeathEvent) {
-        if (lockout.getGameStateHandler().getGameState() != GameState.RUNNING && lockout.getGameStateHandler().getGameState() != GameState.TIEBREAKER) {
+        if (lockout.getGameStateHandler().getGameState() != GameState.RUNNING
+                && lockout.getGameStateHandler().getGameState() != GameState.TIEBREAKER) {
             return;
         }
 
@@ -33,6 +35,6 @@ public class PvpHandler implements Listener {
             return;
         }
 
-        lockout.checkTask(killer, playerDeathEvent);
+        //lockout.checkTask(killer, playerDeathEvent);
     }
 }

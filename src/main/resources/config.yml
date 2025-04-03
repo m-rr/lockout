@@ -18,7 +18,7 @@ clearInventoryStart: true
 clearInventoryEnd: false
 # Countdown config
 moveDuringCountdown: false
-countdownDuration: 60
+countdownDuration: 30
 
 # Number of teams (default wool themed teams). Custom teams can be added by privileged player with /lockout team <name>
 defaultTeams: 4
@@ -45,12 +45,37 @@ commandsRequireOp: true
 
 # Enable/disable game timer on start. Without timer game will continue until completed.
 useTimer: true
+# Time in seconds for the game timer. Only takes effect if useTimer=true
+setTimer: 2700
 
 # When enabled, a tiebreaker round will be used to determine a winner when needed.
 useTieBreaker: true
 
 # World time in ticks on game start
 startTime: 1000
+
+# Should players respawn with kit after time.
+useRespawnKit: true
+# How many seconds should elapse before players receive respawn kit if enabled.
+respawnKitTime: 300
+# How many seconds should elapse before a player can receive a respawn kit again.
+respawnKitCooldown: 180
+
+# Should players receive respawn invulnerability.
+respawnInvulnerability: true
+# Invulnerability time in ticks
+respawnInvulnerabilityTime: 140
+
+# Should advancements be revoked at the start of the game.
+# This may be required for some tasks to work correctly so it is recommended to leave this enabled.
+# Only disable this if your server has specific needs.
+revokeAdvancements: true
+
+# How many ticks should we wait to check player state for some tasks.
+# Lower values will feel slightly more responsive but at a higher performance cost for large servers.
+# If you have 20+ players in a lockout game and experience server lag, setting this to a value from 2-4 may help.
+# It is recommended for most servers to use the lowest value of 1.
+playerStateUpdateTicks: 1
 
 # Should OPs be notified of available plugin update
 checkUpdate: true

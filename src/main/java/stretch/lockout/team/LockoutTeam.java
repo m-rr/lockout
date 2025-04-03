@@ -3,6 +3,7 @@ package stretch.lockout.team;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.scoreboard.Scoreboard;
+import stretch.lockout.team.player.PlayerStat;
 
 import javax.annotation.Nullable;
 import java.util.HashSet;

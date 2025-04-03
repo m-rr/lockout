@@ -17,6 +17,8 @@ import org.luaj.vm2.lib.TwoArgFunction;
 import org.luaj.vm2.lib.jse.CoerceJavaToLua;
 import org.luaj.vm2.lib.jse.CoerceLuaToJava;
 
+import stretch.lockout.lua.LuaPotionEffect;
+
 import java.util.Arrays;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -79,7 +81,8 @@ public class LuaPredicateBindings implements LuaTableBinding {
             @Override
             public LuaValue call(LuaValue luaValue) {
                 LivingEntity entity = (LivingEntity) CoerceLuaToJava.coerce(luaValue, LivingEntity.class);
-                return CoerceJavaToLua.coerce(entity.getAttribute(Attribute.GENERIC_MAX_HEALTH).getValue() == entity.getHealth());
+                //return CoerceJavaToLua.coerce(entity.getAttribute(Attribute.GENERIC_MAX_HEALTH).getValue() == entity.getHealth());
+                return CoerceJavaToLua.coerce(entity.getAttribute(Attribute.MAX_HEALTH).getValue() == entity.getHealth());
             }
         });
 
@@ -89,7 +92,9 @@ public class LuaPredicateBindings implements LuaTableBinding {
             public LuaValue call(LuaValue luaValue, LuaValue luaValue1) {
                 LivingEntity entity = (LivingEntity) CoerceLuaToJava.coerce(luaValue, LivingEntity.class);
                 Material material = (Material) CoerceLuaToJava.coerce(luaValue1, Material.class);
-                Set<Material> armor = Arrays.stream(entity.getEquipment().getArmorContents()).map(ItemStack::getType).collect(Collectors.toSet());
+                Set<Material> armor = Arrays.stream(entity.getEquipment().getArmorContents())
+                        .map(ItemStack::getType)
+                        .collect(Collectors.toSet());
                 return CoerceJavaToLua.coerce(armor.contains(material));
             }
         });
@@ -109,7 +114,8 @@ public class LuaPredicateBindings implements LuaTableBinding {
             @Override
             public LuaValue call(LuaValue luaValue, LuaValue luaValue1) {
                 LivingEntity entity = (LivingEntity) CoerceLuaToJava.coerce(luaValue, LivingEntity.class);
-                PotionEffectType potionEffectType = (PotionEffectType) CoerceLuaToJava.coerce(luaValue1, PotionEffectType.class);
+                LuaPotionEffect effect = (LuaPotionEffect) CoerceLuaToJava.coerce(luaValue1, LuaPotionEffect.class);
+                PotionEffectType potionEffectType = effect.getEffect();
                 return CoerceJavaToLua.coerce(entity.getPotionEffect(potionEffectType) != null);
             }
         });

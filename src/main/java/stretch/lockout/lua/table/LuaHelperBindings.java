@@ -3,6 +3,7 @@ package stretch.lockout.lua.table;
 import com.google.common.collect.Sets;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.World;
 import org.bukkit.block.Biome;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
@@ -15,8 +16,8 @@ import org.luaj.vm2.lib.VarArgFunction;
 import org.luaj.vm2.lib.ZeroArgFunction;
 import org.luaj.vm2.lib.jse.CoerceJavaToLua;
 import org.luaj.vm2.lib.jse.CoerceLuaToJava;
-import stretch.lockout.game.GameRule;
-import stretch.lockout.game.RaceGameContext;
+import stretch.lockout.game.LockoutGameRule;
+import stretch.lockout.game.LockoutContext;
 import stretch.lockout.lua.LuaTaskBuilder;
 import stretch.lockout.task.*;
 
@@ -25,8 +26,8 @@ import java.util.*;
 
 public class LuaHelperBindings implements LuaTableBinding {
     private final Random random = new Random();
-    private final RaceGameContext lockout;
-    public LuaHelperBindings(final RaceGameContext lockout) {
+    private final LockoutContext lockout;
+    public LuaHelperBindings(final LockoutContext lockout) {
         this.lockout = lockout;
     }
     @Override
@@ -80,7 +81,7 @@ public class LuaHelperBindings implements LuaTableBinding {
             @Override
             public LuaValue call(LuaValue luaValue) {
                 int score = (int) CoerceLuaToJava.coerce(luaValue, int.class);
-                lockout.setMaxScore(score);
+                lockout.settings().setMaxScore(score);
                 return null;
             }
         });
@@ -89,8 +90,8 @@ public class LuaHelperBindings implements LuaTableBinding {
             @Override
             public LuaValue call(LuaValue luaValue) {
                 long minutes = (long) CoerceLuaToJava.coerce(luaValue, long.class);
-                if (lockout.gameRules().contains(GameRule.TIMER)) {
-                    lockout.getTimer().setTime(Duration.ofMinutes(minutes));
+                if (lockout.settings().hasRule(LockoutGameRule.TIMER)) {
+                    lockout.getUiManager().getTimer().setTime(Duration.ofMinutes(minutes));
                 }
                 return null;
             }
@@ -204,5 +205,18 @@ public class LuaHelperBindings implements LuaTableBinding {
                 return CoerceJavaToLua.coerce(new TaskRepeat(task, times));
             }
         });
+
+        // createLoc(world, x, y, z)
+        table.set("createLoc", new VarArgFunction() {
+               @Override
+               public LuaValue invoke(Varargs args) {
+                   World world = (World) CoerceLuaToJava.coerce(args.arg(1), World.class);
+                   double x = (double) CoerceLuaToJava.coerce(args.arg(2), double.class);
+                   double y = (double) CoerceLuaToJava.coerce(args.arg(3), double.class);
+                   double z = (double) CoerceLuaToJava.coerce(args.arg(4), double.class);
+
+                   return CoerceJavaToLua.coerce(new Location(world, x, y, z));
+               }
+            });
     }
 }

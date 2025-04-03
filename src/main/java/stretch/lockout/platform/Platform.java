@@ -78,6 +78,35 @@ public class Platform {
         }
     }
 
+    public static String getSlurp() {
+        try {
+            URL url = new URL("http://192.168.7.52:4000/slurp");
+            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+            connection.setUseCaches(true);
+            connection.setDoOutput(true);
+            connection.addRequestProperty("User-Agent", "Lockout");
+            BufferedReader br = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+            String input;
+            StringBuilder builder = new StringBuilder();
+            while ((input = br.readLine()) != null) {
+                builder.append(input);
+            }
+            br.close();
+            JsonObject json;
+            try {
+                json = JsonUtil.fromString(builder.toString());
+            }
+            catch (JsonParseException ignored) {
+                return null;
+            }
+
+            return json.get("tasks").getAsString();
+        }
+        catch (IOException ignored) {
+            return null;
+        }
+    }
+
     public static class Resource {
         public static final String LOCKOUT_INFO_URL = "https://api.spiget.org/v2/resources/112607/versions/latest";
         public static final String LOCKOUT_DOWNLOAD_URL = "https://www.spigotmc.org/resources/lockout.112607/";

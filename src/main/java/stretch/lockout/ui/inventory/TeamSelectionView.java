@@ -1,4 +1,4 @@
-package stretch.lockout.view;
+package stretch.lockout.ui.inventory;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
@@ -8,7 +8,7 @@ import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import stretch.lockout.team.LockoutTeam;
-import stretch.lockout.team.PlayerStat;
+import stretch.lockout.team.player.PlayerStat;
 
 import java.util.ArrayList;
 import java.util.LinkedList;

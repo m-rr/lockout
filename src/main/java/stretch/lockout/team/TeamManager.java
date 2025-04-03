@@ -7,7 +7,9 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.potion.PotionEffect;
 import stretch.lockout.event.PlayerJoinTeamEvent;
-import stretch.lockout.view.TeamSelectionView;
+import stretch.lockout.game.state.LockoutSettings;
+import stretch.lockout.team.player.PlayerStat;
+import stretch.lockout.ui.inventory.TeamSelectionView;
 
 import java.util.*;
 import java.util.function.Consumer;
@@ -15,21 +17,50 @@ import java.util.stream.Collectors;
 
 public class TeamManager {
     private Set<LockoutTeam> lockoutTeams;
+    private Set<PlayerStat> playerStatCache;
+    private Set<UUID> uuidCache;
+    private boolean teamLock = false;
+    private LockoutSettings settings;
 
     private TeamSelectionView teamSelectionView;
-    private int defaultTeams = 0;
-    private int teamSize = 16;
-    private int maxTeams = 8;
+    //private int defaultTeams = 0;
+    //private int teamSize = 16;
+    //private int maxTeams = 8;
 
-    public TeamManager() {
+    public TeamManager(LockoutSettings settings) {
         this.lockoutTeams = new HashSet<>();
+        this.playerStatCache = new HashSet<>();
+        this.uuidCache = new HashSet<>();
         this.teamSelectionView = new TeamSelectionView();
+        this.settings = settings;
     }
 
-    public TeamManager(Collection<LockoutTeam> teams) {
-        teams.forEach(team -> team.setTeamManager(this));
-        this.lockoutTeams = new HashSet<>(teams);
-        this.teamSelectionView = new TeamSelectionView();
+    public void updateSettings(LockoutSettings settings) {
+        this.settings = settings;
+    }
+
+    public boolean isLocked() {
+        return this.teamLock;
+    }
+
+    public void lock() {
+        playerStatCache = getPlayerStats();
+        uuidCache = getPlayerUUIDs();
+        this.teamLock = true;
+    }
+
+    public void unlock() {
+        playerStatCache = new HashSet<>();
+        uuidCache = new HashSet<>();
+        this.teamLock = false;
+    }
+
+    private boolean isValidPlayerStatCache() {
+        return isLocked() && !playerStatCache.isEmpty();
+    }
+
+    private boolean isValidUUIDCache() {
+        return isLocked() && !uuidCache.isEmpty();
     }
 
     public TeamSelectionView getTeamSelectionView() {
@@ -107,8 +138,14 @@ public class TeamManager {
     }
 
     public Set<PlayerStat> getPlayerStats() {
-        return getTeams().stream()
+        return isValidPlayerStatCache() ? playerStatCache : getTeams().stream()
                 .flatMap(team -> team.getPlayerStats().stream())
+                .collect(Collectors.toSet());
+    }
+
+    public Set<UUID> getPlayerUUIDs() {
+        return isValidUUIDCache() ? uuidCache : getPlayerStats().stream()
+                .map(playerStat -> playerStat.getPlayer().getUniqueId())
                 .collect(Collectors.toSet());
     }
 
@@ -129,8 +166,9 @@ public class TeamManager {
                 ));
     }
 
-    public boolean isPlayerOnTeam(Player player) {
-        return getUUIDMappedPlayerStats().containsKey(player.getUniqueId());
+    public boolean isPlayerOnTeam(final Player player) {
+        //return getUUIDMappedPlayerStats().containsKey(player.getUniqueId());
+        return getPlayerUUIDs().contains(player.getUniqueId());
     }
 
     public void doToAllPlayers(Consumer<Player> doAction) {
@@ -138,23 +176,23 @@ public class TeamManager {
     }
 
     public void addDefaultTeams() {
-        for (int i = 0; i < DyeColor.values().length && i < defaultTeams; i++ ) {
+        for (int i = 0; i < DyeColor.values().length && i < settings.getDefaultTeams(); i++ ) {
             DyeColor dyeColor = DyeColor.values()[i];
-            var team = new LockoutTeam(dyeColor.name(), teamSize);
+            var team = new LockoutTeam(dyeColor.name(), settings.getTeamSize());
             team.setGuiItem(new ItemStack(Material.getMaterial(dyeColor.name() + "_WOOL")));
             addTeam(team);
         }
     }
 
-    public void setDefaultTeams(final int defaultTeams) {this.defaultTeams = defaultTeams;}
+    /*public void setDefaultTeams(final int defaultTeams) {this.defaultTeams = defaultTeams;}
     public void setTeamSize(final int teamSize) {this.teamSize = teamSize;}
     public void setMaxTeams(final int maxTeams) {this.maxTeams = maxTeams;}
     public int getMaxTeams() {return this.maxTeams;}
     public int getTeamSize() {return this.teamSize;}
-    public int getDefaultTeams() {return this.defaultTeams;}
+    public int getDefaultTeams() {return this.defaultTeams;}*/
 
     public boolean addTeam(LockoutTeam team) {
-        if (getTeams().size() >= maxTeams) {
+        if (getTeams().size() >= settings.getMaxTeams()) {
             return false;
         }
         team.setTeamManager(this);
@@ -166,11 +204,13 @@ public class TeamManager {
 
     // Safe to try
     public boolean createTeam(String teamName) {
-        if (getMappedTeams().containsKey(teamName) || getTeams().size() >= maxTeams) {
+        if (isLocked()
+                || getMappedTeams().containsKey(teamName)
+                || getTeams().size() >= settings.getMaxTeams()) {
             return false;
         }
 
-        LockoutTeam team = new LockoutTeam(teamName, teamSize, this);
+        LockoutTeam team = new LockoutTeam(teamName, settings.getTeamSize(), this);
 
         getTeams().add(team);
         teamSelectionView.addTeam(team);
@@ -179,7 +219,10 @@ public class TeamManager {
     }
 
     public boolean addPlayerToTeam(Player player, String teamName) {
-        if (isPlayerOnTeam(player) || !isTeam(teamName) || getTeamByName(teamName).isFull()) {
+        if (isLocked()
+                || isPlayerOnTeam(player)
+                || !isTeam(teamName)
+                || getTeamByName(teamName).isFull()) {
             return false;
         }
 

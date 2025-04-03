@@ -21,11 +21,13 @@ import org.luaj.vm2.lib.ThreeArgFunction;
 import org.luaj.vm2.lib.VarArgFunction;
 import org.luaj.vm2.lib.jse.CoerceJavaToLua;
 import org.luaj.vm2.lib.jse.CoerceLuaToJava;
+import stretch.lockout.event.state.PlayerStateChangeEvent;
 import stretch.lockout.lua.LuaBlockPredicate;
 import stretch.lockout.lua.LuaTaskBuilder;
 import stretch.lockout.task.Task;
 import stretch.lockout.task.TaskORComposite;
 import stretch.lockout.task.TaskPvp;
+import stretch.lockout.task.special.TaskAdvancement;
 import stretch.lockout.task.special.TaskCauldron;
 import stretch.lockout.task.special.TaskDamageFromSource;
 import stretch.lockout.task.special.TaskPotion;
@@ -54,7 +56,7 @@ public class LuaTaskBindings implements LuaTableBinding {
             }
         });
 
-        // destroy(entitytype, value, description, guiMaterial)
+        // destroy(material, value, description, guiMaterial)
         table.set("destroy", new VarArgFunction() {
             @Override
             public Varargs invoke(Varargs args) {
@@ -181,11 +183,25 @@ public class LuaTaskBindings implements LuaTableBinding {
             }
         });
 
+        // playerState(value, description, guiMaterial, pred)
+        table.set("playerState", new VarArgFunction() {
+            @Override
+            public Varargs invoke(Varargs args) {
+                int value = (int) CoerceLuaToJava.coerce(args.arg(1), int.class);
+                String description = (String) CoerceLuaToJava.coerce(args.arg(2), String.class);
+                ItemStack guiItem = new ItemStack((Material) CoerceLuaToJava.coerce(args.arg(3), Material.class));
+
+                return CoerceJavaToLua.coerce(new Task(PlayerStateChangeEvent.class, value, description)
+                        .setGuiItemStack(guiItem)
+                        .addPlayerCondition(args.arg(4)));
+            }
+        });
+
         // getEffect(potionEffectType, value, description, guiMaterial)
         table.set("getEffect", new VarArgFunction() {
             @Override
             public Varargs invoke(Varargs args) {
-                PotionEffectType potionEffectType = (PotionEffectType) CoerceLuaToJava.coerce(args.arg(0), PotionEffectType.class);
+                PotionEffectType potionEffectType = (PotionEffectType) CoerceLuaToJava.coerce(args.arg(1), PotionEffectType.class);
                 int value = (int) CoerceLuaToJava.coerce(args.arg(2), int.class);
                 String description = (String) CoerceLuaToJava.coerce(args.arg(3), String.class);
                 ItemStack guiItem = new ItemStack((Material) CoerceLuaToJava.coerce(args.arg(4), Material.class));
@@ -340,9 +356,11 @@ public class LuaTaskBindings implements LuaTableBinding {
                 String description = (String) CoerceLuaToJava.coerce(args.arg(3), String.class);
                 ItemStack guiItem = new ItemStack((Material) CoerceLuaToJava.coerce(args.arg(4), Material.class));
 
-                return CoerceJavaToLua.coerce(new Task(PlayerMoveEvent.class, value, description)
-                        .addPlayerPredicate(player -> player.getLocation().getBlock().getRelative(BlockFace.DOWN).getType() == material)
+                return CoerceJavaToLua.coerce(new Task(PlayerStateChangeEvent.class, value, description)
+                        .addPlayerCondition(player -> player.getLocation().getBlock()
+                                .getRelative(BlockFace.DOWN).getType() == material)
                         .setGuiItemStack(guiItem));
+
             }
         });
 
@@ -356,7 +374,7 @@ public class LuaTaskBindings implements LuaTableBinding {
                 ItemStack guiItem = new ItemStack((Material) CoerceLuaToJava.coerce(args.arg(4), Material.class));
 
                 return CoerceJavaToLua.coerce(new Task(PlayerMoveEvent.class, value, description)
-                        .addPlayerPredicate(player -> materials.contains(player.getLocation().getBlock().getRelative(BlockFace.DOWN).getType()))
+                        .addPlayerCondition(player -> materials.contains(player.getLocation().getBlock().getRelative(BlockFace.DOWN).getType()))
                         .setGuiItemStack(guiItem));
             }
         });
@@ -369,7 +387,7 @@ public class LuaTaskBindings implements LuaTableBinding {
             }
         });
 
-        //interactEntityAny(entityGroup, value, description, guiMaterial)
+        // interactEntityAny(entityGroup, value, description, guiMaterial)
         table.set("interactEntityAny", new VarArgFunction() {
             @Override
             public Varargs invoke(Varargs args) {
@@ -377,7 +395,7 @@ public class LuaTaskBindings implements LuaTableBinding {
             }
         });
 
-        //interactBlock(material, value, description, guiMaterial)
+        // interactBlock(material, value, description, guiMaterial)
         table.set("interactBlock", new VarArgFunction() {
             @Override
             public Varargs invoke(Varargs args) {
@@ -385,7 +403,7 @@ public class LuaTaskBindings implements LuaTableBinding {
             }
         });
 
-        //interactBlockAny(materialType, value, description, guiMaterial)
+        // interactBlockAny(materialType, value, description, guiMaterial)
         table.set("interactBlockAny", new VarArgFunction() {
             @Override
             public Varargs invoke(Varargs args) {
@@ -423,7 +441,7 @@ public class LuaTaskBindings implements LuaTableBinding {
             }
         });
 
-        //pvp(value, description, guiMaterial)
+        // pvp(value, description, guiMaterial)
         table.set("pvp", new ThreeArgFunction() {
             @Override
             public LuaValue call(LuaValue luaValue, LuaValue luaValue1, LuaValue luaValue2) {
@@ -435,5 +453,22 @@ public class LuaTaskBindings implements LuaTableBinding {
                         .setGuiItemStack(guiItem));
             }
         });
+
+        //advancement(advancement, value, description, guiMaterial)
+        table.set("advancement", new VarArgFunction() {
+                        @Override
+                        public Varargs invoke(Varargs args) {
+                                //Advancement advancement = (Advancement) CoerceLuaToJava.coerce(args.arg(1), Advancement.class);
+                                String title = (String) CoerceLuaToJava.coerce(args.arg(1), String.class);
+                                int value = (int) CoerceLuaToJava.coerce(args.arg(2), int.class);
+                                String description = (String) CoerceLuaToJava.coerce(args.arg(3), String.class);
+                                ItemStack guiItem = new ItemStack((Material) CoerceLuaToJava.coerce(args.arg(4), Material.class));
+
+                                return CoerceJavaToLua.coerce(new TaskAdvancement(title, value, description)
+                                                              .setGuiItemStack(guiItem));
+                        }
+                });
+
     }
+
 }

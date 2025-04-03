@@ -6,6 +6,6 @@ import org.luaj.vm2.LuaValue;
 import java.util.function.Predicate;
 
 public interface BlockTask {
-    TaskComponent addBlockPredicate(Predicate<Block> condition);
-    TaskComponent addBlockPredicate(LuaValue condition);
+    TaskComponent addBlockCondition(Predicate<Block> condition);
+    TaskComponent addBlockCondition(LuaValue condition);
 }

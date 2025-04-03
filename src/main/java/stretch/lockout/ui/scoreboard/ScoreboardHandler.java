@@ -1,7 +1,8 @@
-package stretch.lockout.scoreboard;
+package stretch.lockout.ui.scoreboard;
 
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
+import org.bukkit.entity.Player;
 import org.bukkit.scoreboard.DisplaySlot;
 import org.bukkit.scoreboard.Objective;
 import org.bukkit.scoreboard.Score;
@@ -24,7 +25,7 @@ public class ScoreboardHandler {
         boardObjective.setDisplayName(TITLE);
     }
 
-    public void addTeam(LockoutTeam lockoutTeam) {
+    public void addTeam(final LockoutTeam lockoutTeam) {
         teams.add(lockoutTeam);
     }
 
@@ -40,6 +41,10 @@ public class ScoreboardHandler {
         teams.forEach(team -> {
             team.doToPlayers(player -> player.setScoreboard(Bukkit.getScoreboardManager().getNewScoreboard()));
         });
+    }
+
+    public void updatePlayer(final Player player) {
+        player.setScoreboard(getBoard());
     }
 
     public Scoreboard getBoard() {return board;}

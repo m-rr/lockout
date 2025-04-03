@@ -1,4 +1,4 @@
-package stretch.lockout.scoreboard.bar;
+package stretch.lockout.ui.bar;
 
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -38,7 +38,7 @@ public class LockoutTimer extends LockoutBar {
         }
     }
 
-    public void startTimer(Plugin plugin, Runnable onComplete) {
+    public void startTimer(Plugin plugin, boolean show, Runnable onComplete) {
         timerTask = Bukkit.getScheduler().runTaskTimer(plugin,
                 () -> {
             if (currTime.toSeconds() <= 0) {
@@ -46,7 +46,9 @@ public class LockoutTimer extends LockoutBar {
                 onComplete.run();
             }
             currTime = currTime.minusSeconds(1);
-            bossBar.setTitle(ChatColor.GOLD + readableTime());
+            if (show) {
+                bossBar.setTitle(ChatColor.GOLD + readableTime());
+            }
                 }, 1L, 20L);
     }
 

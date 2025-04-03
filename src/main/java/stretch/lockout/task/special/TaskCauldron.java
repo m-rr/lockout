@@ -5,6 +5,7 @@ import org.bukkit.entity.HumanEntity;
 import org.bukkit.event.Event;
 import org.bukkit.event.block.CauldronLevelChangeEvent;
 import org.luaj.vm2.LuaValue;
+import stretch.lockout.event.executor.LockoutWrappedEvent;
 import stretch.lockout.task.BlockTask;
 import stretch.lockout.task.Task;
 import stretch.lockout.task.TaskComponent;
@@ -13,7 +14,7 @@ import java.util.function.Predicate;
 
 public class TaskCauldron extends Task {
     private CauldronLevelChangeEvent.ChangeReason changeReason;
-    private TaskCauldron(Class eventClass, int value, String description) {
+    private TaskCauldron(Class<? extends Event> eventClass, int value, String description) {
         super(eventClass, value, description);
     }
 
@@ -23,12 +24,14 @@ public class TaskCauldron extends Task {
     }
 
     @Override
-    public boolean doesAccomplish(HumanEntity player, Event event) {
+    public boolean doesAccomplish(final LockoutWrappedEvent lockoutEvent) {
+        Event event = lockoutEvent.getEvent();
         if (!(event instanceof CauldronLevelChangeEvent levelChangeEvent)) {
             return false;
         }
+
         return levelChangeEvent.getReason() == changeReason
-                && super.doesAccomplish(player, event);
+                && super.doesAccomplish(lockoutEvent);
     }
 
 }

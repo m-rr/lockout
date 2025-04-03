@@ -6,11 +6,9 @@ import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
-import org.bukkit.entity.HumanEntity;
 import org.bukkit.entity.Player;
-import org.checkerframework.checker.units.qual.C;
-import stretch.lockout.game.GameRule;
-import stretch.lockout.game.RaceGameContext;
+import stretch.lockout.game.LockoutGameRule;
+import stretch.lockout.game.state.LockoutSettings;
 
 public class MessageUtil {
     private static void sendAll(ChatMessageType chatMessageType, String message) {
@@ -41,6 +39,18 @@ public class MessageUtil {
         player.spigot().sendMessage(ChatMessageType.CHAT, content);
     }
 
+    public static void sendAllTitle(String message, String submessage, int fadeIn, int stay, int fadeOut) {
+        Bukkit.getOnlinePlayers().forEach(player -> player.sendTitle(message, submessage, fadeIn, stay, fadeOut));
+    }
+
+    public static void sendTitle(Player player, String message, int fadeIn, int stay, int fadeOut) {
+        player.sendTitle(message, "", fadeIn, stay, fadeOut);
+    }
+
+    public static void sendTitle(Player player, String message, String subMessage, int fadeIn, int stay, int fadeOut) {
+        player.sendTitle(message, subMessage, fadeIn, stay, fadeOut);
+    }
+
     public static void sendActionBar(Player player, String message) {
         send(player, ChatMessageType.ACTION_BAR, message);
     }
@@ -49,13 +59,20 @@ public class MessageUtil {
         log(Bukkit.getConsoleSender(), message);
     }
 
-    public static void debugLog(final RaceGameContext lockout, String message) {
-        if (lockout.gameRules().contains(GameRule.DEBUG)) {
-            consoleLog(message);
+    public static void debugLog(final LockoutSettings settings, String message) {
+        if (settings.hasRule(LockoutGameRule.DEV)) {
+            String finalMessage = ChatColor.BLACK + "[" + ChatColor.DARK_BLUE
+                    + "DEBUG" + ChatColor.BLACK + "] " + ChatColor.GRAY + message;
+
+            consoleLog(finalMessage);
             Bukkit.getOnlinePlayers().stream()
                     .filter(Player::isOp)
-                    .forEach(player -> MessageUtil.sendChat(player, message));
+                    .forEach(player -> MessageUtil.sendChat(player, finalMessage));
         }
+    }
+
+    public static void evalLog(CommandSender sender, String message) {
+        log(sender, ChatColor.AQUA + " => " + message);
     }
 
     public static void log(CommandSender sender, String message) {

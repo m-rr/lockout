@@ -1,25 +1,25 @@
 package stretch.lockout.task;
 
 import org.bukkit.Location;
+import org.bukkit.Material;
 import org.bukkit.entity.HumanEntity;
+import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
 import org.bukkit.inventory.ItemStack;
 import org.luaj.vm2.LuaValue;
+import stretch.lockout.event.executor.LockoutWrappedEvent;
 import stretch.lockout.reward.RewardComponent;
-import stretch.lockout.team.PlayerStat;
+import stretch.lockout.team.player.PlayerStat;
 
 import java.time.Duration;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
+import java.util.*;
 import java.util.function.Predicate;
 
 public sealed abstract class TaskComposite implements TimeCompletableTask permits TaskANDComposite, TaskORComposite, TaskTHENComposite {
     final protected List<TaskComponent> taskComponents = new ArrayList<>();
     final protected HashMap<HumanEntity, HashSet<TaskComponent>> playerCompletedTasks = new HashMap<>();
-    final protected int value;
-    final protected HashSet<Class> eventClassSet = new HashSet<>();
+    protected int value;
+    final protected HashSet<Class<? extends Event>> eventClassSet = new HashSet<>();
     protected String descriptionEntryPrefix;
     protected String description;
     protected ItemStack guiItemStack;
@@ -77,14 +77,20 @@ public sealed abstract class TaskComposite implements TimeCompletableTask permit
     }
 
     @Override
-    public TaskComponent addPlayerPredicate(Predicate<HumanEntity> predicate) {
-        taskComponents.forEach(taskComponent -> taskComponent.addPlayerPredicate(predicate));
+    public TaskComponent setDescription(String description) {
+        this.description = description;
         return this;
     }
 
     @Override
-    public TaskComponent addPlayerPredicate(LuaValue predicate) {
-        taskComponents.forEach(taskComponent -> taskComponent.addPlayerPredicate(predicate));
+    public TaskComponent addPlayerCondition(Predicate<HumanEntity> predicate) {
+        taskComponents.forEach(taskComponent -> taskComponent.addPlayerCondition(predicate));
+        return this;
+    }
+
+    @Override
+    public TaskComponent addPlayerCondition(LuaValue predicate) {
+        taskComponents.forEach(taskComponent -> taskComponent.addPlayerCondition(predicate));
         return this;
     }
 
@@ -93,12 +99,29 @@ public sealed abstract class TaskComposite implements TimeCompletableTask permit
     }
 
     @Override
-    public HashSet<Class> getEventClasses() {
+    public HashSet<Class<? extends Event>> getEventClasses() {
         return eventClassSet;
     }
 
     @Override
     public int getValue() {return value;}
+
+    @Override
+    public TaskComponent setValue(final int value) {
+        this.value = value;
+        return this;
+    }
+
+    @Override
+    public Material getDisplay() {
+        return hasGuiItemStack() ? getGuiItemStack().getType() : Material.AIR;
+    }
+
+    @Override
+    public TaskComponent setDisplay(Material display) {
+        setGuiItemStack(new ItemStack(display));
+        return this;
+    }
 
     @Override
     public RewardComponent getReward() {return reward;}
@@ -143,9 +166,15 @@ public sealed abstract class TaskComposite implements TimeCompletableTask permit
     }
 
     @Override
-    public boolean doesAccomplish(HumanEntity player, Event event) {
+    public boolean doesAccomplish(final LockoutWrappedEvent lockoutEvent) {
+        Optional<Player> optionalPlayer = lockoutEvent.getPlayer();
+        if (optionalPlayer.isEmpty()) {
+            return false;
+        }
+        Player player = optionalPlayer.get();
+
         for (TaskComponent taskComponent : taskComponents) {
-            if (taskComponent.doesAccomplish(player, event)) {
+            if (taskComponent.doesAccomplish(lockoutEvent)) {
                 setPlayerCompletedTasks(player, taskComponent);
             }
         }

@@ -1,7 +1,7 @@
 package stretch.lockout.reward;
 
 import org.luaj.vm2.LuaValue;
-import stretch.lockout.team.PlayerStat;
+import stretch.lockout.team.player.PlayerStat;
 import stretch.lockout.util.MessageUtil;
 
 import java.util.*;

@@ -1,27 +1,31 @@
 package stretch.lockout.task.manager;
 
+import org.bukkit.event.Event;
 import stretch.lockout.task.TimeCompletableTask;
 import stretch.lockout.task.TaskComponent;
 import stretch.lockout.task.TaskInvisible;
-import stretch.lockout.team.PlayerStat;
+import stretch.lockout.team.player.PlayerStat;
 
 import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 public class TaskCollection {
-    private final Map<Class, Set<TaskComponent>> tasks = new HashMap<>();
+    private final Map<Class<? extends Event>, Set<TaskComponent>> tasks = new HashMap<>();
     private final Queue<TimeCompletableTask> completedTasks = new LinkedList<>();
 
-    public TaskCollection() {
-    }
+    public TaskCollection() {}
 
     public TaskCollection(Collection<TaskComponent> taskComponents) {
         taskComponents.forEach(this::addTask);
     }
 
-    public Map<Class, Set<TaskComponent>> getMappedTasks() {
+    public Map<Class<? extends Event>, Set<TaskComponent>> getMappedTasks() {
         return tasks;
+    }
+
+    public Set<Class<? extends Event>> getEventClasses() {
+        return getMappedTasks().keySet();
     }
 
     public Set<TaskComponent> getTasks() {

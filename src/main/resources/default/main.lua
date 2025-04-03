@@ -83,7 +83,7 @@ local swap_stick = action(RewardType.SOLO, "Swap item with tracked player",
                                            swap_inv(player, Material.STICK, 1) end)
 
 local speed_II_temp = potion(Effect.SPEED, 2, RewardType.TEAM, "Speed I temporary", 2400)
-local slowness_II_enemies_temp = potion(Effect.SLOW, 2, RewardType.ENEMY, "Slowness for enemies", 2400)
+local slowness_II_enemies_temp = potion(Effect.SLOWNESS, 2, RewardType.ENEMY, "Slowness for enemies", 2400)
 local iron_pickaxe = item(Material.IRON_PICKAXE, 1, RewardType.TEAM, "Iron pickaxe", {efficiency=4})
 local rabbit = item(Material.COOKED_RABBIT, 15, RewardType.TEAM, "15 cooked rabbit")
 local netherite_shovel = item(Material.NETHERITE_SHOVEL, 1, RewardType.SOLO, "Netherite shovel", {efficiency=4})
@@ -113,15 +113,15 @@ local diamond_axe = item(Material.DIAMOND_AXE, 1, RewardType.SOLO, "Diamond axe"
 local boom = action(RewardType.SOLO, "You get boomed", smite)
 local tp_tracked_player = action(RewardType.SOLO, "Swap with tracked player", tp_tracked)
 local diamond_shovel = item(Material.DIAMOND_SHOVEL, 1, RewardType.TEAM, "Diamond shovel", {efficiency=4})
-local jump = potion(Effect.JUMP, 3, RewardType.SOLO, "Jump II")
+local jump = potion(Effect.JUMP_BOOST, 3, RewardType.SOLO, "Jump II")
 local speed_I = potion(Effect.SPEED, 1, RewardType.SOLO, "Speed II")
-local strength_I_team = potion(Effect.INCREASE_DAMAGE, 1, RewardType.TEAM, "Strength I for team")
+local strength_I_team = potion(Effect.STRENGTH, 1, RewardType.TEAM, "Strength I for team")
 local trident_loyalty = item(Material.TRIDENT, 1, RewardType.SOLO, "Loyalty trident", {loyalty=3, impaling=5})
 local trident_riptide = item(Material.TRIDENT, 1, RewardType.SOLO, "Riptide trident", {riptide=3})
 --local netherite_pickaxe = item(Material.NETHERITE_PICKAXE, 1, RewardType.SOLO, "NetheritePickaxe", {efficiency=3})
 local night_vision = potion(Effect.NIGHT_VISION, 1, RewardType.SOLO, "Night vision")
 --local resistance = potion(Effect.DAMAGE_RESISTANCE, 2, RewardType.SOLO, "Damage resistance", 600)
-local haste = potion(Effect.FAST_DIGGING, 3, RewardType.SOLO, "Haste III", 600)
+local haste = potion(Effect.HASTE, 3, RewardType.SOLO, "Haste III", 20 * 180)
 local pearl = item(Material.ENDER_PEARL, 1, RewardType.SOLO, "Enderpearl")
 local pearls = item(Material.ENDER_PEARL, 8, RewardType.SOLO, "Enderpearls")
 local feather_boots = item(Material.CHAINMAIL_BOOTS, 1, RewardType.SOLO, "Feather falling boots", {feather_falling=4})
@@ -355,6 +355,7 @@ local negative = {
                   :setReward(blindness)
                   }
 
+
 local animal = {
                 kill(Entity.BAT, 1, "Kill a bat", Material.BAT_SPAWN_EGG)
                 :setReward(iron_swift),
@@ -390,6 +391,15 @@ local animal = {
                 destroy(Material.TURTLE_EGG, 1, "Break a turtle egg", Material.TURTLE_EGG)
                 :setReward(turtle_helmet)
                 }
+
+
+local armadillo = interactEntity(Entity.ARMADILLO, 1, "Brush an armadillo", Material.ARMADILLO_SCUTE)
+  :addPlayerPredicate(function (player) return inMainHand(player, Material.BRUSH) end)
+      :setReward(invisibility)
+
+if containsBiomeType(biomes, BiomeType.SAVANNA) or containsBiomeType(biomes, BiomeType.BADLANDS) then
+table.insert(animal, armadillo)
+end
 
 local x_factor = {
                   obtain(Material.HEART_OF_THE_SEA, 1, "Find heart of the sea", Material.HEART_OF_THE_SEA)
@@ -459,9 +469,8 @@ local grind = {
                standOn(Material.BEDROCK, 1, "Stand on bedrock", Material.BEDROCK)
                :setReward(helium_enemies),
 
-               quest("org.bukkit.event.player.PlayerMoveEvent", 1, "Reach build height", Material.NETHER_STAR)
-               :addPlayerPredicate(function (player)
-                                            return aboveY(player, player:getWorld():getMaxHeight()) end)
+               playerState(1, "Reach build height", Material.NETHER_STAR,
+                       function (player) return aboveY(player, player:getWorld():getMaxHeight())  end)
                :setReward(rewards(feather_boots, pearl)),
 
                damageByEntity(Entity.FALLING_BLOCK, DamageCause.FALLING_BLOCK, 1, "Get crushed by anvil", Material.ANVIL)

@@ -6,6 +6,6 @@ import org.luaj.vm2.LuaValue;
 import java.util.function.Predicate;
 
 public interface EntityTask {
-    TaskComponent addEntityPredicate(Predicate<Mob> condition);
-    TaskComponent addEntityPredicate(LuaValue condition);
+    TaskComponent addEntityCondition(Predicate<Mob> condition);
+    TaskComponent addEntityCondition(LuaValue condition);
 }
