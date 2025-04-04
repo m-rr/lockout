@@ -2,18 +2,23 @@ package stretch.lockout.platform;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
+import org.bukkit.Bukkit;
+import org.bukkit.command.CommandSender;
+import org.bukkit.plugin.Plugin;
 import stretch.lockout.util.JsonUtil;
+import stretch.lockout.util.MessageUtil;
 
-import javax.annotation.Nullable;
 import java.io.BufferedReader;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 
 public class Platform {
-    public static @Nullable String latestUpdate() {
+    public static Optional<String> latestUpdate() {
         try {
             URL url = new URL(Resource.LOCKOUT_INFO_URL);
             HttpURLConnection connection = (HttpURLConnection) url.openConnection();
@@ -32,12 +37,13 @@ public class Platform {
                 stats = JsonUtil.fromString(builder.toString());
             }
             catch (JsonParseException ignored) {
-                return null;
+                return Optional.empty();
             }
-            return stats.get("name").getAsString();
+
+            return Optional.of(stats.get("name").getAsString());
         }
         catch (IOException ignored) {
-            return null;
+            return Optional.empty();
         }
     }
 
@@ -78,38 +84,9 @@ public class Platform {
         }
     }
 
-    public static String getSlurp() {
-        try {
-            URL url = new URL("http://192.168.7.52:4000/slurp");
-            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-            connection.setUseCaches(true);
-            connection.setDoOutput(true);
-            connection.addRequestProperty("User-Agent", "Lockout");
-            BufferedReader br = new BufferedReader(new InputStreamReader(connection.getInputStream()));
-            String input;
-            StringBuilder builder = new StringBuilder();
-            while ((input = br.readLine()) != null) {
-                builder.append(input);
-            }
-            br.close();
-            JsonObject json;
-            try {
-                json = JsonUtil.fromString(builder.toString());
-            }
-            catch (JsonParseException ignored) {
-                return null;
-            }
-
-            return json.get("tasks").getAsString();
-        }
-        catch (IOException ignored) {
-            return null;
-        }
-    }
-
     public static class Resource {
         public static final String LOCKOUT_INFO_URL = "https://api.spiget.org/v2/resources/112607/versions/latest";
         public static final String LOCKOUT_DOWNLOAD_URL = "https://www.spigotmc.org/resources/lockout.112607/";
-        public static final String LOCKOUT = "http://lockout.goodstretch.net";
+        public static final String LOCKOUT = "NOT_A_REAL_URL";
     }
 }

@@ -1,6 +1,6 @@
 package stretch.lockout.board;
 
-import org.jetbrains.annotations.NotNull;
+import org.bukkit.Bukkit;
 import stretch.lockout.game.LockoutContext;
 import stretch.lockout.lua.LuaEnvironment;
 import stretch.lockout.util.MessageUtil;
@@ -19,11 +19,11 @@ import java.util.stream.Stream;
 public class BoardManager {
     private final Path BOARD_PATH = Paths.get("plugins/Lockout/");
     LuaEnvironment luaEnvironment;
-    private final LockoutContext lockoutContext;
+    private final LockoutContext lockout;
     private final List<BoardInfo> boards = new ArrayList<>();
 
     public BoardManager(final LockoutContext lockoutContext) {
-        this.lockoutContext = lockoutContext;
+        this.lockout = lockoutContext;
         this.luaEnvironment = new LuaEnvironment(lockoutContext);
     }
 
@@ -37,57 +37,59 @@ public class BoardManager {
                 .findFirst();
     }
 
-    public void loadBoard(String boardName) {
-        luaEnvironment.resetTables();
-        MessageUtil.debugLog(lockoutContext.settings(), "Loading board " + boardName);
+    public void loadBoardAsync(final String boardName) {
+        Bukkit.getAsyncScheduler().runNow(lockout.getPlugin(), task -> {
+            luaEnvironment.resetTables();
+            MessageUtil.debugLog(lockout.settings(), "Loading board " + boardName);
 
-        Optional<BoardInfo> boardInfo = getBoard(boardName);
-        if (boardInfo.isEmpty()) {
-            throw new InvalidBoardPropertiesException("Board " + boardName + " not found");
-        }
-
-        // set lua working directory to the parent folder of the init file.
-        luaEnvironment.setEnvironmentPath(Path.of(boardInfo.get().entryPoint()).getParent().toString() + "/");
-
-        BiConsumer<String, String> evalVariable = (String variable, String value) -> {
-            // make sure that info table is populated with strings
-            String[] identifiers = variable.split("\\.");
-            if (identifiers.length > 1 && "info".equals(identifiers[0])) {
-                value = "\"" + value + "\"";
+            Optional<BoardInfo> boardInfo = getBoard(boardName);
+            if (boardInfo.isEmpty()) {
+                throw new InvalidBoardPropertiesException("Board " + boardName + " not found");
             }
-            MessageUtil.debugLog(lockoutContext.settings(), variable + " = " + value);
-            luaEnvironment.loadString(lockoutContext.getPlugin().getServer().getConsoleSender(), variable + " = " + value);
-        };
+
+            // set lua working directory to the parent folder of the init file.
+            luaEnvironment.setEnvironmentPath(Path.of(boardInfo.get().entryPoint()).getParent().toString() + "/");
+
+            BiConsumer<String, String> evalVariable = (String variable, String value) -> {
+                // make sure that info table is populated with strings
+                String[] identifiers = variable.split("\\.");
+                if (identifiers.length > 1 && "info".equals(identifiers[0])) {
+                    value = "\"" + value + "\"";
+                }
+                MessageUtil.debugLog(lockout.settings(), variable + " = " + value);
+                luaEnvironment.loadString(lockout.getPlugin().getServer().getConsoleSender(), variable + " = " + value);
+            };
 
 
-        MessageUtil.debugLog(lockoutContext.settings(), "Injecting variables");
-        // inject variables
-        Set<String> initTables = new HashSet<>();
-        boardInfo.get().variables()
-                .forEach((key, value) -> {
-                    String[] tables = getStrings(key);
+            MessageUtil.debugLog(lockout.settings(), "Injecting variables");
+            // inject variables
+            Set<String> initTables = new HashSet<>();
+            boardInfo.get().variables()
+                    .forEach((key, value) -> {
+                        String[] tables = getStrings(key);
 
-                    // make sure all tables are initialized before assigning values
-                    String currentTable = tables[0];
-                    for (int i = 1; i < tables.length; i++) {
-                        if (!initTables.contains(currentTable)) {
-                            MessageUtil.debugLog(lockoutContext.settings(), String.format("Initializing table '%s'", currentTable));
+                        // make sure all tables are initialized before assigning values
+                        String currentTable = tables[0];
+                        for (int i = 1; i < tables.length; i++) {
+                            if (!initTables.contains(currentTable)) {
+                                MessageUtil.debugLog(lockout.settings(), String.format("Initializing table '%s'", currentTable));
 
-                            initTables.add(currentTable);
-                            evalVariable.accept(currentTable, "{}");
-                            currentTable = String.join(".", tables[i]);
+                                initTables.add(currentTable);
+                                evalVariable.accept(currentTable, "{}");
+                                currentTable = String.join(".", tables[i]);
+                            }
                         }
-                    }
 
-                    evalVariable.accept(key, value);
-                });
+                        evalVariable.accept(key, value);
+                    });
 
 
-        String relativeInitPath = Path.of(luaEnvironment.getEnvironmentPath())
-                .relativize(Path.of(boardInfo.get().entryPoint())).toString();
+            String relativeInitPath = Path.of(luaEnvironment.getEnvironmentPath())
+                    .relativize(Path.of(boardInfo.get().entryPoint())).toString();
 
-        luaEnvironment.requireFile(relativeInitPath);
-        MessageUtil.debugLog(lockoutContext.settings(), String.format("Board %s loaded", boardName));
+            luaEnvironment.requireFile(relativeInitPath);
+            MessageUtil.debugLog(lockout.settings(), String.format("Board %s loaded", boardName));
+        });
     }
 
     private String[] getStrings(String key) {
@@ -102,7 +104,7 @@ public class BoardManager {
                     )
             );
         }
-        MessageUtil.debugLog(lockoutContext.settings(), "Found tables: " + Arrays.toString(tables));
+        MessageUtil.debugLog(lockout.settings(), "Found tables: " + Arrays.toString(tables));
         return tables;
     }
 
@@ -145,24 +147,26 @@ public class BoardManager {
         Path boardsFile = directory.resolve("board.properties");
 
         if (Files.exists(boardsFile)) {
-            MessageUtil.debugLog(lockoutContext.settings(), "Found existing board file: " + boardsFile);
+            MessageUtil.debugLog(lockout.settings(), "Found existing board file: " + boardsFile);
             BoardInfo boardInfo = createBoardInfo(boardsFile);
             boards.add(boardInfo);
         }
     }
 
-    public void registerBoards() {
-        MessageUtil.debugLog(lockoutContext.settings(), "Registering boards.");
-        MessageUtil.debugLog(lockoutContext.settings(), boards.stream()
-                .map(Record::toString)
-                .collect(Collectors.joining("\n")));
+    public void registerBoardsAsync() {
+        Bukkit.getAsyncScheduler().runNow(lockout.getPlugin(), task -> {
+            MessageUtil.debugLog(lockout.settings(), "Registering boards.");
+            MessageUtil.debugLog(lockout.settings(), boards.stream()
+                    .map(Record::toString)
+                    .collect(Collectors.joining("\n")));
 
-        try (Stream<Path> dirs = Files.walk(BOARD_PATH)) {
-            dirs.filter(Files::isDirectory)
-                    .forEach(this::findAndRegisterBoard);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+            try (Stream<Path> dirs = Files.walk(BOARD_PATH)) {
+                dirs.filter(Files::isDirectory)
+                        .forEach(this::findAndRegisterBoard);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        });
     }
 
     public void reset() {

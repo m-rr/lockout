@@ -15,8 +15,6 @@ import stretch.lockout.game.LockoutContext;
 import stretch.lockout.team.TeamManager;
 import stretch.lockout.util.SpigotSafeCall;
 
-import java.util.Optional;
-
 public record InventoryInputHandler(LockoutContext lockout) implements Listener {
 
     public InventoryInputHandler(LockoutContext lockout) {
@@ -51,7 +49,7 @@ public record InventoryInputHandler(LockoutContext lockout) implements Listener 
                         clickedItem.getItemMeta().getDisplayName(),
                         "");
 
-                lockout.getBoardManager().loadBoard(boardName);
+                lockout.getBoardManager().loadBoardAsync(boardName);
             }
             clickEvent.setCancelled(true);
             return;

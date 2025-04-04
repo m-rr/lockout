@@ -15,6 +15,7 @@ import stretch.lockout.team.TeamManager;
 import stretch.lockout.util.MessageUtil;
 
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 
 public class PlayerEventHandler implements Listener {
@@ -44,10 +45,10 @@ public class PlayerEventHandler implements Listener {
 
         // If op, check for update
         if (player.isOp() && lockout.settings().hasRule(LockoutGameRule.CHECK_UPDATE)) {
-            Bukkit.getScheduler().runTaskAsynchronously(lockout.getPlugin(), () -> {
+            Bukkit.getAsyncScheduler().runNow(lockout.getPlugin(), task -> {
                 String version = lockout.getPlugin().getDescription().getVersion();
-                String latest = Platform.latestUpdate();
-                if (latest == null || !latest.equals(version)) {
+                Optional<String> latest = Platform.latestUpdate();
+                if (latest.isEmpty() || !latest.get().equals(version)) {
                     MessageUtil.sendChat(player, "Plugin version " +
                             ChatColor.BLUE + latest +
                             ChatColor.DARK_GRAY + " is available; this server is using " +

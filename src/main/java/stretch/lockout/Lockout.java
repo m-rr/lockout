@@ -51,6 +51,8 @@ public final class Lockout extends JavaPlugin {
         lockout = new LockoutContext(this, gameSettings);
         MessageUtil.debugLog(gameSettings, "Created lockoutContext object");
 
+        lockout.getBoardManager().registerBoardsAsync();
+
         if (gameSettings.hasRule(LockoutGameRule.DEV)) {
             lockout.getUserLuaEnvironment().initUserChunk();
         }

@@ -29,15 +29,13 @@ public class DefaultStateHandler extends GameStateHandler {
         lockout.getUiManager().getTimer()
             .setTime(Duration.ofSeconds(time));
 
-        lockout.getBoardManager().registerBoards();
-
         // TODO make method for this
         if (lockout.settings().hasRule(LockoutGameRule.AUTO_LOAD)) {
             String boardName = Optional.ofNullable(lockout.getPlugin().getConfig()
                             .getString("autoLoadTask"))
                     .orElse("default");
             
-            lockout.getBoardManager().loadBoard(boardName);
+            lockout.getBoardManager().loadBoardAsync(boardName);
         }
 
         lockout.getEventExecutor().register();
