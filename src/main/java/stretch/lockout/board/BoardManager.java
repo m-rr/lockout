@@ -37,57 +37,59 @@ public class BoardManager {
                 .findFirst();
     }
 
-    public void loadBoard(final String boardName) {
-        luaEnvironment.resetTables();
-        MessageUtil.debugLog(lockout.settings(), "Loading board " + boardName);
+    public void loadBoardAsync(final String boardName) {
+        Bukkit.getAsyncScheduler().runNow(lockout.getPlugin(), task -> {
+            luaEnvironment.resetTables();
+            MessageUtil.debugLog(lockout.settings(), "Loading board " + boardName);
 
-        Optional<BoardInfo> boardInfo = getBoard(boardName);
-        if (boardInfo.isEmpty()) {
-            throw new InvalidBoardPropertiesException("Board " + boardName + " not found");
-        }
-
-        // set lua working directory to the parent folder of the init file.
-        luaEnvironment.setEnvironmentPath(Path.of(boardInfo.get().entryPoint()).getParent().toString() + "/");
-
-        BiConsumer<String, String> evalVariable = (String variable, String value) -> {
-            // make sure that info table is populated with strings
-            String[] identifiers = variable.split("\\.");
-            if (identifiers.length > 1 && "info".equals(identifiers[0])) {
-                value = "\"" + value + "\"";
+            Optional<BoardInfo> boardInfo = getBoard(boardName);
+            if (boardInfo.isEmpty()) {
+                throw new InvalidBoardPropertiesException("Board " + boardName + " not found");
             }
-            MessageUtil.debugLog(lockout.settings(), variable + " = " + value);
-            luaEnvironment.loadString(lockout.getPlugin().getServer().getConsoleSender(), variable + " = " + value);
-        };
+
+            // set lua working directory to the parent folder of the init file.
+            luaEnvironment.setEnvironmentPath(Path.of(boardInfo.get().entryPoint()).getParent().toString() + "/");
+
+            BiConsumer<String, String> evalVariable = (String variable, String value) -> {
+                // make sure that info table is populated with strings
+                String[] identifiers = variable.split("\\.");
+                if (identifiers.length > 1 && "info".equals(identifiers[0])) {
+                    value = "\"" + value + "\"";
+                }
+                MessageUtil.debugLog(lockout.settings(), variable + " = " + value);
+                luaEnvironment.loadString(lockout.getPlugin().getServer().getConsoleSender(), variable + " = " + value);
+            };
 
 
-        MessageUtil.debugLog(lockout.settings(), "Injecting variables");
-        // inject variables
-        Set<String> initTables = new HashSet<>();
-        boardInfo.get().variables()
-                .forEach((key, value) -> {
-                    String[] tables = getStrings(key);
+            MessageUtil.debugLog(lockout.settings(), "Injecting variables");
+            // inject variables
+            Set<String> initTables = new HashSet<>();
+            boardInfo.get().variables()
+                    .forEach((key, value) -> {
+                        String[] tables = getStrings(key);
 
-                    // make sure all tables are initialized before assigning values
-                    String currentTable = tables[0];
-                    for (int i = 1; i < tables.length; i++) {
-                        if (!initTables.contains(currentTable)) {
-                            MessageUtil.debugLog(lockout.settings(), String.format("Initializing table '%s'", currentTable));
+                        // make sure all tables are initialized before assigning values
+                        String currentTable = tables[0];
+                        for (int i = 1; i < tables.length; i++) {
+                            if (!initTables.contains(currentTable)) {
+                                MessageUtil.debugLog(lockout.settings(), String.format("Initializing table '%s'", currentTable));
 
-                            initTables.add(currentTable);
-                            evalVariable.accept(currentTable, "{}");
-                            currentTable = String.join(".", tables[i]);
+                                initTables.add(currentTable);
+                                evalVariable.accept(currentTable, "{}");
+                                currentTable = String.join(".", tables[i]);
+                            }
                         }
-                    }
 
-                    evalVariable.accept(key, value);
-                });
+                        evalVariable.accept(key, value);
+                    });
 
 
-        String relativeInitPath = Path.of(luaEnvironment.getEnvironmentPath())
-                .relativize(Path.of(boardInfo.get().entryPoint())).toString();
+            String relativeInitPath = Path.of(luaEnvironment.getEnvironmentPath())
+                    .relativize(Path.of(boardInfo.get().entryPoint())).toString();
 
-        luaEnvironment.requireFile(relativeInitPath);
-        MessageUtil.debugLog(lockout.settings(), String.format("Board %s loaded", boardName));
+            luaEnvironment.requireFile(relativeInitPath);
+            MessageUtil.debugLog(lockout.settings(), String.format("Board %s loaded", boardName));
+        });
     }
 
     private String[] getStrings(String key) {

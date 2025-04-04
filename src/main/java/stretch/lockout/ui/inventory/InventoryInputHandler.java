@@ -49,7 +49,7 @@ public record InventoryInputHandler(LockoutContext lockout) implements Listener 
                         clickedItem.getItemMeta().getDisplayName(),
                         "");
 
-                lockout.getBoardManager().loadBoard(boardName);
+                lockout.getBoardManager().loadBoardAsync(boardName);
             }
             clickEvent.setCancelled(true);
             return;

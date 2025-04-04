@@ -1,8 +1,8 @@
 package stretch.lockout.game;
 
 import com.google.common.collect.ImmutableList;
+import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
-import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
@@ -16,7 +16,6 @@ import stretch.lockout.kit.CompassKit;
 import stretch.lockout.team.LockoutTeam;
 import stretch.lockout.team.TeamManager;
 import stretch.lockout.util.MessageUtil;
-import stretch.lockout.world.AsyncChunkSearcher;
 
 import java.util.List;
 
@@ -84,27 +83,9 @@ public class LockoutCommand implements TabExecutor {
                         compassKit.apply(player);
                     }
                     case "dev" -> {
-                        if (!lockout.settings().hasRule(LockoutGameRule.DEV)) {
-                            return false;
-                        }
+                        if (lockout.settings().hasRule(LockoutGameRule.DEV)) {
 
-                        AsyncChunkSearcher chunkSearcher = new AsyncChunkSearcher(lockout.getPlugin(), player.getWorld(), 55, 200);
-                        // Search parameters
-                        Location centerLocation = player.getLocation();
-                        int searchRadius = Integer.parseInt(args[1]); // chunks
-                        Material targetMaterial = Material.getMaterial(args[2]);
-                        player.sendMessage(ChatColor.BLUE + "Searching for " + targetMaterial + " at " + centerLocation + " with radius of " + (searchRadius * 16) + " blocks");
-                        // Start the search process
-                        // Will load any unloaded chunks automatically
-                        chunkSearcher.findMaterialNear(player.getLocation(), searchRadius, targetMaterial, 8).thenAccept(locations -> {
-                            if (locations.isEmpty()) {
-                                player.sendMessage(ChatColor.RED + "Cannot find any " + targetMaterial + " at " + centerLocation);
-                            }
-                            else {
-                                player.sendMessage(ChatColor.GOLD + locations.toString());
-                                player.sendMessage(ChatColor.GREEN + "Found " + locations.size() + " " + targetMaterial);
-                            }
-                        });
+                        }
                     }
                     case "start" -> {
                     if (lockout.settings().hasRule(LockoutGameRule.OP_COMMANDS)
@@ -162,7 +143,6 @@ public class LockoutCommand implements TabExecutor {
                     lockout.getUserLuaEnvironment().initUserChunk();
 
                     lockout.getBoardManager().reset();
-                    lockout.getBoardManager().registerBoardsAsync();
 
                     lockout.getGameStateHandler().setGameState(GameState.END);
                     MessageUtil.debugLog(lockout.settings(), ChatColor.GREEN + "Reload complete");
@@ -214,9 +194,6 @@ public class LockoutCommand implements TabExecutor {
 
                     lockout.getUserLuaEnvironment().resetTables();
                     lockout.getUserLuaEnvironment().initUserChunk();
-
-                    lockout.getBoardManager().reset();
-                    lockout.getBoardManager().registerBoardsAsync();
 
                     lockout.getGameStateHandler().setGameState(GameState.END);
                     MessageUtil.debugLog(lockout.settings(), ChatColor.GREEN + "Reload complete");
