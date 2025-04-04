@@ -4,6 +4,8 @@ import org.bukkit.ChatColor;
 import org.bukkit.plugin.PluginDescriptionFile;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.plugin.java.JavaPluginLoader;
+import stretch.lockout.board.BoardManager;
+import stretch.lockout.board.FileBasedBoardManager;
 import stretch.lockout.game.LockoutGameRule;
 import stretch.lockout.game.state.LockoutSettings;
 import stretch.lockout.platform.Metrics;
@@ -16,7 +18,7 @@ import java.io.File;
 import java.util.List;
 import java.util.stream.Stream;
 
-public final class Lockout extends JavaPlugin {
+public class Lockout extends JavaPlugin {
     private final int pluginId = 19299;
     private LockoutContext lockout;
     private final String DEFAULT_TASK_NAME = "default/main.lua";
@@ -48,7 +50,9 @@ public final class Lockout extends JavaPlugin {
         LockoutSettings gameSettings = generateConfig(false);
         MessageUtil.debugLog(gameSettings, ChatColor.RED + "Lockout initialized in debug mode");
 
-        lockout = new LockoutContext(this, gameSettings);
+        BoardManager boardManager = new FileBasedBoardManager(this, gameSettings);
+
+        lockout = new LockoutContext(this, gameSettings, boardManager);
         MessageUtil.debugLog(gameSettings, "Created lockoutContext object");
 
         lockout.getBoardManager().registerBoardsAsync();

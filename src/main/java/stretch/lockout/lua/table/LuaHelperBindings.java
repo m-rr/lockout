@@ -9,6 +9,7 @@ import org.bukkit.World;
 import org.bukkit.block.Biome;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.plugin.Plugin;
 import org.luaj.vm2.LuaTable;
 import org.luaj.vm2.LuaValue;
 import org.luaj.vm2.Varargs;
@@ -20,8 +21,12 @@ import org.luaj.vm2.lib.jse.CoerceJavaToLua;
 import org.luaj.vm2.lib.jse.CoerceLuaToJava;
 import stretch.lockout.game.LockoutGameRule;
 import stretch.lockout.game.LockoutContext;
+import stretch.lockout.game.state.LockoutSettings;
 import stretch.lockout.lua.LuaTaskBuilder;
 import stretch.lockout.task.*;
+import stretch.lockout.task.manager.TaskCollection;
+import stretch.lockout.tracker.PlayerTracker;
+import stretch.lockout.ui.bar.LockoutTimer;
 
 import java.time.Duration;
 import java.util.*;
@@ -30,9 +35,17 @@ import java.util.function.Supplier;
 
 public class LuaHelperBindings implements LuaTableBinding {
     private final Random random = new Random();
-    private final LockoutContext lockout;
-    public LuaHelperBindings(final LockoutContext lockout) {
-        this.lockout = lockout;
+    private final LockoutSettings settings;
+    private final TaskCollection tasks;
+    private final LockoutTimer timer;
+    private final PlayerTracker tracker;
+    private final Plugin plugin;
+    public LuaHelperBindings(final Plugin plugin, final LockoutSettings settings, final TaskCollection tasks, final LockoutTimer timer, final PlayerTracker playerTracker) {
+        this.settings = settings;
+        this.tasks = tasks;
+        this.timer = timer;
+        this.tracker = playerTracker;
+        this.plugin = plugin;
     }
     @Override
     public void injectBindings(LuaTable table) {
@@ -40,7 +53,7 @@ public class LuaHelperBindings implements LuaTableBinding {
             @Override
             public LuaValue call(LuaValue luaValue) {
                 TaskComponent task = (TaskComponent) CoerceLuaToJava.coerce(luaValue, TaskComponent.class);
-                lockout.getMainTasks().addTask(task);
+                tasks.addTask(task);
                 return CoerceJavaToLua.coerce(task);
             }
         });
@@ -49,8 +62,9 @@ public class LuaHelperBindings implements LuaTableBinding {
             @Override
             public LuaValue call(LuaValue luaValue) {
                 TaskComponent task = (TaskComponent) CoerceLuaToJava.coerce(luaValue, TaskComponent.class);
-                lockout.getTieBreaker().addTask(task);
-                return CoerceJavaToLua.coerce(task);
+                //lockout.getTieBreaker().addTask(task);
+                throw new UnsupportedOperationException("_addTieBreaker is not supported");
+                //return CoerceJavaToLua.coerce(task);
             }
         });
 
@@ -77,7 +91,7 @@ public class LuaHelperBindings implements LuaTableBinding {
         table.set("_taskCount", new ZeroArgFunction() {
             @Override
             public LuaValue call() {
-                return CoerceJavaToLua.coerce(lockout.getCurrentTaskCollection().getTaskCount());
+                return CoerceJavaToLua.coerce(tasks.getTaskCount());
             }
         });
 
@@ -85,7 +99,7 @@ public class LuaHelperBindings implements LuaTableBinding {
             @Override
             public LuaValue call(LuaValue luaValue) {
                 int score = (int) CoerceLuaToJava.coerce(luaValue, int.class);
-                lockout.settings().setMaxScore(score);
+                settings.setMaxScore(score);
                 return null;
             }
         });
@@ -94,8 +108,8 @@ public class LuaHelperBindings implements LuaTableBinding {
             @Override
             public LuaValue call(LuaValue luaValue) {
                 long minutes = (long) CoerceLuaToJava.coerce(luaValue, long.class);
-                if (lockout.settings().hasRule(LockoutGameRule.TIMER)) {
-                    lockout.getUiManager().getTimer().setTime(Duration.ofMinutes(minutes));
+                if (settings.hasRule(LockoutGameRule.TIMER)) {
+                    timer.setTime(Duration.ofMinutes(minutes));
                 }
                 return null;
             }
@@ -105,7 +119,7 @@ public class LuaHelperBindings implements LuaTableBinding {
             @Override
             public LuaValue call(LuaValue luaValue) {
                 Player player = (Player) CoerceLuaToJava.coerce(luaValue, Player.class);
-                Player trackedPlayer = Optional.ofNullable(lockout.getPlayerTracker().getTrackedPlayer(player))
+                Player trackedPlayer = Optional.ofNullable(tracker.getTrackedPlayer(player))
                         .orElse(player);
                 return CoerceJavaToLua.coerce(trackedPlayer);
             }
@@ -150,12 +164,8 @@ public class LuaHelperBindings implements LuaTableBinding {
                 final Location negZ = new Location(start.getWorld(), 0D, 0D, -15D);
 
                 var regionScheduler = Bukkit.getRegionScheduler();
-                var plugin = lockout.getPlugin();
-
-                // check for biomes in a snowflake shape
-
                 final ConcurrentHashMap<Biome, Integer> biomes = new ConcurrentHashMap<>();
-
+                // check for biomes in a snowflake shape
                 regionScheduler.run(plugin, start, task -> findBiomes(start, posX, dist, biomes));
                 regionScheduler.run(plugin, start, task -> findBiomes(start, negX, dist, biomes));
                 regionScheduler.run(plugin, start, task -> findBiomes(start, posZ, dist, biomes));

@@ -4,6 +4,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.entity.HumanEntity;
 import stretch.lockout.Lockout;
 import stretch.lockout.board.BoardManager;
+import stretch.lockout.board.FileBasedBoardManager;
 import stretch.lockout.event.executor.LockoutEventExecutor;
 import stretch.lockout.event.state.PlayerStateChangeHandler;
 import stretch.lockout.game.state.DefaultStateHandler;
@@ -13,6 +14,7 @@ import stretch.lockout.game.state.LockoutSettings;
 import stretch.lockout.kit.KitHandler;
 import stretch.lockout.listener.*;
 import stretch.lockout.lua.LuaEnvironment;
+import stretch.lockout.lua.table.*;
 import stretch.lockout.reward.scheduler.RewardScheduler;
 import stretch.lockout.ui.UIManager;
 import stretch.lockout.ui.inventory.InventoryInputHandler;
@@ -33,16 +35,18 @@ public class LockoutContext {
     private TaskCollection tieBreaker = new TaskCollection();
     private PlayerTracker playerTracker = new PlayerTracker();
     private RewardScheduler rewardScheduler;
-    private final GameStateHandler gameStateHandler;
-    private final LockoutEventExecutor eventExecutor;
-    private final LuaEnvironment userLuaEnvironment;
-    private final BoardManager boardManager;
-    private final UIManager uiManager;
+    private GameStateHandler gameStateHandler;
+    private LockoutEventExecutor eventExecutor;
+    private LuaEnvironment userLuaEnvironment;
+    private BoardManager boardManager;
+    private UIManager uiManager;
     private LockoutSettings settings;
+    private final List<LuaTableBinding> luaBindings = new ArrayList<>();
     
-    public LockoutContext(final Lockout injectedPlugin, LockoutSettings settings) {
+    public LockoutContext(final Lockout injectedPlugin, LockoutSettings settings, BoardManager boardManager) {
         this.plugin = injectedPlugin;
         this.settings = settings;
+        this.boardManager = boardManager;
 
         new PlayerEventHandler(this);
         new TaskRaceEventHandler(this);
@@ -57,8 +61,17 @@ public class LockoutContext {
         eventExecutor = new LockoutEventExecutor(this);
         teamManager = new TeamManager(settings);
         rewardScheduler = new RewardScheduler(getPlugin());
-        userLuaEnvironment = new LuaEnvironment(this);
-        boardManager = new BoardManager(this);
+        userLuaEnvironment = new LuaEnvironment(getPlugin(), settings);
+
+        luaBindings.add(new LuaTaskBindings());
+        luaBindings.add(new LuaRewardBindings(settings(), getMainTasks()));
+        luaBindings.add(new LuaHelperBindings(plugin, settings(), getMainTasks(), getUiManager().getTimer(), getPlayerTracker()));
+        luaBindings.add(new LuaClassBindings());
+        luaBindings.add(new LuaPredicateBindings());
+
+        // Make sure that our lua environments have proper bindings available
+        getUserLuaEnvironment().addLuaTableBindings(luaBindings);
+        boardManager.getLuaEnvironment().addLuaTableBindings(luaBindings);
 
         gameStateHandler = new DefaultStateHandler(this);
     }
@@ -78,6 +91,46 @@ public class LockoutContext {
     public LuaEnvironment getUserLuaEnvironment() {return userLuaEnvironment;}
     public BoardManager getBoardManager() {return boardManager;}
     public LockoutEventExecutor getEventExecutor() {return eventExecutor;}
+
+    public void setMainTasks(TaskCollection mainTasks) {
+        this.mainTasks = mainTasks;
+    }
+
+    public void setSettings(LockoutSettings settings) {
+        this.settings = settings;
+    }
+
+    public void setUiManager(UIManager uiManager) {
+        this.uiManager = uiManager;
+    }
+
+    public void setBoardManager(BoardManager boardManager) {
+        this.boardManager = boardManager;
+    }
+
+    public void setUserLuaEnvironment(LuaEnvironment userLuaEnvironment) {
+        this.userLuaEnvironment = userLuaEnvironment;
+    }
+
+    public void setEventExecutor(LockoutEventExecutor eventExecutor) {
+        this.eventExecutor = eventExecutor;
+    }
+
+    public void setGameStateHandler(GameStateHandler gameStateHandler) {
+        this.gameStateHandler = gameStateHandler;
+    }
+
+    public void setRewardScheduler(RewardScheduler rewardScheduler) {
+        this.rewardScheduler = rewardScheduler;
+    }
+
+    public void setPlayerTracker(PlayerTracker playerTracker) {
+        this.playerTracker = playerTracker;
+    }
+
+    public void setTieBreaker(TaskCollection tieBreaker) {
+        this.tieBreaker = tieBreaker;
+    }
 
     public void reset() {
         Bukkit.getScheduler().cancelTasks(getPlugin());

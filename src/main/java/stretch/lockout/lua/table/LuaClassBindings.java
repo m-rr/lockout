@@ -22,9 +22,8 @@ import stretch.lockout.util.types.BiomeTypes;
 import stretch.lockout.util.types.MaterialTypes;
 
 public class LuaClassBindings implements LuaTableBinding {
-    private final LockoutContext lockout;
-    public LuaClassBindings(final LockoutContext lockout) {
-        this.lockout = lockout;
+    public LuaClassBindings() {
+
     }
     @Override
     public void injectBindings(LuaTable table) {
@@ -42,7 +41,7 @@ public class LuaClassBindings implements LuaTableBinding {
         table.set("ChatColor", CoerceJavaToLua.coerce(ChatColor.class));
         table.set("Attribute", CoerceJavaToLua.coerce(Attribute.class));
 
-        table.set("Lockout", new LockoutWrapper(lockout));
+        //table.set("Lockout", new LockoutWrapper(lockout));
         table.set("Effect", CoerceJavaToLua.coerce(LuaPotionEffect.class));
         table.set("GameRule", CoerceJavaToLua.coerce(LockoutGameRule.class));
         table.set("RewardType", CoerceJavaToLua.coerce(RewardType.class));
