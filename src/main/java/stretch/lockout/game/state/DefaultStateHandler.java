@@ -35,7 +35,7 @@ public class DefaultStateHandler extends GameStateHandler {
                             .getString("autoLoadTask"))
                     .orElse("default");
             
-            lockout.getBoardManager().loadBoardAsync(boardName);
+            lockout.getBoardManager().loadBoard(boardName);
         }
 
         lockout.getEventExecutor().register();
