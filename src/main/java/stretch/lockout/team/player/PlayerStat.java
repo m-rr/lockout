@@ -2,7 +2,7 @@ package stretch.lockout.team.player;
 
 import org.bukkit.entity.Player;
 import org.bukkit.scoreboard.Scoreboard;
-import stretch.lockout.task.TaskComponent;
+import stretch.lockout.task.api.TaskComponent;
 import stretch.lockout.team.LockoutTeam;
 
 import java.util.HashSet;

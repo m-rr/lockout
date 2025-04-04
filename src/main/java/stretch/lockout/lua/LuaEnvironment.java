@@ -1,7 +1,5 @@
 package stretch.lockout.lua;
 
-import com.google.common.collect.ImmutableList;
-
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -22,10 +20,7 @@ import org.luaj.vm2.lib.jse.CoerceLuaToJava;
 import org.luaj.vm2.lib.jse.JsePlatform;
 import stretch.lockout.game.state.LockoutSettings;
 import stretch.lockout.lua.table.*;
-import stretch.lockout.task.manager.TaskCollection;
-import stretch.lockout.tracker.PlayerTracker;
-import stretch.lockout.ui.bar.LockoutTimer;
-import stretch.lockout.util.MessageUtil;
+import stretch.lockout.util.LockoutLogger;
 
 public class LuaEnvironment implements EvalFileHandler {
     private Globals global_table;
@@ -56,10 +51,10 @@ public class LuaEnvironment implements EvalFileHandler {
             return;
         }
 
-        MessageUtil.debugLog(settings, "Attempting to load " + ChatColor.GREEN + "init.lua");
+        LockoutLogger.debugLog(settings, "Attempting to load " + ChatColor.GREEN + "init.lua");
         LuaValue userChunk = global_table.loadfile(getEnvironmentPath() + "init.lua");
         userChunk.call();
-        MessageUtil.debugLog(settings, "Loaded " + ChatColor.GREEN + "init.lua");
+        LockoutLogger.debugLog(settings, "Loaded " + ChatColor.GREEN + "init.lua");
     }
 
     public void initBaseTable() {
@@ -107,12 +102,12 @@ public class LuaEnvironment implements EvalFileHandler {
     }
 
     public void loadFile(CommandSender sender, String filePath) {
-        MessageUtil.debugLog(settings, "Attempting to load " + ChatColor.GREEN + filePath);
+        LockoutLogger.debugLog(settings, "Attempting to load " + ChatColor.GREEN + filePath);
         loadFile(filePath);
     }
 
     public void loadFile(String filePath) {
-        MessageUtil.debugLog(settings, "Attempting to load " + ChatColor.GREEN + filePath);
+        LockoutLogger.debugLog(settings, "Attempting to load " + ChatColor.GREEN + filePath);
         if (!filePath.endsWith(FILE_EXTENSION)) {
             filePath = filePath + FILE_EXTENSION;
         }
@@ -131,12 +126,12 @@ public class LuaEnvironment implements EvalFileHandler {
             LuaValue chunk = global_table.load(data);
             chunk.call();
             String message = "Evaluated: " + ChatColor.GREEN + data;
-            MessageUtil.consoleLog(message);
+            LockoutLogger.consoleLog(message);
             if (sender instanceof Player) {
-                MessageUtil.log(sender, message);
+                LockoutLogger.log(sender, message);
             }
         } catch (LuaError error) {
-            MessageUtil.log(sender, ChatColor.RED + error.getMessage());
+            LockoutLogger.log(sender, ChatColor.RED + error.getMessage());
         }
         finally {
             global_table.set("_p", CoerceJavaToLua.coerce(false));

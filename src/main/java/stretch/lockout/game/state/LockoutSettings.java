@@ -4,7 +4,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.World;
 import org.bukkit.configuration.ConfigurationSection;
 import stretch.lockout.game.LockoutGameRule;
-import stretch.lockout.util.MessageUtil;
+import stretch.lockout.util.LockoutLogger;
 
 import java.util.HashSet;
 import java.util.Optional;
@@ -134,15 +134,15 @@ public void showDiff(final LockoutSettings other) {
         newRule.removeAll(other.gameRules());
         other.gameRules().removeAll(rules);
         for (var r : newRule) {
-            MessageUtil.debugLog(this, r.name() + ": False => True");
+            LockoutLogger.debugLog(this, r.name() + ": False => True");
         }
         for (var r : other.gameRules()) {
-            MessageUtil.debugLog(this, r.name() + ": True => False");
+            LockoutLogger.debugLog(this, r.name() + ": True => False");
 
         }
 
         if (gameWorld != other.getGameWorld()) {
-            MessageUtil.debugLog(this, "WORLD: "
+            LockoutLogger.debugLog(this, "WORLD: "
                     + other.getGameWorld().getName() + " => " + gameWorld.getName());
         }
 
@@ -160,7 +160,7 @@ public void showDiff(final LockoutSettings other) {
 
     private void displaySettingDiff(String name, int newVal, int oldVal) {
         if (newVal != oldVal) {
-            MessageUtil.debugLog(this, name + ": " + oldVal + " => " + newVal);
+            LockoutLogger.debugLog(this, name + ": " + oldVal + " => " + newVal);
             //MessageUtil.debugLog(this, StringTemplate.STR."\{name}: \{oldVal} => \{newVal}");
         }
     }

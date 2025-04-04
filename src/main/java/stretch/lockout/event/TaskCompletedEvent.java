@@ -3,7 +3,7 @@ package stretch.lockout.event;
 import org.bukkit.event.Cancellable;
 import org.bukkit.event.Event;
 import org.bukkit.event.HandlerList;
-import stretch.lockout.task.TaskComponent;
+import stretch.lockout.task.api.TaskComponent;
 import stretch.lockout.team.player.PlayerStat;
 
 public class TaskCompletedEvent extends Event implements Cancellable {

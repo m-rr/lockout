@@ -2,11 +2,7 @@ package stretch.lockout.platform;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
-import org.bukkit.Bukkit;
-import org.bukkit.command.CommandSender;
-import org.bukkit.plugin.Plugin;
 import stretch.lockout.util.JsonUtil;
-import stretch.lockout.util.MessageUtil;
 
 import java.io.BufferedReader;
 import java.io.DataOutputStream;
@@ -15,7 +11,6 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
 
 public class Platform {
     public static Optional<String> latestUpdate() {

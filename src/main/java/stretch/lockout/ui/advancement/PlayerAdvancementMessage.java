@@ -11,7 +11,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.Material;
 
 import stretch.lockout.Lockout;
-import stretch.lockout.task.TaskComponent;
+import stretch.lockout.task.api.TaskComponent;
 
 import java.util.UUID;
 

@@ -16,8 +16,6 @@ import org.bukkit.event.inventory.InventoryInteractEvent;
 import org.bukkit.event.player.*;
 import org.bukkit.potion.PotionEffect;
 
-import stretch.lockout.util.MessageUtil;
-
 import java.util.Optional;
 
 

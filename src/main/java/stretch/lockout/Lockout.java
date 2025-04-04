@@ -12,7 +12,7 @@ import stretch.lockout.platform.Metrics;
 import stretch.lockout.game.state.GameState;
 import stretch.lockout.game.LockoutCommand;
 import stretch.lockout.game.LockoutContext;
-import stretch.lockout.util.MessageUtil;
+import stretch.lockout.util.LockoutLogger;
 
 import java.io.File;
 import java.util.List;
@@ -33,40 +33,42 @@ public class Lockout extends JavaPlugin {
 
     @Override
     public void onEnable() {
+        LockoutLogger.consoleLog("Enabling Lockout v" + getDescription().getVersion());
         // Plugin startup logic
         if (!getDataFolder().exists()) {
             if (!getDataFolder().mkdir()) {
-                MessageUtil.consoleLog(ChatColor.RED + "Failed to create plugin directory.");
+                LockoutLogger.consoleLog(ChatColor.RED + "Failed to create plugin directory.");
             }
         }
 
         File defaultTasks = new File(getDataFolder(), DEFAULT_TASK_NAME);
         if (!defaultTasks.exists()) {
             saveResource(DEFAULT_TASK_NAME, false);
-            MessageUtil.consoleLog("Created default task list.");
+            getLogger().info("Created default task list.");
         }
 
         saveDefaultConfig();
         LockoutSettings gameSettings = generateConfig(false);
-        MessageUtil.debugLog(gameSettings, ChatColor.RED + "Lockout initialized in debug mode");
+        LockoutLogger.debugLog(gameSettings, ChatColor.RED + "Lockout initialized in debug mode");
 
         BoardManager boardManager = new FileBasedBoardManager(this, gameSettings);
 
-        lockout = new LockoutContext(this, gameSettings, boardManager);
-        MessageUtil.debugLog(gameSettings, "Created lockoutContext object");
+        this.lockout = new LockoutContext(this, gameSettings, boardManager);
+        LockoutLogger.debugLog(gameSettings, "Created lockoutContext object");
 
         lockout.getBoardManager().registerBoardsAsync();
 
         if (gameSettings.hasRule(LockoutGameRule.DEV)) {
+            // Eval init.lua in Lockout directory. Useful for development.
             lockout.getUserLuaEnvironment().initUserChunk();
         }
 
-        getCommand("lockout")
-                .setExecutor(new LockoutCommand(lockout));
+        getCommand("lockout").setExecutor(new LockoutCommand(lockout));
 
         Metrics metrics = new Metrics(this, pluginId);
 
         lockout.getGameStateHandler().setGameState(GameState.PRE);
+        LockoutLogger.consoleLog(ChatColor.GREEN + "Lockout v" + getDescription().getVersion() + " enabled");
     }
 
     @Override
@@ -79,16 +81,12 @@ public class Lockout extends JavaPlugin {
 
     public LockoutSettings generateConfig(boolean regen) {
         if (regen) {
-            MessageUtil.debugLog(lockout.settings(), "Updating configuration from disk");
+            LockoutLogger.debugLog(lockout.settings(), "Reloading configuration from disk");
             reloadConfig();
         }
         return new LockoutSettings(getConfig());
     }
 
-
-
-    public String getTaskFileExtension() {return ".tasks";}
-    public String getDataFolderRelativePath() {return "plugins/Lockout/";}
 
     // Should instead return config file which lists boards
     public List<String> getTaskLists() {

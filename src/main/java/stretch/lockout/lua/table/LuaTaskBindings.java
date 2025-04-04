@@ -24,14 +24,14 @@ import org.luaj.vm2.lib.jse.CoerceLuaToJava;
 import stretch.lockout.event.state.PlayerStateChangeEvent;
 import stretch.lockout.lua.LuaBlockPredicate;
 import stretch.lockout.lua.LuaTaskBuilder;
-import stretch.lockout.task.Task;
-import stretch.lockout.task.TaskORComposite;
-import stretch.lockout.task.TaskPvp;
-import stretch.lockout.task.special.TaskAdvancement;
-import stretch.lockout.task.special.TaskCauldron;
-import stretch.lockout.task.special.TaskDamageFromSource;
-import stretch.lockout.task.special.TaskPotion;
-import stretch.lockout.task.structure.TaskStructure;
+import stretch.lockout.task.base.Task;
+import stretch.lockout.task.composite.TaskChoice;
+import stretch.lockout.task.impl.entity.TaskPvp;
+import stretch.lockout.task.impl.player.TaskAdvancement;
+import stretch.lockout.task.impl.block.TaskCauldron;
+import stretch.lockout.task.impl.entity.TaskDamageFromSource;
+import stretch.lockout.task.impl.player.TaskPotion;
+import stretch.lockout.task.impl.block.TaskStructure;
 
 import java.util.List;
 import java.util.Set;
@@ -135,7 +135,7 @@ public class LuaTaskBindings implements LuaTableBinding {
                 int value = (int) CoerceLuaToJava.coerce(args.arg(2), int.class);
                 String description = (String) CoerceLuaToJava.coerce(args.arg(3), String.class);
                 ItemStack guiItem = new ItemStack((Material) CoerceLuaToJava.coerce(args.arg(4), Material.class));
-                return CoerceJavaToLua.coerce(new TaskORComposite(List.of(
+                return CoerceJavaToLua.coerce(new TaskChoice(List.of(
                         LuaTaskBuilder.createTaskMaterial(args, InventoryClickEvent.class),
                         LuaTaskBuilder.createTaskMaterial(args, FurnaceExtractEvent.class),
                         LuaTaskBuilder.createTaskMaterial(args, CraftItemEvent.class),
@@ -153,7 +153,7 @@ public class LuaTaskBindings implements LuaTableBinding {
                 String description = (String) CoerceLuaToJava.coerce(args.arg(3), String.class);
                 ItemStack guiItem = new ItemStack((Material) CoerceLuaToJava.coerce(args.arg(4), Material.class));
 
-                return CoerceJavaToLua.coerce(new TaskORComposite(List.of(
+                return CoerceJavaToLua.coerce(new TaskChoice(List.of(
                         LuaTaskBuilder.createGroupTaskMaterial(args, InventoryClickEvent.class),
                         LuaTaskBuilder.createGroupTaskMaterial(args, FurnaceExtractEvent.class),
                         LuaTaskBuilder.createGroupTaskMaterial(args, CraftItemEvent.class),

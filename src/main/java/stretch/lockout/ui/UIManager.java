@@ -18,7 +18,7 @@ import stretch.lockout.game.LockoutContext;
 import stretch.lockout.game.LockoutGameRule;
 import stretch.lockout.game.state.GameState;
 import stretch.lockout.reward.RewardComponent;
-import stretch.lockout.task.TaskInvisible;
+import stretch.lockout.task.HiddenTask;
 import stretch.lockout.team.LockoutTeam;
 import stretch.lockout.team.TeamManager;
 import stretch.lockout.team.player.PlayerStat;
@@ -26,7 +26,7 @@ import stretch.lockout.ui.bar.*;
 import stretch.lockout.ui.inventory.InventoryInputHandler;
 import stretch.lockout.ui.misc.CountDownSequence;
 import stretch.lockout.ui.scoreboard.ScoreboardHandler;
-import stretch.lockout.util.MessageUtil;
+import stretch.lockout.util.LockoutLogger;
 
 import java.util.function.Consumer;
 
@@ -50,7 +50,7 @@ public class UIManager implements Listener {
 
     // TODO timer should not be internal to this package
     public LockoutTimer getTimer() {
-        MessageUtil.debugLog(lockout.settings(),ChatColor.RED + "TIMER SHOULD BE SEPARATE FROM UI");
+        LockoutLogger.debugLog(lockout.settings(),ChatColor.RED + "TIMER SHOULD BE SEPARATE FROM UI");
         return barManager.getTimer();
     }
 
@@ -79,16 +79,16 @@ public class UIManager implements Listener {
         barManager.getTimer().deactivate();
         if (!lockout.settings().hasRule(LockoutGameRule.TIE_BREAK) || !lockout.getTieBreaker().isTasksLoaded()) {
             String message = ChatColor.YELLOW + "Draw!";
-            MessageUtil.sendAllTitle(message, "", 10, 20, 10);
-            MessageUtil.sendAllChat("The game was a " + message);
+            LockoutLogger.sendAllTitle(message, "", 10, 20, 10);
+            LockoutLogger.sendAllChat("The game was a " + message);
             return;
         }
 
         barManager.getTimer().activate();
         String message = ChatColor.DARK_RED + "Tie breaker!";
-        MessageUtil.sendAllTitle(message, "", 10, 20, 10);
-        MessageUtil.sendAllActionBar(message);
-        MessageUtil.sendAllChat("Entering " + message);
+        LockoutLogger.sendAllTitle(message, "", 10, 20, 10);
+        LockoutLogger.sendAllActionBar(message);
+        LockoutLogger.sendAllChat("Entering " + message);
 
         lockout.getTeamManager().doToAllPlayers(player ->
                 player.playSound(player, Sound.ENTITY_BLAZE_SHOOT, 1F, 1F));
@@ -136,9 +136,9 @@ public class UIManager implements Listener {
         TeamManager teamManager = lockout.getTeamManager();
         LockoutTeam team = taskCompletedEvent.getPlayer().getTeam();
 
-        if (!(task instanceof TaskInvisible)) {
+        if (!(task instanceof HiddenTask)) {
             // Play sound for all players
-            MessageUtil.debugLog(lockout.settings(), ChatColor.RED + "Fix sound in UI");
+            LockoutLogger.debugLog(lockout.settings(), ChatColor.RED + "Fix sound in UI");
 
             //teamManager.doToAllPlayers(PlayerEffect.NEGATIVE_TASK::accept);
             //teamManager.doToAllPlayers(PlayerEffect.POSITIVE_TASK::accept);
@@ -157,15 +157,15 @@ public class UIManager implements Listener {
                     + ChatColor.RED + task.getDescription();
 
             team.doToPlayers(player -> {
-                MessageUtil.sendActionBar(player, friendlyMessage);
-                MessageUtil.sendChat(player, friendlyMessage);
+                LockoutLogger.sendActionBar(player, friendlyMessage);
+                LockoutLogger.sendChat(player, friendlyMessage);
                 //PlayerEffect.POSITIVE_TASK.accept(player);
                 PlayerEffect.NEGATIVE_TASK.accept(player);
                 //new PlayerAdvancementMessage(task).sendMessage(player);
             });
             team.doToOpposingTeams(player -> {
-                MessageUtil.sendActionBar(player, enemyMessage);
-                MessageUtil.sendChat(player, enemyMessage);
+                LockoutLogger.sendActionBar(player, enemyMessage);
+                LockoutLogger.sendChat(player, enemyMessage);
                 PlayerEffect.NEGATIVE_TASK.accept(player);
             });
         }
@@ -183,7 +183,7 @@ public class UIManager implements Listener {
                 case ENEMY -> "Team " + scoredPlayerStat.getTeam().getName() + " caused debuff: ";
             };
             String message = messagePrefix + ChatColor.LIGHT_PURPLE + reward.getDescription();
-            MessageUtil.sendChat(player, ChatColor.GRAY + message);
+            LockoutLogger.sendChat(player, ChatColor.GRAY + message);
         };
 
         scoredPlayerStat.getTeam()
@@ -219,7 +219,7 @@ public class UIManager implements Listener {
     @EventHandler
     public void onPlayerJoinTeam(final PlayerJoinTeamEvent playerJoinTeamEvent) {
         var playerStat = playerJoinTeamEvent.getPlayerStat();
-        MessageUtil.sendChat(playerStat.getPlayer(), "You joined team " + ChatColor.GOLD + playerStat.getTeam().getName());
+        LockoutLogger.sendChat(playerStat.getPlayer(), "You joined team " + ChatColor.GOLD + playerStat.getTeam().getName());
     }
 
 

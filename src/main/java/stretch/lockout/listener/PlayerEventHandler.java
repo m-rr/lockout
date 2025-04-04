@@ -12,7 +12,7 @@ import stretch.lockout.game.LockoutContext;
 import stretch.lockout.platform.Platform;
 import stretch.lockout.team.player.PlayerStat;
 import stretch.lockout.team.TeamManager;
-import stretch.lockout.util.MessageUtil;
+import stretch.lockout.util.LockoutLogger;
 
 import java.util.Map;
 import java.util.Optional;
@@ -36,7 +36,6 @@ public class PlayerEventHandler implements Listener {
             Map<UUID, PlayerStat> mappedPlayerStats = teamManager.getUUIDMappedPlayerStats();
 
             if (mappedPlayerStats.containsKey(player.getUniqueId())) {
-                //player.setScoreboard(lockout.getScoreboardManager().getBoard());
                 PlayerStat playerStat = mappedPlayerStats.get(player.getUniqueId());
                 playerStat.setPlayer(player);
                 lockout.getPlayerTracker().setPlayer(playerStat);
@@ -49,11 +48,11 @@ public class PlayerEventHandler implements Listener {
                 String version = lockout.getPlugin().getDescription().getVersion();
                 Optional<String> latest = Platform.latestUpdate();
                 if (latest.isEmpty() || !latest.get().equals(version)) {
-                    MessageUtil.sendChat(player, "Plugin version " +
-                            ChatColor.BLUE + latest +
+                    LockoutLogger.sendChat(player, "Plugin version " +
+                            ChatColor.BLUE + latest.get() +
                             ChatColor.DARK_GRAY + " is available; this server is using " +
                             ChatColor.DARK_RED + version);
-                    MessageUtil.sendLink(player, Platform.Resource.LOCKOUT_DOWNLOAD_URL,
+                    LockoutLogger.sendLink(player, Platform.Resource.LOCKOUT_DOWNLOAD_URL,
                             ChatColor.UNDERLINE + "Click here to download the latest update.");
                 }
             });

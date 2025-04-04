@@ -13,12 +13,12 @@ import org.bukkit.event.entity.FoodLevelChangeEvent;
 import org.bukkit.event.player.PlayerDropItemEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 import stretch.lockout.game.state.GameState;
-import stretch.lockout.util.MessageUtil;
+import stretch.lockout.util.LockoutLogger;
 
 public class GameRuleEnforcer implements Listener {
     private final LockoutContext lockout;
     public GameRuleEnforcer(final LockoutContext lockout) {
-        MessageUtil.debugLog(lockout.settings(), "Game rule enforcer initialized.");
+        LockoutLogger.debugLog(lockout.settings(), "Game rule enforcer initialized.");
         this.lockout = lockout;
         Bukkit.getPluginManager().registerEvents(this, lockout.getPlugin());
     }

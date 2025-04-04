@@ -1,17 +1,17 @@
 package stretch.lockout.reward;
 
 import org.bukkit.entity.Player;
-import stretch.lockout.task.TaskInvisible;
+import stretch.lockout.task.HiddenTask;
 
 public class RewardTask extends RewardLeaf {
-    private final TaskInvisible taskInvisible;
+    private final HiddenTask taskInvisible;
 
-    public RewardTask(TaskInvisible task, String description) {
+    public RewardTask(HiddenTask task, String description) {
         super(description);
         this.taskInvisible = task;
     }
 
-    public RewardTask(TaskInvisible task, RewardType rewardType, String description) {
+    public RewardTask(HiddenTask task, RewardType rewardType, String description) {
         super(rewardType, description);
         this.taskInvisible = task;
     }
@@ -21,5 +21,5 @@ public class RewardTask extends RewardLeaf {
         taskInvisible.subscribe(player);
     }
 
-    public TaskInvisible getDelegate() {return taskInvisible;}
+    public HiddenTask getDelegate() {return taskInvisible;}
 }

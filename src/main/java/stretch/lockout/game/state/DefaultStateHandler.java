@@ -11,7 +11,7 @@ import stretch.lockout.game.LockoutGameRule;
 import stretch.lockout.game.LockoutContext;
 import stretch.lockout.ui.bar.LockoutTimer;
 import stretch.lockout.team.TeamManager;
-import stretch.lockout.util.MessageUtil;
+import stretch.lockout.util.LockoutLogger;
 
 import java.time.Duration;
 import java.util.Optional;
@@ -54,8 +54,8 @@ public class DefaultStateHandler extends GameStateHandler {
 
         if (!lockout.getCurrentTaskCollection().isTasksLoaded()) {
             String message = ChatColor.RED + "You can not start without loading tasks!";
-            MessageUtil.consoleLog(message);
-            MessageUtil.sendAllChat(message);
+            LockoutLogger.consoleLog(message);
+            LockoutLogger.sendAllChat(message);
             setGameState(GameState.READY);
             return;
         }
@@ -97,7 +97,7 @@ public class DefaultStateHandler extends GameStateHandler {
 
         lockout.settings().getGameWorld().setTime(lockout.settings().getStartTime());
 
-        MessageUtil.sendAllChat("Game Starting!");
+        LockoutLogger.sendAllChat("Game Starting!");
 
         Bukkit.getPluginManager().callEvent(new StartGameEvent());
     }
@@ -152,7 +152,7 @@ public class DefaultStateHandler extends GameStateHandler {
         //lockout.getLuaEnvironment().resetTables();
         //lockout.getLuaEnvironment().resetRequiredFiles();
 
-        MessageUtil.sendAllChat("Game ending.");
+        LockoutLogger.sendAllChat("Game ending.");
         setGameState(GameState.PRE);
     }
 

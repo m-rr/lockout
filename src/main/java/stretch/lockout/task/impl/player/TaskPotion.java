@@ -1,0 +1,35 @@
+package stretch.lockout.task.impl.player;
+
+import org.bukkit.NamespacedKey;
+import org.bukkit.event.entity.EntityPotionEffectEvent;
+import org.bukkit.potion.PotionEffect;
+import org.bukkit.potion.PotionEffectType;
+import stretch.lockout.event.executor.LockoutWrappedEvent;
+import stretch.lockout.task.base.Task;
+
+import java.util.Optional;
+
+public class TaskPotion extends Task {
+    //private final PotionEffectType potionEffectType;
+    private final NamespacedKey potionKey;
+
+    public TaskPotion(PotionEffectType potionEffectType, int value, String description) {
+        super(EntityPotionEffectEvent.class, value, description);
+        //this.potionEffectType = potionEffectType;
+        this.potionKey = potionEffectType.getKey();
+    }
+
+    @Override
+    public boolean doesAccomplish(final LockoutWrappedEvent lockoutEvent) {
+        Optional<PotionEffect> optionalPotionEffect = lockoutEvent.getPotionEffect();
+        if (optionalPotionEffect.isEmpty()) {
+            return false;
+        }
+        PotionEffect potionEffect = optionalPotionEffect.get();
+
+        //return potionEffect.getType().getName().equals(potionEffectType.getName())
+        //        && super.doesAccomplish(player, event);
+        return potionEffect.getType().getKey() == potionKey
+                && super.doesAccomplish(lockoutEvent);
+    }
+}

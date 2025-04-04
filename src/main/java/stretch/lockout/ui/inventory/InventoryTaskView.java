@@ -10,8 +10,8 @@ import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import stretch.lockout.reward.RewardComponent;
-import stretch.lockout.task.TaskComponent;
-import stretch.lockout.task.TaskInvisible;
+import stretch.lockout.task.api.TaskComponent;
+import stretch.lockout.task.HiddenTask;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -123,7 +123,7 @@ public class InventoryTaskView extends LockoutView implements InventoryHolder {
 
     // Uses guiItemStack of task by default
     public void addTaskEntry(TaskComponent task) {
-        if (task instanceof TaskInvisible) {
+        if (task instanceof HiddenTask) {
             return;
         }
         ItemStack itemStack = task.getGuiItemStack();

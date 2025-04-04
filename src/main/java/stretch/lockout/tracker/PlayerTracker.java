@@ -5,7 +5,7 @@ import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
 import stretch.lockout.team.player.PlayerStat;
-import stretch.lockout.util.MessageUtil;
+import stretch.lockout.util.LockoutLogger;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -22,7 +22,7 @@ public class PlayerTracker implements Runnable {
 
     public void changeTracker(Player player) {
         if (players.stream().map(playerStat -> playerStat.getPlayer().isOnline()).count() < 2) {
-            MessageUtil.sendActionBar(player, ChatColor.RED + "No other players to track.");
+            LockoutLogger.sendActionBar(player, ChatColor.RED + "No other players to track.");
             return;
         }
 
@@ -37,7 +37,7 @@ public class PlayerTracker implements Runnable {
         String message = targetPlayer.getWorld().getEnvironment() == World.Environment.NORMAL ?
                 ChatColor.GOLD + "Now tracking " + ChatColor.BLUE + targetPlayer.getName() :
                 ChatColor.BLUE + targetPlayer.getName() + ChatColor.GOLD + " is not in the overworld";
-        MessageUtil.sendActionBar(player, message);
+        LockoutLogger.sendActionBar(player, message);
     }
 
     public void update() {

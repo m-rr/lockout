@@ -9,11 +9,11 @@ import stretch.lockout.game.LockoutGameRule;
 import stretch.lockout.game.state.GameState;
 import stretch.lockout.game.LockoutContext;
 import stretch.lockout.platform.Platform;
-import stretch.lockout.task.TaskInvisible;
+import stretch.lockout.task.HiddenTask;
 import stretch.lockout.team.LockoutTeam;
 import stretch.lockout.team.TeamManager;
 import stretch.lockout.util.JsonUtil;
-import stretch.lockout.util.MessageUtil;
+import stretch.lockout.util.LockoutLogger;
 
 import java.util.function.Predicate;
 
@@ -39,7 +39,7 @@ public class TaskRaceEventHandler implements Listener {
         if (task.hasReward() && lockout.settings().hasRule(LockoutGameRule.ALLOW_REWARD)) {
             var reward = task.getReward();
             reward.applyReward(scoredPlayerStat);
-            if (!(task instanceof TaskInvisible)) {
+            if (!(task instanceof HiddenTask)) {
                 var rewardEvent = new RewardApplyEvent(scoredPlayerStat, reward);
                 Bukkit.getPluginManager().callEvent(rewardEvent);
             }
@@ -90,7 +90,7 @@ public class TaskRaceEventHandler implements Listener {
         Bukkit.getScheduler().scheduleSyncDelayedTask(lockout.getPlugin(),
                 () -> lockout.getGameStateHandler().setGameState(GameState.END), 100);
 
-        MessageUtil.debugLog(lockout.settings(), "Game has ended");
+        LockoutLogger.debugLog(lockout.settings(), "Game has ended");
     }
 
     @EventHandler

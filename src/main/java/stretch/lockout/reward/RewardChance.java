@@ -2,7 +2,7 @@ package stretch.lockout.reward;
 
 import org.luaj.vm2.LuaValue;
 import stretch.lockout.team.player.PlayerStat;
-import stretch.lockout.util.MessageUtil;
+import stretch.lockout.util.LockoutLogger;
 
 import java.util.*;
 
@@ -26,7 +26,7 @@ public class RewardChance implements RewardComponent {
     public void determine() {
         int length = weightedRewards.size();
         if (length == 0) {
-            MessageUtil.consoleLog("Chance reward did not contain any reward components.");
+            LockoutLogger.consoleLog("Chance reward did not contain any reward components.");
             return;
         }
 

@@ -1,7 +1,7 @@
 package stretch.lockout.task.manager;
 
-import stretch.lockout.task.TaskComponent;
-import stretch.lockout.util.MessageUtil;
+import stretch.lockout.task.api.TaskComponent;
+import stretch.lockout.util.LockoutLogger;
 
 import java.util.Optional;
 
@@ -17,7 +17,7 @@ public class TaskManager {
         try {
             taskTiers[tier].addTask(task);
         } catch (IndexOutOfBoundsException e) {
-            MessageUtil.consoleLog("Could not add task: [" + task.getDescription() + "] to task tier: "
+            LockoutLogger.consoleLog("Could not add task: [" + task.getDescription() + "] to task tier: "
                     + tier + " Because the tier does not exist.");
         }
     }

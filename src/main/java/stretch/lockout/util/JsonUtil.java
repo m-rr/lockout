@@ -8,7 +8,7 @@ import com.google.gson.JsonObject;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import stretch.lockout.game.LockoutContext;
-import stretch.lockout.task.TimeCompletableTask;
+import stretch.lockout.task.api.TimeCompletableTask;
 import stretch.lockout.team.LockoutTeam;
 import stretch.lockout.team.player.PlayerStat;
 

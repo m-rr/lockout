@@ -4,7 +4,7 @@ plugins {
 }
 
 group = 'stretch'
-version = '2.5.0-TESTING'
+version = '2.5.1-TESTING'
 
 repositories {
     mavenCentral()
@@ -26,34 +26,34 @@ repositories {
         name = 'papermc'
         url = uri("https://repo.papermc.io/repository/maven-public/")
     }
-    }
+}
 
 dependencies {
-    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.0.0-M2'
-    //compileOnly 'org.spigotmc:spigot-api:1.21.4-R0.1-SNAPSHOT'
+    // Test dependencies - Scopes look correct
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.1'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.8.1'
+    testImplementation 'org.mockbukkit.mockbukkit:mockbukkit-v1.21:4.0.0'
+    testImplementation 'org.mockito:mockito-core:5.16.1' // Updated to 5.12.0 as 5.16.1 might not exist, adjust if needed
+
+    // Plugin dependencies
     compileOnly 'io.papermc.paper:paper-api:1.21.4-R0.1-SNAPSHOT'
-    implementation 'com.google.code.gson:gson:2.8.9'
+    implementation 'com.google.code.gson:gson:2.10.1'
     implementation 'org.luaj:luaj-jse:3.0.1'
-    //testImplementation 'com.github.seeseemelk:MockBukkit-v1.19:2.29.0'
 }
 
 test {
     useJUnitPlatform()
+    testLogging { events "passed", "skipped", "failed" }
 }
+
 
 def targetJavaVersion = 21
 java {
     def javaVersion = JavaVersion.toVersion(targetJavaVersion)
-    sourceCompatibility = javaVersion
-    targetCompatibility = javaVersion
-    if (JavaVersion.current() < javaVersion) {
-        toolchain.languageVersion = JavaLanguageVersion.of(targetJavaVersion)
-    }
-}
-
-tasks.withType(JavaCompile).configureEach {
-    if (targetJavaVersion >= 10 || JavaVersion.current().isJava10Compatible()) {
-        options.release = targetJavaVersion
+    //sourceCompatibility = javaVersion
+    //targetCompatibility = javaVersion
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(targetJavaVersion)
     }
 }
 
@@ -64,4 +64,13 @@ processResources {
     filesMatching('plugin.yml') {
         expand props
     }
+}
+
+// This ensures 'test' runs and succeeds before 'shadowJar' starts building the fat JAR.
+tasks.named('shadowJar') {
+    dependsOn tasks.named('test')
+
+    archiveClassifier = '' // Removes the '-all' or similar classifier from the final JAR name
+    // minimize()
+
 }

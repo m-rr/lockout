@@ -1,7 +1,5 @@
 package stretch.lockout.lua.table;
 
-import com.google.common.collect.ForwardingIterator;
-import com.google.common.collect.Sets;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -20,10 +18,14 @@ import org.luaj.vm2.lib.ZeroArgFunction;
 import org.luaj.vm2.lib.jse.CoerceJavaToLua;
 import org.luaj.vm2.lib.jse.CoerceLuaToJava;
 import stretch.lockout.game.LockoutGameRule;
-import stretch.lockout.game.LockoutContext;
 import stretch.lockout.game.state.LockoutSettings;
 import stretch.lockout.lua.LuaTaskBuilder;
-import stretch.lockout.task.*;
+import stretch.lockout.task.api.TaskComponent;
+import stretch.lockout.task.api.TimeCompletableTask;
+import stretch.lockout.task.composite.TaskSet;
+import stretch.lockout.task.composite.TaskChoice;
+import stretch.lockout.task.composite.RepeatingTask;
+import stretch.lockout.task.composite.TaskSequence;
 import stretch.lockout.task.manager.TaskCollection;
 import stretch.lockout.tracker.PlayerTracker;
 import stretch.lockout.ui.bar.LockoutTimer;
@@ -205,7 +207,7 @@ public class LuaHelperBindings implements LuaTableBinding {
         table.set("_anyOf", new VarArgFunction() {
             @Override
             public Varargs invoke(Varargs args) {
-                return CoerceJavaToLua.coerce(LuaTaskBuilder.createComposite(args, TaskORComposite.class));
+                return CoerceJavaToLua.coerce(LuaTaskBuilder.createComposite(args, TaskChoice.class));
             }
         });
 
@@ -213,7 +215,7 @@ public class LuaHelperBindings implements LuaTableBinding {
         table.set("_allOf", new VarArgFunction() {
             @Override
             public Varargs invoke(Varargs args) {
-                return CoerceJavaToLua.coerce(LuaTaskBuilder.createComposite(args, TaskANDComposite.class));
+                return CoerceJavaToLua.coerce(LuaTaskBuilder.createComposite(args, TaskSet.class));
             }
         });
 
@@ -221,7 +223,7 @@ public class LuaHelperBindings implements LuaTableBinding {
         table.set("_sequential", new VarArgFunction() {
             @Override
             public Varargs invoke(Varargs args) {
-                return CoerceJavaToLua.coerce(LuaTaskBuilder.createComposite(args, TaskTHENComposite.class));
+                return CoerceJavaToLua.coerce(LuaTaskBuilder.createComposite(args, TaskSequence.class));
             }
         });
 
@@ -230,7 +232,7 @@ public class LuaHelperBindings implements LuaTableBinding {
             public LuaValue call(LuaValue luaValue, LuaValue luaValue1) {
                 int times = (int) CoerceLuaToJava.coerce(luaValue, int.class);
                 TimeCompletableTask task = (TimeCompletableTask) CoerceLuaToJava.coerce(luaValue1, TimeCompletableTask.class);
-                return CoerceJavaToLua.coerce(new TaskRepeat(task, times));
+                return CoerceJavaToLua.coerce(new RepeatingTask(task, times));
             }
         });
 

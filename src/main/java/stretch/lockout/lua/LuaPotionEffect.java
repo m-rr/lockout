@@ -4,8 +4,6 @@ import org.bukkit.NamespacedKey;
 import org.bukkit.Registry;
 import org.bukkit.potion.PotionEffectType;
 
-import stretch.lockout.util.MessageUtil;
-
 public enum LuaPotionEffect {
     ABSORPTION,
     BAD_OMEN,

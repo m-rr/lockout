@@ -1,0 +1,13 @@
+name: Lockout
+version: '${version}'
+main: stretch.lockout.TestLockout
+api-version: 1.19
+prefix: Lockout
+load: POSTWORLD
+description: Race to complete tasks.
+website: https://github.com/m-rr/lockout
+author: m-rr
+commands:
+  lockout:
+    description: lockout commands
+    usage: /lockout team <team name> /lockout start  /lockout end /lockout compass

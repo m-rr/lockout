@@ -16,15 +16,13 @@ import org.luaj.vm2.lib.TwoArgFunction;
 import org.luaj.vm2.lib.VarArgFunction;
 import org.luaj.vm2.lib.jse.CoerceJavaToLua;
 import org.luaj.vm2.lib.jse.CoerceLuaToJava;
-import stretch.lockout.game.LockoutContext;
 import stretch.lockout.game.state.LockoutSettings;
 import stretch.lockout.lua.LuaPlayerConsumer;
 import stretch.lockout.lua.LuaPotionEffect;
 import stretch.lockout.lua.Compatability;
-import stretch.lockout.task.TaskComponent;
-import stretch.lockout.task.TaskInvisible;
+import stretch.lockout.task.api.TaskComponent;
+import stretch.lockout.task.HiddenTask;
 import stretch.lockout.task.manager.TaskCollection;
-import stretch.lockout.util.MessageUtil;
 import stretch.lockout.reward.*;
 
 import java.util.*;
@@ -114,7 +112,7 @@ public class LuaRewardBindings implements LuaTableBinding {
                 String description = (String) CoerceLuaToJava.coerce(luaValue1, String.class);
                 TaskComponent taskComponent = (TaskComponent) CoerceLuaToJava.coerce(luaValue2, TaskComponent.class);
 
-                TaskInvisible taskInvisible = new TaskInvisible(taskComponent);
+                HiddenTask taskInvisible = new HiddenTask(taskComponent);
                 tasks.addTask(taskInvisible);
 
                 return CoerceJavaToLua.coerce(new RewardTask(taskInvisible, rewardType, description));

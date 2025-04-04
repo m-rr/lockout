@@ -19,12 +19,14 @@ public class KitHandler implements Listener {
     private final LockoutContext lockout;
     private final StarterKit starterKit = new StarterKit();
     private final CompassKit compassKit = new CompassKit();
-    private Map<Player, Long> lastRespawn = new HashMap<Player, Long>();
+    private final Map<Player, Long> lastRespawn = new HashMap<Player, Long>();
 
     public KitHandler(LockoutContext lockout) {
         this.lockout = lockout;
         Bukkit.getPluginManager().registerEvents(this, lockout.getPlugin());
     }
+
+    public Map<Player, Long> getLastRespawn() {return lastRespawn;}
 
     @EventHandler
     public void onStarting(StartGameEvent startGameEvent) {

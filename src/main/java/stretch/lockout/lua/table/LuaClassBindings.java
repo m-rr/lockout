@@ -13,11 +13,8 @@ import org.luaj.vm2.lib.jse.CoerceJavaToLua;
 import stretch.lockout.game.LockoutGameRule;
 import stretch.lockout.game.state.GameState;
 import stretch.lockout.lua.LuaPotionEffect;
-import stretch.lockout.game.LockoutWrapper;
-import stretch.lockout.game.LockoutContext;
 import stretch.lockout.reward.RewardType;
-import stretch.lockout.task.TaskMob;
-import stretch.lockout.util.MessageUtil;
+import stretch.lockout.util.LockoutLogger;
 import stretch.lockout.util.types.BiomeTypes;
 import stretch.lockout.util.types.MaterialTypes;
 
@@ -48,6 +45,6 @@ public class LuaClassBindings implements LuaTableBinding {
         table.set("GameState", CoerceJavaToLua.coerce(GameState.class));
         table.set("BiomeType", CoerceJavaToLua.coerce(BiomeTypes.class));
         table.set("MaterialType", CoerceJavaToLua.coerce(MaterialTypes.class));
-        table.set("log", CoerceJavaToLua.coerce(MessageUtil.class));
+        table.set("log", CoerceJavaToLua.coerce(LockoutLogger.class));
     }
 }

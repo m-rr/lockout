@@ -7,7 +7,12 @@ import org.bukkit.inventory.ItemStack;
 import org.luaj.vm2.LuaValue;
 import org.luaj.vm2.Varargs;
 import org.luaj.vm2.lib.jse.CoerceLuaToJava;
-import stretch.lockout.task.*;
+import stretch.lockout.task.api.TaskComponent;
+import stretch.lockout.task.composite.TaskSet;
+import stretch.lockout.task.composite.TaskChoice;
+import stretch.lockout.task.composite.TaskSequence;
+import stretch.lockout.task.impl.block.TaskMaterial;
+import stretch.lockout.task.impl.entity.TaskMob;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -51,9 +56,9 @@ public class LuaTaskBuilder {
         }
 
         return switch (clazz.getSimpleName()) {
-            case "TaskTHENComposite" -> new TaskTHENComposite(tasks, value, description).setGuiItemStack(guiItem);
-            case "TaskANDComposite" -> new TaskANDComposite(tasks, value, description).setGuiItemStack(guiItem);
-            case "TaskORComposite" -> new TaskORComposite(tasks, value, description).setGuiItemStack(guiItem);
+            case "TaskTHENComposite" -> new TaskSequence(tasks, value, description).setGuiItemStack(guiItem);
+            case "TaskANDComposite" -> new TaskSet(tasks, value, description).setGuiItemStack(guiItem);
+            case "TaskORComposite" -> new TaskChoice(tasks, value, description).setGuiItemStack(guiItem);
             default -> throw new IllegalStateException("Unexpected value: " + clazz.getName());
         };
     }
@@ -68,7 +73,7 @@ public class LuaTaskBuilder {
                 .map(m -> (TaskComponent) new TaskMaterial(eventClass, m, value, description))
                 .toList();
 
-        return new TaskORComposite(tasks, value, description)
+        return new TaskChoice(tasks, value, description)
                 .setGuiItemStack(guiItem);
     }
 
@@ -82,7 +87,7 @@ public class LuaTaskBuilder {
                 .map(m -> (TaskComponent) new TaskMob(eventClass, m, value, description))
                 .toList();
 
-        return new TaskORComposite(tasks, value, description)
+        return new TaskChoice(tasks, value, description)
                 .setGuiItemStack(guiItem);
     }
 

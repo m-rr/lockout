@@ -1,0 +1,81 @@
+# Sets whether tasks file is loaded automatically.
+# Set to false if you wish to choose tasks file with
+# a gui inventory by right-clicking compass in game.
+# This is only useful if you have multiple tasks files.
+autoLoad: true
+
+# Only applies if "autoLoad=true".
+# Name of tasks file which should be loaded on start.
+autoLoadTask: default
+
+# Should be overworld name game will be played on.
+world: "world"
+
+# Will clear all lockout players inventory on game start or end.
+# Only set these to true if you want players to all start with
+# equal inventories.
+clearInventoryStart: true
+clearInventoryEnd: false
+# Countdown config
+moveDuringCountdown: false
+countdownDuration: 30
+
+# Number of teams (default wool themed teams). Custom teams can be added by privileged player with /lockout team <name>
+defaultTeams: 4
+maxTeams: 8
+# Maximum players per team.
+teamSize: 4
+
+# Enable/disable rewards from completing tasks.
+# This will override a tasks file.
+enableReward: true
+
+# Teleports all players to spawn on game start
+startAtSpawn: false
+
+# Forces all players in server to be placed on a team when game starts.
+forcePlayersOnTeam: true
+
+# Enable/disable player compass tracking.
+allowCompassTracking: true
+
+# Should commands require permission from permission manager. (LuckPerms etc.)
+# OP privilege will always give access to commands.
+commandsRequireOp: true
+
+# Enable/disable game timer on start. Without timer game will continue until completed.
+useTimer: true
+# Time in seconds for the game timer. Only takes effect if useTimer=true
+setTimer: 2700
+
+# When enabled, a tiebreaker round will be used to determine a winner when needed.
+useTieBreaker: true
+
+# World time in ticks on game start
+startTime: 1000
+
+# Should players respawn with kit after time.
+useRespawnKit: true
+# How many seconds should elapse before players receive respawn kit if enabled.
+respawnKitTime: 300
+# How many seconds should elapse before a player can receive a respawn kit again.
+respawnKitCooldown: 180
+
+# Should players receive respawn invulnerability.
+respawnInvulnerability: true
+# Invulnerability time in ticks
+respawnInvulnerabilityTime: 140
+
+# Should advancements be revoked at the start of the game.
+# This may be required for some tasks to work correctly so it is recommended to leave this enabled.
+# Only disable this if your server has specific needs.
+revokeAdvancements: true
+
+# How many ticks should we wait to check player state for some tasks.
+# Lower values will feel slightly more responsive but at a higher performance cost for large servers.
+# If you have 20+ players in a lockout game and experience server lag, setting this to a value from 2-4 may help.
+# It is recommended for most servers to use the lowest value of 1.
+playerStateUpdateTicks: 1
+
+# Should OPs be notified of available plugin update
+checkUpdate: true

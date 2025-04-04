@@ -8,10 +8,10 @@ import org.bukkit.entity.Player;
 import stretch.lockout.event.TaskCompletedEvent;
 import stretch.lockout.game.LockoutContext;
 import stretch.lockout.game.state.GameState;
-import stretch.lockout.task.TaskComponent;
-import stretch.lockout.task.TimeCompletableTask;
+import stretch.lockout.task.api.TaskComponent;
+import stretch.lockout.task.api.TimeCompletableTask;
 import stretch.lockout.team.player.PlayerStat;
-import stretch.lockout.util.MessageUtil;
+import stretch.lockout.util.LockoutLogger;
 
 import java.util.Optional;
 
@@ -32,12 +32,12 @@ public class LockoutEventExecutor implements EventExecutor {
                                 EventPriority.NORMAL,
                                 this,
                                 lockout.getPlugin()));
-        MessageUtil.debugLog(lockout.settings(), "Registered tasks");
+        LockoutLogger.debugLog(lockout.settings(), "Registered tasks");
     }
 
     public void unregister() {
         HandlerList.unregisterAll(LOCKOUT_NULL_LISTENER);
-        MessageUtil.debugLog(lockout.settings(), "Unregistered tasks");
+        LockoutLogger.debugLog(lockout.settings(), "Unregistered tasks");
     }
 
     @Override
