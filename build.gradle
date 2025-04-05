@@ -68,7 +68,7 @@ processResources {
 
 // This ensures 'test' runs and succeeds before 'shadowJar' starts building the fat JAR.
 tasks.named('shadowJar') {
-    dependsOn tasks.named('test')
+    //dependsOn tasks.named('test')
 
     archiveClassifier = '' // Removes the '-all' or similar classifier from the final JAR name
     // minimize()

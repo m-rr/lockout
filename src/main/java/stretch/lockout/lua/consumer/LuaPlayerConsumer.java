@@ -1,4 +1,4 @@
-package stretch.lockout.lua;
+package stretch.lockout.lua.consumer;
 
 import org.bukkit.entity.Player;
 import org.luaj.vm2.LuaFunction;

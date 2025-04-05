@@ -15,7 +15,7 @@ public abstract class GameStateHandler {
     public GameState getGameState() {return gameState;}
     public void setGameState(GameState gameState) {
         this.gameState = gameState;
-        LockoutLogger.debugLog(lockout.settings(), "Entering gamestate " + gameState.name());
+        LockoutLogger.debugLog("Entering gamestate " + gameState.name());
         switch (gameState) {
             case PRE -> preGame();
             case READY -> ready();

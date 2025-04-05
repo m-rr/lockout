@@ -1,9 +1,11 @@
-package stretch.lockout.reward;
+package stretch.lockout.reward.impl;
 
 import org.bukkit.entity.Player;
 import org.bukkit.potion.PotionEffect;
+import stretch.lockout.reward.api.RewardType;
+import stretch.lockout.reward.base.Reward;
 
-public class RewardPotion extends RewardLeaf {
+public class RewardPotion extends Reward {
     final private PotionEffect potionEffect;
     public RewardPotion(PotionEffect potionEffect, String description) {
         super(description);

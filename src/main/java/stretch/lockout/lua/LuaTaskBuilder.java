@@ -4,6 +4,7 @@ import com.google.common.collect.ImmutableSet;
 import org.bukkit.Material;
 import org.bukkit.entity.EntityType;
 import org.bukkit.inventory.ItemStack;
+import org.luaj.vm2.LuaTable;
 import org.luaj.vm2.LuaValue;
 import org.luaj.vm2.Varargs;
 import org.luaj.vm2.lib.jse.CoerceLuaToJava;
@@ -56,9 +57,9 @@ public class LuaTaskBuilder {
         }
 
         return switch (clazz.getSimpleName()) {
-            case "TaskTHENComposite" -> new TaskSequence(tasks, value, description).setGuiItemStack(guiItem);
-            case "TaskANDComposite" -> new TaskSet(tasks, value, description).setGuiItemStack(guiItem);
-            case "TaskORComposite" -> new TaskChoice(tasks, value, description).setGuiItemStack(guiItem);
+            case "TaskSequence" -> new TaskSequence(tasks, value, description).setGuiItemStack(guiItem);
+            case "TaskSet" -> new TaskSet(tasks, value, description).setGuiItemStack(guiItem);
+            case "TaskChoice" -> new TaskChoice(tasks, value, description).setGuiItemStack(guiItem);
             default -> throw new IllegalStateException("Unexpected value: " + clazz.getName());
         };
     }
@@ -79,6 +80,7 @@ public class LuaTaskBuilder {
 
     public static TaskComponent createGroupTaskEntity(Varargs args, Class eventClass) {
         Set<EntityType> entities = (ImmutableSet<EntityType>) CoerceLuaToJava.coerce(args.arg(1), ImmutableSet.class);
+
         int value = (int) CoerceLuaToJava.coerce(args.arg(2), int.class);
         String description = (String) CoerceLuaToJava.coerce(args.arg(3), String.class);
         ItemStack guiItem = new ItemStack((Material) CoerceLuaToJava.coerce(args.arg(4), Material.class));

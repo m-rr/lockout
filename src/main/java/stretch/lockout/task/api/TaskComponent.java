@@ -4,7 +4,7 @@ import org.bukkit.Material;
 import org.bukkit.event.Event;
 import org.bukkit.inventory.ItemStack;
 import stretch.lockout.event.executor.LockoutWrappedEvent;
-import stretch.lockout.reward.RewardComponent;
+import stretch.lockout.reward.api.RewardComponent;
 import stretch.lockout.team.player.PlayerStat;
 
 import java.util.HashSet;

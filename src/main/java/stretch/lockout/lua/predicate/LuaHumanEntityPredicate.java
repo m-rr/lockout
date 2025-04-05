@@ -1,6 +1,6 @@
-package stretch.lockout.lua;
+package stretch.lockout.lua.predicate;
 
-import org.bukkit.entity.Mob;
+import org.bukkit.entity.HumanEntity;
 import org.luaj.vm2.LuaFunction;
 import org.luaj.vm2.LuaValue;
 import org.luaj.vm2.lib.jse.CoerceJavaToLua;
@@ -8,14 +8,15 @@ import org.luaj.vm2.lib.jse.CoerceLuaToJava;
 
 import java.util.function.Predicate;
 
-public class LuaMobPredicate implements Predicate<Mob> {
+public class LuaHumanEntityPredicate implements Predicate<HumanEntity> {
     private final LuaFunction predicate;
-    public LuaMobPredicate(LuaValue predicate) {
+    public LuaHumanEntityPredicate(LuaValue predicate) {
         this.predicate = predicate.checkfunction();
     }
+
     @Override
-    public boolean test(Mob mob) {
-        LuaValue pred = CoerceJavaToLua.coerce(mob);
+    public boolean test(HumanEntity player) {
+        LuaValue pred = CoerceJavaToLua.coerce(player);
         return (boolean) CoerceLuaToJava.coerce(predicate.call(pred), boolean.class);
     }
 }

@@ -30,8 +30,8 @@ import java.util.*;
 public class LockoutContext {
     final private Lockout plugin;
     private final TeamManager teamManager;
-    private TaskCollection mainTasks = new TaskCollection();
-    private TaskCollection tieBreaker = new TaskCollection();
+    private final TaskCollection mainTasks = new TaskCollection();
+    private final TaskCollection tieBreaker = new TaskCollection();
     private PlayerTracker playerTracker = new PlayerTracker();
     private RewardScheduler rewardScheduler;
     private GameStateHandler gameStateHandler;
@@ -68,6 +68,13 @@ public class LockoutContext {
         luaBindings.add(new LuaClassBindings());
         luaBindings.add(new LuaPredicateBindings());
 
+        if (settings.hasRule(LockoutGameRule.DEV)) {
+            // Eval init.lua in Lockout directory. Useful for development.
+            getUserLuaEnvironment().addLuaTableBindings(luaBindings);
+            getUserLuaEnvironment().resetTables();
+            getUserLuaEnvironment().initUserChunk();
+        }
+
         // Make sure that our lua environments have proper bindings available
         getUserLuaEnvironment().addLuaTableBindings(luaBindings);
         boardManager.getLuaEnvironment().addLuaTableBindings(luaBindings);
@@ -90,10 +97,6 @@ public class LockoutContext {
     public LuaEnvironment getUserLuaEnvironment() {return userLuaEnvironment;}
     public BoardManager getBoardManager() {return boardManager;}
     public LockoutEventExecutor getEventExecutor() {return eventExecutor;}
-
-    public void setMainTasks(TaskCollection mainTasks) {
-        this.mainTasks = mainTasks;
-    }
 
     public void setSettings(LockoutSettings settings) {
         this.settings = settings;
@@ -127,17 +130,13 @@ public class LockoutContext {
         this.playerTracker = playerTracker;
     }
 
-    public void setTieBreaker(TaskCollection tieBreaker) {
-        this.tieBreaker = tieBreaker;
-    }
-
     public void reset() {
         Bukkit.getScheduler().cancelTasks(getPlugin());
         getTeamManager().destroyAllTeams();
         getTeamManager().unlock();
         getUiManager().reset();
-        mainTasks = new TaskCollection();
-        tieBreaker = new TaskCollection();
+        getMainTasks().removeAllTasks();
+        getTieBreaker().removeAllTasks();
         playerTracker = new PlayerTracker();
         rewardScheduler = new RewardScheduler(getPlugin());
     }

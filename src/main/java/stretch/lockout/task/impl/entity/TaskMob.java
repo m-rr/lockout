@@ -5,7 +5,7 @@ import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Mob;
 import org.luaj.vm2.LuaValue;
 import stretch.lockout.event.executor.LockoutWrappedEvent;
-import stretch.lockout.lua.LuaMobPredicate;
+import stretch.lockout.lua.predicate.LuaMobPredicate;
 import stretch.lockout.task.api.EntityTask;
 import stretch.lockout.task.api.TaskComponent;
 import stretch.lockout.task.base.Task;

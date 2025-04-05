@@ -21,6 +21,8 @@ import java.util.stream.Stream;
 public class Lockout extends JavaPlugin {
     private final int pluginId = 19299;
     private LockoutContext lockout;
+    private static Lockout instance;
+    private static boolean devModeEnabled = false;
     private final String DEFAULT_TASK_NAME = "default/main.lua";
 
     public Lockout() {
@@ -31,9 +33,16 @@ public class Lockout extends JavaPlugin {
         super(loader, descriptionFile, dataFolder, file);
     }
 
+    public static Lockout getInstance() {return instance;}
+    public static boolean isDevModeEnabled() {return devModeEnabled;}
+    public void updateDevModeFlag(LockoutSettings settings) {
+        devModeEnabled = settings.hasRule(LockoutGameRule.DEV);
+    }
+
     @Override
     public void onEnable() {
         LockoutLogger.consoleLog("Enabling Lockout v" + getDescription().getVersion());
+        instance = this;
         // Plugin startup logic
         if (!getDataFolder().exists()) {
             if (!getDataFolder().mkdir()) {
@@ -49,19 +58,15 @@ public class Lockout extends JavaPlugin {
 
         saveDefaultConfig();
         LockoutSettings gameSettings = generateConfig(false);
-        LockoutLogger.debugLog(gameSettings, ChatColor.RED + "Lockout initialized in debug mode");
+        updateDevModeFlag(gameSettings);
+        LockoutLogger.debugLog(ChatColor.RED + "Lockout initialized in debug mode");
 
         BoardManager boardManager = new FileBasedBoardManager(this, gameSettings);
 
         this.lockout = new LockoutContext(this, gameSettings, boardManager);
-        LockoutLogger.debugLog(gameSettings, "Created lockoutContext object");
+        LockoutLogger.debugLog("Created lockoutContext object");
 
         lockout.getBoardManager().registerBoardsAsync();
-
-        if (gameSettings.hasRule(LockoutGameRule.DEV)) {
-            // Eval init.lua in Lockout directory. Useful for development.
-            lockout.getUserLuaEnvironment().initUserChunk();
-        }
 
         getCommand("lockout").setExecutor(new LockoutCommand(lockout));
 
@@ -81,7 +86,7 @@ public class Lockout extends JavaPlugin {
 
     public LockoutSettings generateConfig(boolean regen) {
         if (regen) {
-            LockoutLogger.debugLog(lockout.settings(), "Reloading configuration from disk");
+            LockoutLogger.debugLog("Reloading configuration from disk");
             reloadConfig();
         }
         return new LockoutSettings(getConfig());

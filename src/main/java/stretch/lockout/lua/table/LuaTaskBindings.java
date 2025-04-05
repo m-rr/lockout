@@ -22,7 +22,7 @@ import org.luaj.vm2.lib.VarArgFunction;
 import org.luaj.vm2.lib.jse.CoerceJavaToLua;
 import org.luaj.vm2.lib.jse.CoerceLuaToJava;
 import stretch.lockout.event.state.PlayerStateChangeEvent;
-import stretch.lockout.lua.LuaBlockPredicate;
+import stretch.lockout.lua.predicate.LuaBlockPredicate;
 import stretch.lockout.lua.LuaTaskBuilder;
 import stretch.lockout.task.base.Task;
 import stretch.lockout.task.composite.TaskChoice;
@@ -41,7 +41,7 @@ public class LuaTaskBindings implements LuaTableBinding {
     @Override
     public void injectBindings(LuaTable table) {
         // place(material, value, description, guiMaterial)
-        table.set("place", new VarArgFunction() {
+        table.set("_place", new VarArgFunction() {
             @Override
             public Varargs invoke(Varargs args) {
                 return CoerceJavaToLua.coerce(LuaTaskBuilder.createTaskMaterial(args, BlockPlaceEvent.class));
@@ -49,7 +49,7 @@ public class LuaTaskBindings implements LuaTableBinding {
         });
 
         // placeAny(materialType, value, description, guiMaterial)
-        table.set("placeAny", new VarArgFunction() {
+        table.set("_placeAny", new VarArgFunction() {
             @Override
             public Varargs invoke(Varargs args) {
                 return CoerceJavaToLua.coerce(LuaTaskBuilder.createGroupTaskMaterial(args, BlockPlaceEvent.class));
@@ -57,7 +57,7 @@ public class LuaTaskBindings implements LuaTableBinding {
         });
 
         // destroy(material, value, description, guiMaterial)
-        table.set("destroy", new VarArgFunction() {
+        table.set("_destroy", new VarArgFunction() {
             @Override
             public Varargs invoke(Varargs args) {
                 return CoerceJavaToLua.coerce(LuaTaskBuilder.createTaskMaterial(args, BlockBreakEvent.class));
@@ -65,7 +65,7 @@ public class LuaTaskBindings implements LuaTableBinding {
         });
 
         // destroyAny(materialType, value, description, guiMaterial)
-        table.set("destroyAny", new VarArgFunction() {
+        table.set("_destroyAny", new VarArgFunction() {
             @Override
             public Varargs invoke(Varargs args) {
                 return CoerceJavaToLua.coerce(LuaTaskBuilder.createGroupTaskMaterial(args, BlockBreakEvent.class));
@@ -73,7 +73,7 @@ public class LuaTaskBindings implements LuaTableBinding {
         });
 
         // pickup(material, value, description, guiMaterial)
-        table.set("pickup", new VarArgFunction() {
+        table.set("_pickup", new VarArgFunction() {
             @Override
             public Varargs invoke(Varargs args) {
                 return CoerceJavaToLua.coerce(LuaTaskBuilder.createTaskMaterial(args, EntityPickupItemEvent.class));
@@ -81,7 +81,7 @@ public class LuaTaskBindings implements LuaTableBinding {
         });
 
         // pickupAny(materialType, value, description, guiMaterial)
-        table.set("pickupAny", new VarArgFunction() {
+        table.set("_pickupAny", new VarArgFunction() {
             @Override
             public Varargs invoke(Varargs args) {
                 return CoerceJavaToLua.coerce(LuaTaskBuilder.createGroupTaskMaterial(args, EntityPickupItemEvent.class));
@@ -89,7 +89,7 @@ public class LuaTaskBindings implements LuaTableBinding {
         });
 
         // drop(material, value, description, guiMaterial
-        table.set("drop", new VarArgFunction() {
+        table.set("_drop", new VarArgFunction() {
             @Override
             public Varargs invoke(Varargs args) {
                 return CoerceJavaToLua.coerce(LuaTaskBuilder.createTaskMaterial(args, PlayerDropItemEvent.class));
@@ -97,7 +97,7 @@ public class LuaTaskBindings implements LuaTableBinding {
         });
 
         // dropAny(material, value, description, guiMaterial)
-        table.set("dropAny", new VarArgFunction() {
+        table.set("_dropAny", new VarArgFunction() {
             @Override
             public Varargs invoke(Varargs args) {
                 return CoerceJavaToLua.coerce(LuaTaskBuilder.createGroupTaskMaterial(args, PlayerDropItemEvent.class));
@@ -105,7 +105,7 @@ public class LuaTaskBindings implements LuaTableBinding {
         });
 
         // tame(entity, value, description, guiMaterial)
-        table.set("tame", new VarArgFunction() {
+        table.set("_tame", new VarArgFunction() {
             @Override
             public Varargs invoke(Varargs args) {
                 return CoerceJavaToLua.coerce(LuaTaskBuilder.createTaskEntity(args, EntityTameEvent.class));
@@ -113,7 +113,7 @@ public class LuaTaskBindings implements LuaTableBinding {
         });
 
         // tameAny(entityGroup, value, description, guiMaterial)
-        table.set("tameAny", new VarArgFunction() {
+        table.set("_tameAny", new VarArgFunction() {
             @Override
             public Varargs invoke(Varargs args) {
                 return CoerceJavaToLua.coerce(LuaTaskBuilder.createGroupTaskEntity(args, EntityTameEvent.class));
@@ -121,7 +121,7 @@ public class LuaTaskBindings implements LuaTableBinding {
         });
 
         // shear(entity, value, description, guiMaterial)
-        table.set("shear", new VarArgFunction() {
+        table.set("_shear", new VarArgFunction() {
             @Override
             public Varargs invoke(Varargs args) {
                 return CoerceJavaToLua.coerce(LuaTaskBuilder.createTaskEntity(args, PlayerShearEntityEvent.class));
@@ -129,7 +129,7 @@ public class LuaTaskBindings implements LuaTableBinding {
         });
 
         // obtain(material, value, description, guiMaterial)
-        table.set("obtain", new VarArgFunction() {
+        table.set("_obtain", new VarArgFunction() {
             @Override
             public Varargs invoke(Varargs args) {
                 int value = (int) CoerceLuaToJava.coerce(args.arg(2), int.class);
@@ -146,7 +146,7 @@ public class LuaTaskBindings implements LuaTableBinding {
         });
 
         // obtainAny(materialType, value, description, guiMaterial)
-        table.set("obtainAny", new VarArgFunction() {
+        table.set("_obtainAny", new VarArgFunction() {
             @Override
             public Varargs invoke(Varargs args) {
                 int value = (int) CoerceLuaToJava.coerce(args.arg(2), int.class);
@@ -164,7 +164,7 @@ public class LuaTaskBindings implements LuaTableBinding {
         });
 
         // quest(eventName, value, description, guiMaterial)
-        table.set("quest", new VarArgFunction() {
+        table.set("_quest", new VarArgFunction() {
             @Override
             public Varargs invoke(Varargs args) {
                 String eventName = (String) CoerceLuaToJava.coerce(args.arg(1), String.class);
@@ -184,7 +184,7 @@ public class LuaTaskBindings implements LuaTableBinding {
         });
 
         // playerState(value, description, guiMaterial, pred)
-        table.set("playerState", new VarArgFunction() {
+        table.set("_playerState", new VarArgFunction() {
             @Override
             public Varargs invoke(Varargs args) {
                 int value = (int) CoerceLuaToJava.coerce(args.arg(1), int.class);
@@ -198,7 +198,7 @@ public class LuaTaskBindings implements LuaTableBinding {
         });
 
         // getEffect(potionEffectType, value, description, guiMaterial)
-        table.set("getEffect", new VarArgFunction() {
+        table.set("_getEffect", new VarArgFunction() {
             @Override
             public Varargs invoke(Varargs args) {
                 PotionEffectType potionEffectType = (PotionEffectType) CoerceLuaToJava.coerce(args.arg(1), PotionEffectType.class);
@@ -212,7 +212,7 @@ public class LuaTaskBindings implements LuaTableBinding {
         });
 
         // eat(material, value, description, guiMaterial)
-        table.set("eat", new VarArgFunction() {
+        table.set("_eat", new VarArgFunction() {
             @Override
             public Varargs invoke(Varargs args) {
                 return CoerceJavaToLua.coerce(LuaTaskBuilder.createTaskMaterial(args, PlayerItemConsumeEvent.class));
@@ -220,7 +220,7 @@ public class LuaTaskBindings implements LuaTableBinding {
         });
 
         // eatAny(materialType, value, description, guiMaterial)
-        table.set("eatAny", new VarArgFunction() {
+        table.set("_eatAny", new VarArgFunction() {
             @Override
             public Varargs invoke(Varargs args) {
                 return CoerceJavaToLua.coerce(LuaTaskBuilder.createGroupTaskMaterial(args, PlayerItemConsumeEvent.class));
@@ -228,7 +228,7 @@ public class LuaTaskBindings implements LuaTableBinding {
         });
 
         // kill(entity, value, description, guiMaterial)
-        table.set("kill", new VarArgFunction() {
+        table.set("_kill", new VarArgFunction() {
             @Override
             public Varargs invoke(Varargs args) {
                 return CoerceJavaToLua.coerce(LuaTaskBuilder.createTaskEntity(args, EntityDeathEvent.class));
@@ -236,7 +236,7 @@ public class LuaTaskBindings implements LuaTableBinding {
         });
 
         // killAny(entityGroup, value, description, guiMaterial)
-        table.set("killAny", new VarArgFunction() {
+        table.set("_killAny", new VarArgFunction() {
             @Override
             public Varargs invoke(Varargs args) {
                 return CoerceJavaToLua.coerce(LuaTaskBuilder.createGroupTaskEntity(args, EntityDeathEvent.class));
@@ -244,7 +244,7 @@ public class LuaTaskBindings implements LuaTableBinding {
         });
 
         // smelt(material, value, description, guiMaterial)
-        table.set("smelt", new VarArgFunction() {
+        table.set("_smelt", new VarArgFunction() {
             @Override
             public Varargs invoke(Varargs args) {
                 return CoerceJavaToLua.coerce(LuaTaskBuilder.createTaskMaterial(args, FurnaceExtractEvent.class));
@@ -252,7 +252,7 @@ public class LuaTaskBindings implements LuaTableBinding {
         });
 
         // smeltAny(materialType, value, description, guiMaterial)
-        table.set("smeltAny", new VarArgFunction() {
+        table.set("_smeltAny", new VarArgFunction() {
             @Override
             public Varargs invoke(Varargs args) {
                 return CoerceJavaToLua.coerce(LuaTaskBuilder.createTaskMaterial(args, FurnaceExtractEvent.class));
@@ -260,7 +260,7 @@ public class LuaTaskBindings implements LuaTableBinding {
         });
 
         // bucket(entity, value, description, guiMaterial)
-        table.set("bucket", new VarArgFunction() {
+        table.set("_bucket", new VarArgFunction() {
             @Override
             public Varargs invoke(Varargs args) {
                 EntityType entity = (EntityType) CoerceLuaToJava.coerce(args.arg1(), EntityType.class);
@@ -272,7 +272,7 @@ public class LuaTaskBindings implements LuaTableBinding {
         });
 
         // hit(entity, value, description, guiMaterial)
-        table.set("hit", new VarArgFunction() {
+        table.set("_hit", new VarArgFunction() {
             @Override
             public Varargs invoke(Varargs args) {
                 return CoerceJavaToLua.coerce(LuaTaskBuilder.createTaskEntity(args, EntityDamageByEntityEvent.class));
@@ -280,7 +280,7 @@ public class LuaTaskBindings implements LuaTableBinding {
         });
 
         // hitAny(entityGroup, value, description, guiMaterial)
-        table.set("hitAny", new VarArgFunction() {
+        table.set("_hitAny", new VarArgFunction() {
             @Override
             public Varargs invoke(Varargs args) {
                 return CoerceJavaToLua.coerce(LuaTaskBuilder.createGroupTaskEntity(args, EntityDamageByEntityEvent.class));
@@ -288,7 +288,7 @@ public class LuaTaskBindings implements LuaTableBinding {
         });
 
         // breed(entity, value, description, guiMaterial)
-        table.set("breed", new VarArgFunction() {
+        table.set("_breed", new VarArgFunction() {
             @Override
             public Varargs invoke(Varargs args) {
                 return CoerceJavaToLua.coerce(LuaTaskBuilder.createTaskEntity(args, EntityBreedEvent.class));
@@ -296,7 +296,7 @@ public class LuaTaskBindings implements LuaTableBinding {
         });
 
         // breedAny(entityGroup, value, description, guiMaterial)
-        table.set("breedAny", new VarArgFunction() {
+        table.set("_breedAny", new VarArgFunction() {
             @Override
             public Varargs invoke(Varargs args) {
                 return CoerceJavaToLua.coerce(LuaTaskBuilder.createGroupTaskEntity(args, EntityBreedEvent.class));
@@ -304,7 +304,7 @@ public class LuaTaskBindings implements LuaTableBinding {
         });
 
         // damageByEntity(entity, damageCause, value, description, guiMaterial)
-        table.set("damageByEntity", new VarArgFunction() {
+        table.set("_damageByEntity", new VarArgFunction() {
             @Override
             public Varargs invoke(Varargs args) {
                 EntityType entityType = (EntityType) CoerceLuaToJava.coerce(args.arg(1), EntityType.class);
@@ -319,7 +319,7 @@ public class LuaTaskBindings implements LuaTableBinding {
         });
 
         // damageByBlock(material, damageCause, value, description, guiMaterial)
-        table.set("damageByBlock", new VarArgFunction() {
+        table.set("_damageByBlock", new VarArgFunction() {
             @Override
             public Varargs invoke(Varargs args) {
                 Material material = (Material) CoerceLuaToJava.coerce(args.arg(1), Material.class);
@@ -334,7 +334,7 @@ public class LuaTaskBindings implements LuaTableBinding {
         });
 
         // takeDamage(damageCause, value, description, guiMaterial)
-        table.set("takeDamage", new VarArgFunction() {
+        table.set("_takeDamage", new VarArgFunction() {
             @Override
             public Varargs invoke(Varargs args) {
                 EntityDamageEvent.DamageCause damageCause = (EntityDamageEvent.DamageCause) CoerceLuaToJava.coerce(args.arg(1), EntityDamageEvent.DamageCause.class);
@@ -348,7 +348,7 @@ public class LuaTaskBindings implements LuaTableBinding {
         });
 
         // standOn(material, value, description, guiMaterial)
-        table.set("standOn", new VarArgFunction() {
+        table.set("_standOn", new VarArgFunction() {
             @Override
             public Varargs invoke(Varargs args) {
                 Material material = (Material) CoerceLuaToJava.coerce(args.arg(1), Material.class);
@@ -365,7 +365,7 @@ public class LuaTaskBindings implements LuaTableBinding {
         });
 
         // standOnAny(materialType, value, description, guiMaterial)
-        table.set("standOnAny", new VarArgFunction() {
+        table.set("_standOnAny", new VarArgFunction() {
             @Override
             public Varargs invoke(Varargs args) {
                 Set<Material> materials = (ImmutableSet<Material>) CoerceLuaToJava.coerce(args.arg(1), ImmutableSet.class);
@@ -380,7 +380,7 @@ public class LuaTaskBindings implements LuaTableBinding {
         });
 
         // interactEntity(entity, value, description, guiMaterial)
-        table.set("interactEntity", new VarArgFunction() {
+        table.set("_interactEntity", new VarArgFunction() {
             @Override
             public Varargs invoke(Varargs args) {
                 return CoerceJavaToLua.coerce(LuaTaskBuilder.createTaskEntity(args, PlayerInteractEntityEvent.class));
@@ -388,7 +388,7 @@ public class LuaTaskBindings implements LuaTableBinding {
         });
 
         // interactEntityAny(entityGroup, value, description, guiMaterial)
-        table.set("interactEntityAny", new VarArgFunction() {
+        table.set("_interactEntityAny", new VarArgFunction() {
             @Override
             public Varargs invoke(Varargs args) {
                 return CoerceJavaToLua.coerce(LuaTaskBuilder.createGroupTaskEntity(args, PlayerInteractEntityEvent.class));
@@ -396,7 +396,7 @@ public class LuaTaskBindings implements LuaTableBinding {
         });
 
         // interactBlock(material, value, description, guiMaterial)
-        table.set("interactBlock", new VarArgFunction() {
+        table.set("_interactBlock", new VarArgFunction() {
             @Override
             public Varargs invoke(Varargs args) {
                 return CoerceJavaToLua.coerce(LuaTaskBuilder.createTaskMaterial(args, PlayerInteractEvent.class));
@@ -404,7 +404,7 @@ public class LuaTaskBindings implements LuaTableBinding {
         });
 
         // interactBlockAny(materialType, value, description, guiMaterial)
-        table.set("interactBlockAny", new VarArgFunction() {
+        table.set("_interactBlockAny", new VarArgFunction() {
             @Override
             public Varargs invoke(Varargs args) {
                 return CoerceJavaToLua.coerce(LuaTaskBuilder.createGroupTaskMaterial(args, PlayerInteractEvent.class));
@@ -412,7 +412,7 @@ public class LuaTaskBindings implements LuaTableBinding {
         });
 
         // structure(value, description, guiMaterial, blockPredicate)
-        table.set("structure", new VarArgFunction() {
+        table.set("_structure", new VarArgFunction() {
             @Override
             public Varargs invoke(Varargs args) {
                 int value = (int) CoerceLuaToJava.coerce(args.arg(1), int.class);
@@ -427,7 +427,7 @@ public class LuaTaskBindings implements LuaTableBinding {
         });
 
         // cauldron(reason, value, description, guiMaterial)
-        table.set("cauldron", new VarArgFunction() {
+        table.set("_cauldron", new VarArgFunction() {
             @Override
             public Varargs invoke(Varargs args) {
                 CauldronLevelChangeEvent.ChangeReason reason = (CauldronLevelChangeEvent.ChangeReason)
@@ -442,7 +442,7 @@ public class LuaTaskBindings implements LuaTableBinding {
         });
 
         // pvp(value, description, guiMaterial)
-        table.set("pvp", new ThreeArgFunction() {
+        table.set("_pvp", new ThreeArgFunction() {
             @Override
             public LuaValue call(LuaValue luaValue, LuaValue luaValue1, LuaValue luaValue2) {
                 int value = (int) CoerceLuaToJava.coerce(luaValue, int.class);
@@ -455,7 +455,7 @@ public class LuaTaskBindings implements LuaTableBinding {
         });
 
         //advancement(advancement, value, description, guiMaterial)
-        table.set("advancement", new VarArgFunction() {
+        table.set("_advancement", new VarArgFunction() {
                         @Override
                         public Varargs invoke(Varargs args) {
                                 //Advancement advancement = (Advancement) CoerceLuaToJava.coerce(args.arg(1), Advancement.class);

@@ -1,23 +1,30 @@
 package stretch.lockout.game;
 
 import com.google.common.collect.ImmutableList;
+import io.papermc.paper.registry.RegistryAccess;
+import io.papermc.paper.registry.RegistryKey;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabExecutor;
+import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.checkerframework.checker.nullness.qual.NonNull;
+import org.luaj.vm2.LuaValue;
 import stretch.lockout.game.state.GameState;
 import stretch.lockout.game.state.LockoutSettings;
 import stretch.lockout.kit.CompassKit;
+import stretch.lockout.lua.provider.EnchantmentProvider;
 import stretch.lockout.team.LockoutTeam;
 import stretch.lockout.team.TeamManager;
 import stretch.lockout.util.LockoutLogger;
 import stretch.lockout.world.AsyncChunkSearcher;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class LockoutCommand implements TabExecutor {
@@ -88,23 +95,7 @@ public class LockoutCommand implements TabExecutor {
                             return false;
                         }
 
-                        AsyncChunkSearcher chunkSearcher = new AsyncChunkSearcher(lockout.getPlugin(), player.getWorld(), 55, 200);
-                        // Search parameters
-                        Location centerLocation = player.getLocation();
-                        int searchRadius = Integer.parseInt(args[1]); // chunks
-                        Material targetMaterial = Material.getMaterial(args[2]);
-                        player.sendMessage(ChatColor.BLUE + "Searching for " + targetMaterial + " at " + centerLocation + " with radius of " + (searchRadius * 16) + " blocks");
-                        // Start the search process
-                        // Will load any unloaded chunks automatically
-                        chunkSearcher.findMaterialNear(player.getLocation(), searchRadius, targetMaterial, 8).thenAccept(locations -> {
-                            if (locations.isEmpty()) {
-                                player.sendMessage(ChatColor.RED + "Cannot find any " + targetMaterial + " at " + centerLocation);
-                            }
-                            else {
-                                player.sendMessage(ChatColor.GOLD + locations.toString());
-                                player.sendMessage(ChatColor.GREEN + "Found " + locations.size() + " " + targetMaterial);
-                            }
-                        });
+
                     }
                     case "start" -> {
                     if (lockout.settings().hasRule(LockoutGameRule.OP_COMMANDS)
@@ -139,12 +130,13 @@ public class LockoutCommand implements TabExecutor {
                             stringBuilder.append(args[i]).append(" ");
                         }
                         String chunk = stringBuilder.toString();
-                        lockout.getUserLuaEnvironment().loadString(sender, chunk);
+                        LuaValue rt = lockout.getUserLuaEnvironment().loadString(sender, chunk);
+                        LockoutLogger.evalLog(sender, ChatColor.GREEN + chunk);
+                        LockoutLogger.evalLog(sender, rt.toString());
                     }
                     else {
                         LockoutLogger.log(sender, "You are not in dev mode");
                     }
-
                 }
                 case "reload" -> {
                     if (lockout.settings().hasRule(LockoutGameRule.OP_COMMANDS)
@@ -152,7 +144,7 @@ public class LockoutCommand implements TabExecutor {
                         noPermissionMessage(player);
                         return true;
                     }
-                    LockoutLogger.debugLog(lockout.settings(), ChatColor.RED + "Reload request from " + sender.getName());
+                    LockoutLogger.debugLog(ChatColor.RED + "Reload request from " + sender.getName());
                     lockout.getGameStateHandler().setGameState(GameState.PAUSED);
                     LockoutSettings oldSettings = lockout.settings();
                     lockout.updateSettings(lockout.getPlugin().generateConfig(true));
@@ -165,7 +157,7 @@ public class LockoutCommand implements TabExecutor {
                     lockout.getBoardManager().registerBoardsAsync();
 
                     lockout.getGameStateHandler().setGameState(GameState.END);
-                    LockoutLogger.debugLog(lockout.settings(), ChatColor.GREEN + "Reload complete");
+                    LockoutLogger.debugLog(ChatColor.GREEN + "Reload complete");
                 }
                     default -> {return false;}
                 }
@@ -198,6 +190,21 @@ public class LockoutCommand implements TabExecutor {
                 case "version" -> {
                     LockoutLogger.log(sender, lockout.getPlugin().getDescription().getVersion());
                 }
+                case "eval" -> {
+                    if (lockout.settings().hasRule(LockoutGameRule.DEV)) {
+                        final int length = args.length;
+                        StringBuilder stringBuilder = new StringBuilder();
+                        for (int i = 1; i < length; i++) {
+                            stringBuilder.append(args[i]).append(" ");
+                        }
+                        String chunk = stringBuilder.toString();
+                        LuaValue rt = lockout.getUserLuaEnvironment().loadString(sender, chunk);
+                        LockoutLogger.evalLog(sender, rt.toString());
+                    }
+                    else {
+                        LockoutLogger.log(sender, "You are not in dev mode");
+                    }
+                }
                 case "reload" -> {
                     if (lockout.settings().hasRule(LockoutGameRule.OP_COMMANDS)
                         && sender instanceof Player player
@@ -206,7 +213,7 @@ public class LockoutCommand implements TabExecutor {
                         return true;
                     }
 
-                    LockoutLogger.debugLog(lockout.settings(), ChatColor.RED + "Reload request from " + sender.getName());
+                    LockoutLogger.debugLog(ChatColor.RED + "Reload request from " + sender.getName());
                     lockout.getGameStateHandler().setGameState(GameState.PAUSED);
                     LockoutSettings oldSettings = lockout.settings();
                     lockout.updateSettings(lockout.getPlugin().generateConfig(true));
@@ -219,7 +226,7 @@ public class LockoutCommand implements TabExecutor {
                     lockout.getBoardManager().registerBoardsAsync();
 
                     lockout.getGameStateHandler().setGameState(GameState.END);
-                    LockoutLogger.debugLog(lockout.settings(), ChatColor.GREEN + "Reload complete");
+                    LockoutLogger.debugLog(ChatColor.GREEN + "Reload complete");
                 }
                 default -> {return false;}
             }

@@ -1,10 +1,14 @@
-package stretch.lockout.reward;
+package stretch.lockout.reward.pattern;
 
+import org.bukkit.entity.Player;
 import org.luaj.vm2.LuaValue;
+import stretch.lockout.reward.api.RewardComponent;
+import stretch.lockout.reward.api.RewardType;
 import stretch.lockout.team.player.PlayerStat;
 import stretch.lockout.util.LockoutLogger;
 
 import java.util.*;
+import java.util.function.Consumer;
 
 public class RewardChance implements RewardComponent {
     private final String description;
@@ -12,7 +16,7 @@ public class RewardChance implements RewardComponent {
     private RewardComponent selectedReward;
     private final Random random = new Random(System.currentTimeMillis());
     //private final List<Runnable> rewardRunnables = new ArrayList<>();
-    private final Map<Runnable, Long> rewardRunnables = new HashMap<>();
+    private final Map<Consumer<Player>, Long> rewardRunnables = new HashMap<>();
 
     public RewardChance(String description) {
         this.description = description;
@@ -90,17 +94,17 @@ public class RewardChance implements RewardComponent {
     }
 
     @Override
-    public Map<Runnable, Long> getActions() {
+    public Map<Consumer<Player>, Long> getActions() {
         return rewardRunnables;
     }
 
     @Override
-    public void addAction(Runnable rewardRunnable) {
+    public void addAction(Consumer<Player> rewardRunnable) {
         addAction(rewardRunnable, -1L);
     }
 
     @Override
-    public void addAction(Runnable rewardRunnable, long delay) {
+    public void addAction(Consumer<Player> rewardRunnable, long delay) {
         rewardRunnables.put(rewardRunnable, delay);
     }
 
@@ -111,7 +115,7 @@ public class RewardChance implements RewardComponent {
 
     @Override
     public void addAction(LuaValue luaRunnable, long delay) {
-        rewardRunnables.put(() -> luaRunnable.checkfunction().call(), delay);
+        rewardRunnables.put((player) -> luaRunnable.checkfunction().call(), delay);
     }
 
     public record WeightedReward(RewardComponent rewardComponent, int weight) {}

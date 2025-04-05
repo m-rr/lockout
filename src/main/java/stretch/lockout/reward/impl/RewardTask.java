@@ -1,9 +1,11 @@
-package stretch.lockout.reward;
+package stretch.lockout.reward.impl;
 
 import org.bukkit.entity.Player;
+import stretch.lockout.reward.api.RewardType;
+import stretch.lockout.reward.base.Reward;
 import stretch.lockout.task.HiddenTask;
 
-public class RewardTask extends RewardLeaf {
+public class RewardTask extends Reward {
     private final HiddenTask taskInvisible;
 
     public RewardTask(HiddenTask task, String description) {

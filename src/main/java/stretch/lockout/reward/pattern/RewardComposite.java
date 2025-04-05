@@ -1,17 +1,20 @@
-package stretch.lockout.reward;
+package stretch.lockout.reward.pattern;
 
+import org.bukkit.entity.Player;
 import org.luaj.vm2.LuaValue;
+import stretch.lockout.reward.api.RewardComponent;
+import stretch.lockout.reward.api.RewardType;
 import stretch.lockout.team.player.PlayerStat;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 
 public class RewardComposite implements RewardComponent {
     private final List<RewardComponent> rewardComponents;
-    //private final List<Runnable> rewardRunnables = new ArrayList<>();
-    private final Map<Runnable, Long> rewardRunnables = new HashMap<>();
+    private final Map<Consumer<Player>, Long> rewardRunnables = new HashMap<>();
 
     public RewardComposite() {
         this.rewardComponents = new ArrayList<>();
@@ -32,15 +35,15 @@ public class RewardComposite implements RewardComponent {
     public List<RewardComponent> getRewardComponents() {return rewardComponents;}
 
     @Override
-    public Map<Runnable, Long> getActions() {return rewardRunnables;}
+    public Map<Consumer<Player>, Long> getActions() {return rewardRunnables;}
 
     @Override
-    public void addAction(Runnable rewardRunnable) {
+    public void addAction(Consumer<Player> rewardRunnable) {
         addAction(rewardRunnable, -1L);
     }
 
     @Override
-    public void addAction(Runnable rewardRunnable, long delay) {
+    public void addAction(Consumer<Player> rewardRunnable, long delay) {
         rewardRunnables.put(rewardRunnable, delay);
     }
 
@@ -51,7 +54,7 @@ public class RewardComposite implements RewardComponent {
 
     @Override
     public void addAction(LuaValue luaRunnable, long delay) {
-        rewardRunnables.put(() -> luaRunnable.checkfunction().call(), delay);
+        rewardRunnables.put((player) -> luaRunnable.checkfunction().call(), delay);
     }
 
     @Override

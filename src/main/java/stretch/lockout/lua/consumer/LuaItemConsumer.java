@@ -1,6 +1,5 @@
-package stretch.lockout.lua;
+package stretch.lockout.lua.consumer;
 
-import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.luaj.vm2.LuaFunction;
 import org.luaj.vm2.LuaValue;

@@ -1,10 +1,12 @@
-package stretch.lockout.reward;
+package stretch.lockout.reward.impl;
 
 import org.bukkit.entity.Player;
+import stretch.lockout.reward.api.RewardType;
+import stretch.lockout.reward.base.Reward;
 
 import java.util.function.Consumer;
 
-public class RewardAction extends RewardLeaf {
+public class RewardAction extends Reward {
     private final Consumer<Player> action;
     public RewardAction(Consumer<Player> consumer, String description) {
         super(description);

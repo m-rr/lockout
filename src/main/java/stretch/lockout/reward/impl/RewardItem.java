@@ -1,9 +1,11 @@
-package stretch.lockout.reward;
+package stretch.lockout.reward.impl;
 
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
+import stretch.lockout.reward.api.RewardType;
+import stretch.lockout.reward.base.Reward;
 
-public class RewardItem extends RewardLeaf {
+public class RewardItem extends Reward {
     final private ItemStack rewardItem;
 
     public RewardItem(ItemStack rewardItem, String description) {

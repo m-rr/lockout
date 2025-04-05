@@ -46,7 +46,7 @@ public class TaskRaceEventHandler implements Listener {
 
             var actions = reward.getActions();
             if (!actions.isEmpty()) {
-                lockout.getRewardScheduler().scheduleRewardActions(reward);
+                lockout.getRewardScheduler().scheduleRewardActions(scoredPlayerStat, reward);
             }
         }
 
@@ -90,7 +90,7 @@ public class TaskRaceEventHandler implements Listener {
         Bukkit.getScheduler().scheduleSyncDelayedTask(lockout.getPlugin(),
                 () -> lockout.getGameStateHandler().setGameState(GameState.END), 100);
 
-        LockoutLogger.debugLog(lockout.settings(), "Game has ended");
+        LockoutLogger.debugLog("Game has ended");
     }
 
     @EventHandler

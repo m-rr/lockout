@@ -42,7 +42,7 @@ public class FileBasedBoardManager implements BoardManager {
 
     public void loadBoard(final String boardName) {
         luaEnvironment.resetTables();
-        LockoutLogger.debugLog(settings, "Loading board " + boardName);
+        LockoutLogger.debugLog("Loading board " + boardName);
 
         Optional<BoardInfo> boardInfo = getBoard(boardName);
         if (boardInfo.isEmpty()) {
@@ -58,12 +58,12 @@ public class FileBasedBoardManager implements BoardManager {
             if (identifiers.length > 1 && "info".equals(identifiers[0])) {
                 value = "\"" + value + "\"";
             }
-            LockoutLogger.debugLog(settings, variable + " = " + value);
+            LockoutLogger.debugLog(variable + " = " + value);
             luaEnvironment.loadString(plugin.getServer().getConsoleSender(), variable + " = " + value);
         };
 
 
-        LockoutLogger.debugLog(settings, "Injecting variables");
+        LockoutLogger.debugLog("Injecting variables");
         // inject variables
         Set<String> initTables = new HashSet<>();
         boardInfo.get().variables()
@@ -74,7 +74,7 @@ public class FileBasedBoardManager implements BoardManager {
                     String currentTable = tables[0];
                     for (int i = 1; i < tables.length; i++) {
                         if (!initTables.contains(currentTable)) {
-                            LockoutLogger.debugLog(settings, String.format("Initializing table '%s'", currentTable));
+                            LockoutLogger.debugLog(String.format("Initializing table '%s'", currentTable));
 
                             initTables.add(currentTable);
                             evalVariable.accept(currentTable, "{}");
@@ -90,7 +90,7 @@ public class FileBasedBoardManager implements BoardManager {
                 .relativize(Path.of(boardInfo.get().entryPoint())).toString();
 
         luaEnvironment.requireFile(relativeInitPath);
-        LockoutLogger.debugLog(settings, String.format("Board %s loaded", boardName));
+        LockoutLogger.debugLog(String.format("Board %s loaded", boardName));
     }
 
     private String[] getStrings(String key) {
@@ -105,7 +105,7 @@ public class FileBasedBoardManager implements BoardManager {
                     )
             );
         }
-        LockoutLogger.debugLog(settings, "Found tables: " + Arrays.toString(tables));
+        LockoutLogger.debugLog("Found tables: " + Arrays.toString(tables));
         return tables;
     }
 
@@ -148,7 +148,7 @@ public class FileBasedBoardManager implements BoardManager {
         Path boardsFile = directory.resolve("board.properties");
 
         if (Files.exists(boardsFile)) {
-            LockoutLogger.debugLog(settings, "Found existing board file: " + boardsFile);
+            LockoutLogger.debugLog("Found existing board file: " + boardsFile);
             BoardInfo boardInfo = createBoardInfo(boardsFile);
             boards.add(boardInfo);
         }
@@ -156,8 +156,8 @@ public class FileBasedBoardManager implements BoardManager {
 
     public void registerBoardsAsync() {
         Bukkit.getAsyncScheduler().runNow(plugin, task -> {
-            LockoutLogger.debugLog(settings, "Registering boards.");
-            LockoutLogger.debugLog(settings, boards.stream()
+            LockoutLogger.debugLog("Registering boards.");
+            LockoutLogger.debugLog(boards.stream()
                     .map(Record::toString)
                     .collect(Collectors.joining("\n")));
 

@@ -1,11 +1,11 @@
 package stretch.lockout.lua;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
@@ -28,6 +28,8 @@ public class LuaEnvironment implements EvalFileHandler {
     private final Plugin plugin;
     private final String FILE_EXTENSION = ".lua";
     private String environmentPath = "plugins/Lockout/";
+    private final String LIB_PATH = "lib/";
+    private final String RESOURCE_IDENTIFIER = "RESOURCE_IDENTIFIER//";
     private final Map<String, LuaValue> requiredFiles = new HashMap<>();
     private final List<LuaTableBinding> luaBindings = new ArrayList<>();
 
@@ -46,15 +48,20 @@ public class LuaEnvironment implements EvalFileHandler {
         initBaseTable();
     }
 
+    public void initHelperLibrary() {
+        LockoutLogger.debugLog(ChatColor.YELLOW + "Initializing helper library");
+        requireLibFile("global");
+    }
+
     public void initUserChunk() {
         if (!Files.exists(Path.of(getEnvironmentPath(), "init.lua"))) {
             return;
         }
 
-        LockoutLogger.debugLog(settings, "Attempting to load " + ChatColor.GREEN + "init.lua");
+        LockoutLogger.debugLog("Attempting to load " + ChatColor.GREEN + "init.lua");
         LuaValue userChunk = global_table.loadfile(getEnvironmentPath() + "init.lua");
         userChunk.call();
-        LockoutLogger.debugLog(settings, "Loaded " + ChatColor.GREEN + "init.lua");
+        LockoutLogger.debugLog("Loaded " + ChatColor.GREEN + "init.lua");
     }
 
     public void initBaseTable() {
@@ -66,11 +73,17 @@ public class LuaEnvironment implements EvalFileHandler {
             }
         });
 
-        luaBindings.forEach(table -> table.injectBindings(global_table));
-    }
+        global_table.set("_require", new OneArgFunction() {
 
-    public void addLuaTableBinding(LuaTableBinding binding) {
-        luaBindings.add(binding);
+            @Override
+            public LuaValue call(LuaValue luaValue) {
+                String relativeFilePath = (String) CoerceLuaToJava.coerce(luaValue, String.class);
+                return requireLibFile(relativeFilePath);
+            }
+        });
+
+        luaBindings.forEach(table -> table.injectBindings(global_table));
+        initHelperLibrary();
     }
 
     public void addLuaTableBindings(List<LuaTableBinding> bindings) {
@@ -97,17 +110,42 @@ public class LuaEnvironment implements EvalFileHandler {
         return requiredFiles.get(getEnvironmentPath() + filePath);
     }
 
+    public LuaValue requireLibFile(String resourcePath) {
+        if (!resourcePath.endsWith(FILE_EXTENSION)) {
+            resourcePath = resourcePath + FILE_EXTENSION;
+        }
+
+        if (!requiredFiles.containsKey(RESOURCE_IDENTIFIER + resourcePath)) {
+            String lua = "";
+            InputStream inputStream = plugin.getResource(LIB_PATH + resourcePath);
+            try (inputStream) {
+                assert inputStream != null;
+                byte[] allBytes = inputStream.readAllBytes();
+                lua = new String(allBytes, StandardCharsets.UTF_8);
+            }
+            catch (IOException e) {
+                LockoutLogger.consoleLog(ChatColor.RED + "Failed to load " + resourcePath);
+            }
+
+            LuaValue chunk = global_table.load(lua);
+            LuaValue result = chunk.call();
+            requiredFiles.put(RESOURCE_IDENTIFIER + resourcePath, result);
+        }
+
+        return requiredFiles.get(RESOURCE_IDENTIFIER + resourcePath);
+    }
+
     public void resetRequiredFiles() {
         requiredFiles.clear();
     }
 
     public void loadFile(CommandSender sender, String filePath) {
-        LockoutLogger.debugLog(settings, "Attempting to load " + ChatColor.GREEN + filePath);
+        LockoutLogger.debugLog("Attempting to load " + ChatColor.GREEN + filePath);
         loadFile(filePath);
     }
 
     public void loadFile(String filePath) {
-        LockoutLogger.debugLog(settings, "Attempting to load " + ChatColor.GREEN + filePath);
+        LockoutLogger.debugLog("Attempting to load " + ChatColor.GREEN + filePath);
         if (!filePath.endsWith(FILE_EXTENSION)) {
             filePath = filePath + FILE_EXTENSION;
         }
@@ -116,20 +154,19 @@ public class LuaEnvironment implements EvalFileHandler {
 
     }
 
-    public void loadString(CommandSender sender, String data) {
+    public LuaValue loadString(CommandSender sender, String data) {
         global_table.set("_s", CoerceJavaToLua.coerce(sender));
         if (sender instanceof Player player) {
             global_table.set("_p", CoerceJavaToLua.coerce(player));
         }
 
+        LuaValue result = LuaValue.EMPTYSTRING;
+
         try {
             LuaValue chunk = global_table.load(data);
-            chunk.call();
+            result = chunk.call();
             String message = "Evaluated: " + ChatColor.GREEN + data;
             LockoutLogger.consoleLog(message);
-            if (sender instanceof Player) {
-                LockoutLogger.log(sender, message);
-            }
         } catch (LuaError error) {
             LockoutLogger.log(sender, ChatColor.RED + error.getMessage());
         }
@@ -137,10 +174,13 @@ public class LuaEnvironment implements EvalFileHandler {
             global_table.set("_p", CoerceJavaToLua.coerce(false));
             global_table.set("_s", CoerceJavaToLua.coerce(false));
         }
+
+        return result;
     }
 
     public void resetTables() {
         global_table = JsePlatform.standardGlobals();
+        resetRequiredFiles();
         initBaseTable();
     }
 }

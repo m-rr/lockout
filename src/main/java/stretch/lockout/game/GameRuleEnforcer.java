@@ -18,7 +18,7 @@ import stretch.lockout.util.LockoutLogger;
 public class GameRuleEnforcer implements Listener {
     private final LockoutContext lockout;
     public GameRuleEnforcer(final LockoutContext lockout) {
-        LockoutLogger.debugLog(lockout.settings(), "Game rule enforcer initialized.");
+        LockoutLogger.debugLog("Game rule enforcer initialized.");
         this.lockout = lockout;
         Bukkit.getPluginManager().registerEvents(this, lockout.getPlugin());
     }

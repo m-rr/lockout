@@ -134,15 +134,15 @@ public void showDiff(final LockoutSettings other) {
         newRule.removeAll(other.gameRules());
         other.gameRules().removeAll(rules);
         for (var r : newRule) {
-            LockoutLogger.debugLog(this, r.name() + ": False => True");
+            LockoutLogger.debugLog(r.name() + ": False => True");
         }
         for (var r : other.gameRules()) {
-            LockoutLogger.debugLog(this, r.name() + ": True => False");
+            LockoutLogger.debugLog(r.name() + ": True => False");
 
         }
 
         if (gameWorld != other.getGameWorld()) {
-            LockoutLogger.debugLog(this, "WORLD: "
+            LockoutLogger.debugLog("WORLD: "
                     + other.getGameWorld().getName() + " => " + gameWorld.getName());
         }
 
@@ -160,7 +160,7 @@ public void showDiff(final LockoutSettings other) {
 
     private void displaySettingDiff(String name, int newVal, int oldVal) {
         if (newVal != oldVal) {
-            LockoutLogger.debugLog(this, name + ": " + oldVal + " => " + newVal);
+            LockoutLogger.debugLog(name + ": " + oldVal + " => " + newVal);
             //MessageUtil.debugLog(this, StringTemplate.STR."\{name}: \{oldVal} => \{newVal}");
         }
     }

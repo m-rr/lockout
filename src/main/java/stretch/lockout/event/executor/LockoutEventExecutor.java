@@ -32,12 +32,12 @@ public class LockoutEventExecutor implements EventExecutor {
                                 EventPriority.NORMAL,
                                 this,
                                 lockout.getPlugin()));
-        LockoutLogger.debugLog(lockout.settings(), "Registered tasks");
+        LockoutLogger.debugLog("Registered tasks");
     }
 
     public void unregister() {
         HandlerList.unregisterAll(LOCKOUT_NULL_LISTENER);
-        LockoutLogger.debugLog(lockout.settings(), "Unregistered tasks");
+        LockoutLogger.debugLog("Unregistered tasks");
     }
 
     @Override

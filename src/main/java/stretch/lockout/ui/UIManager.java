@@ -17,7 +17,7 @@ import stretch.lockout.event.*;
 import stretch.lockout.game.LockoutContext;
 import stretch.lockout.game.LockoutGameRule;
 import stretch.lockout.game.state.GameState;
-import stretch.lockout.reward.RewardComponent;
+import stretch.lockout.reward.api.RewardComponent;
 import stretch.lockout.task.HiddenTask;
 import stretch.lockout.team.LockoutTeam;
 import stretch.lockout.team.TeamManager;
@@ -50,7 +50,7 @@ public class UIManager implements Listener {
 
     // TODO timer should not be internal to this package
     public LockoutTimer getTimer() {
-        LockoutLogger.debugLog(lockout.settings(),ChatColor.RED + "TIMER SHOULD BE SEPARATE FROM UI");
+        LockoutLogger.debugLog(ChatColor.RED + "TIMER SHOULD BE SEPARATE FROM UI");
         return barManager.getTimer();
     }
 
@@ -138,7 +138,7 @@ public class UIManager implements Listener {
 
         if (!(task instanceof HiddenTask)) {
             // Play sound for all players
-            LockoutLogger.debugLog(lockout.settings(), ChatColor.RED + "Fix sound in UI");
+            LockoutLogger.debugLog(ChatColor.RED + "Fix sound in UI");
 
             //teamManager.doToAllPlayers(PlayerEffect.NEGATIVE_TASK::accept);
             //teamManager.doToAllPlayers(PlayerEffect.POSITIVE_TASK::accept);

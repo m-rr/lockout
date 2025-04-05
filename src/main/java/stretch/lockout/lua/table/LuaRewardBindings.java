@@ -17,13 +17,20 @@ import org.luaj.vm2.lib.VarArgFunction;
 import org.luaj.vm2.lib.jse.CoerceJavaToLua;
 import org.luaj.vm2.lib.jse.CoerceLuaToJava;
 import stretch.lockout.game.state.LockoutSettings;
-import stretch.lockout.lua.LuaPlayerConsumer;
+import stretch.lockout.lua.consumer.LuaPlayerConsumer;
 import stretch.lockout.lua.LuaPotionEffect;
 import stretch.lockout.lua.Compatability;
+import stretch.lockout.reward.api.RewardComponent;
+import stretch.lockout.reward.api.RewardType;
+import stretch.lockout.reward.impl.RewardAction;
+import stretch.lockout.reward.impl.RewardItem;
+import stretch.lockout.reward.impl.RewardPotion;
+import stretch.lockout.reward.impl.RewardTask;
+import stretch.lockout.reward.pattern.RewardChance;
+import stretch.lockout.reward.pattern.RewardComposite;
 import stretch.lockout.task.api.TaskComponent;
 import stretch.lockout.task.HiddenTask;
 import stretch.lockout.task.manager.TaskCollection;
-import stretch.lockout.reward.*;
 
 import java.util.*;
 
@@ -39,7 +46,7 @@ public class LuaRewardBindings implements LuaTableBinding {
     @Override
     public void injectBindings(LuaTable table) {
         //item(material, amount, rewardType, description, {optional} enchantment table, {optional} itemMetaConsumer)
-        table.set("item", new VarArgFunction() {
+        table.set("_item", new VarArgFunction() {
             @Override
             public Varargs invoke(Varargs args) {
                 Material material = (Material) CoerceLuaToJava.coerce(args.arg(1), Material.class);
@@ -74,7 +81,7 @@ public class LuaRewardBindings implements LuaTableBinding {
         });
 
         //potion(potioneffectType, amplifier, rewardType, description, {optional} timeTicks)
-        table.set("potion", new VarArgFunction() {
+        table.set("_potion", new VarArgFunction() {
             @Override
             public Varargs invoke(Varargs args) {
                 LuaPotionEffect effect = (LuaPotionEffect) CoerceLuaToJava.coerce(args.arg(1), LuaPotionEffect.class);
@@ -94,7 +101,7 @@ public class LuaRewardBindings implements LuaTableBinding {
         });
 
         //action(rewardType, description, consumer)
-        table.set("action", new ThreeArgFunction() {
+        table.set("_action", new ThreeArgFunction() {
             @Override
             public LuaValue call(LuaValue luaValue, LuaValue luaValue1, LuaValue luaValue2) {
                 RewardType rewardType = (RewardType) CoerceLuaToJava.coerce(luaValue, RewardType.class);
@@ -105,7 +112,7 @@ public class LuaRewardBindings implements LuaTableBinding {
         });
 
         //rewardTask(rewardType, description, task)
-        table.set("rewardTask", new ThreeArgFunction() {
+        table.set("_rewardTask", new ThreeArgFunction() {
             @Override
             public LuaValue call(LuaValue luaValue, LuaValue luaValue1, LuaValue luaValue2) {
                 RewardType rewardType = (RewardType) CoerceLuaToJava.coerce(luaValue, RewardType.class);
@@ -120,7 +127,7 @@ public class LuaRewardBindings implements LuaTableBinding {
         });
 
         //rewardChance(description, rewardTable)
-        table.set("rewardChance", new TwoArgFunction() {
+        table.set("_rewardChance", new TwoArgFunction() {
             @Override
             public LuaValue call(LuaValue luaValue, LuaValue luaValue1) {
                 String description = (String) CoerceLuaToJava.coerce(luaValue, String.class);
@@ -135,7 +142,7 @@ public class LuaRewardBindings implements LuaTableBinding {
         });
 
         //rewards(reward..rewards)
-        table.set("rewards", new VarArgFunction() {
+        table.set("_rewards", new VarArgFunction() {
             @Override
             public Varargs invoke(Varargs args) {
                 List<RewardComponent> rewards = new ArrayList<>();

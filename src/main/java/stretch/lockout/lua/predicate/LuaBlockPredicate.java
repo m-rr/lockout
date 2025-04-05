@@ -1,4 +1,4 @@
-package stretch.lockout.lua;
+package stretch.lockout.lua.predicate;
 
 import org.bukkit.block.Block;
 import org.luaj.vm2.LuaFunction;

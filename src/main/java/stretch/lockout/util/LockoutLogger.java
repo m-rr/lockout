@@ -7,8 +7,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
-import stretch.lockout.game.LockoutGameRule;
-import stretch.lockout.game.state.LockoutSettings;
+import stretch.lockout.Lockout;
 
 public class LockoutLogger {
     private static void sendAll(ChatMessageType chatMessageType, String message) {
@@ -59,8 +58,8 @@ public class LockoutLogger {
         log(Bukkit.getConsoleSender(), message);
     }
 
-    public static void debugLog(final LockoutSettings settings, String message) {
-        if (settings.hasRule(LockoutGameRule.DEV)) {
+    public static void debugLog(String message) {
+        if (Lockout.isDevModeEnabled()) {
             String finalMessage = ChatColor.BLACK + "[" + ChatColor.DARK_BLUE
                     + "DEBUG" + ChatColor.BLACK + "] " + ChatColor.GRAY + message;
 

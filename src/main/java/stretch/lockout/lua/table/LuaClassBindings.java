@@ -4,7 +4,6 @@ import org.bukkit.*;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.block.Biome;
 import org.bukkit.block.BlockFace;
-import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.EntityType;
 import org.bukkit.event.block.CauldronLevelChangeEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
@@ -13,7 +12,7 @@ import org.luaj.vm2.lib.jse.CoerceJavaToLua;
 import stretch.lockout.game.LockoutGameRule;
 import stretch.lockout.game.state.GameState;
 import stretch.lockout.lua.LuaPotionEffect;
-import stretch.lockout.reward.RewardType;
+import stretch.lockout.reward.api.RewardType;
 import stretch.lockout.util.LockoutLogger;
 import stretch.lockout.util.types.BiomeTypes;
 import stretch.lockout.util.types.MaterialTypes;
@@ -29,7 +28,12 @@ public class LuaClassBindings implements LuaTableBinding {
         table.set("Biome", CoerceJavaToLua.coerce(Biome.class));
         table.set("BlockFace", CoerceJavaToLua.coerce(BlockFace.class));
         table.set("Entity", CoerceJavaToLua.coerce(EntityType.class));
-        table.set("Enchantment", CoerceJavaToLua.coerce(Enchantment.class));
+
+        // Some types need a work around
+        table.set("Enchantment", new LuaTable());
+        LuaEnchantmentBindings enchantBindings = new LuaEnchantmentBindings();
+        enchantBindings.injectBindings(table.get("Enchantment").checktable());
+
         table.set("DamageCause", CoerceJavaToLua.coerce(EntityDamageEvent.DamageCause.class));
         table.set("CauldronChange", CoerceJavaToLua.coerce(CauldronLevelChangeEvent.ChangeReason.class));
         table.set("DyeColor", CoerceJavaToLua.coerce(DyeColor.class));

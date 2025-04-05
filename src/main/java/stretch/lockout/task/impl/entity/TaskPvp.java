@@ -6,7 +6,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.luaj.vm2.LuaValue;
 import stretch.lockout.event.executor.LockoutWrappedEvent;
-import stretch.lockout.lua.LuaHumanEntityPredicate;
+import stretch.lockout.lua.predicate.LuaHumanEntityPredicate;
 import stretch.lockout.task.api.PlayerTargetTask;
 import stretch.lockout.task.api.TaskComponent;
 import stretch.lockout.task.base.Task;
