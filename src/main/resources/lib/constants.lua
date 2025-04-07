@@ -122,10 +122,13 @@ map_enum_array_to_lowercase("effects", Effect) -- Assuming PotionEffectType is e
    --   map_enum_array_to_lowercase("enchantments", Enchantment) -- Assuming Enchantment is exposed as array
 map_enum_array_to_lowercase("damage_causes", DamageCause) -- Assuming DamageCause is exposed as array
 map_enum_array_to_lowercase("reward_types", RewardType) -- Assuming RewardType is exposed as array
+map_enum_array_to_lowercase("block_faces", BlockFace)
 
 constants.enchantments = Enchantment -- Should already be a table exposed by java
-
-constants.default_potion_ticks = 20 * 60 * 60 * 24 -- 24 hours -> Just needs to be a long time. Should probably do this differently but oh well.
+constants.default_potion_ticks = 20 * 60 * 60 * 24 -- (24 hours) Default time which a potion reward will apply the potion for
+constants.default_description = "I'm a mystery" -- Default string displayed for task and reward descriptions
+constants.default_display = constants.materials.stone -- Default display material for tasks
+constants.default_value = 1 -- Default value for tasks
 ----------------------------------------------------
 -- Manually Add Custom Groups (Optional - Same as before)
    ----------------------------------------------------

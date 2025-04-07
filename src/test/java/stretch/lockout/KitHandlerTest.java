@@ -4,14 +4,12 @@ import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
-import org.bukkit.inventory.ItemStack;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockbukkit.mockbukkit.MockBukkit;
 import org.mockbukkit.mockbukkit.ServerMock;
 import org.mockbukkit.mockbukkit.entity.PlayerMock;
-import org.mockbukkit.mockbukkit.inventory.ItemStackMock;
 import stretch.lockout.event.StartGameEvent;
 import stretch.lockout.game.LockoutContext;
 import stretch.lockout.game.LockoutGameRule;
@@ -65,7 +63,7 @@ class KitHandlerTest {
         server = MockBukkit.mock();
         // Load TestLockout to get context with mocks pre-injected
         plugin = MockBukkit.load(TestLockout.class);
-        lockoutContext = plugin.getLockout();
+        lockoutContext = plugin.getLockoutContext();
         settings = lockoutContext.settings(); // Use settings from context
 
         // --- Get Mocks from TestLockout/LockoutContext ---

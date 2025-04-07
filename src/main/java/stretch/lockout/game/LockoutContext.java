@@ -11,21 +11,26 @@ import stretch.lockout.game.state.GameState;
 import stretch.lockout.game.state.GameStateHandler;
 import stretch.lockout.game.state.LockoutSettings;
 import stretch.lockout.kit.KitHandler;
-import stretch.lockout.listener.*;
+import stretch.lockout.listener.LockoutEventHandler;
+import stretch.lockout.listener.OfflineRewardListener;
+import stretch.lockout.listener.PlayerEventHandler;
+import stretch.lockout.listener.PvpHandler;
 import stretch.lockout.lua.LuaEnvironment;
 import stretch.lockout.lua.table.*;
 import stretch.lockout.reward.scheduler.RewardScheduler;
-import stretch.lockout.ui.UIManager;
-import stretch.lockout.ui.inventory.InventoryInputHandler;
-import stretch.lockout.task.event.IndirectTaskListener;
 import stretch.lockout.task.api.TaskComponent;
+import stretch.lockout.task.event.IndirectTaskListener;
 import stretch.lockout.task.manager.TaskCollection;
 import stretch.lockout.team.TeamManager;
 import stretch.lockout.tracker.PlayerTracker;
+import stretch.lockout.ui.UIManager;
+import stretch.lockout.ui.inventory.InventoryInputHandler;
 import stretch.lockout.ui.inventory.InventoryTaskView;
 import stretch.lockout.ui.inventory.TaskSelectionView;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
 
 public class LockoutContext {
     final private Lockout plugin;
@@ -60,6 +65,7 @@ public class LockoutContext {
         eventExecutor = new LockoutEventExecutor(this);
         teamManager = new TeamManager(settings);
         rewardScheduler = new RewardScheduler(getPlugin());
+        new OfflineRewardListener(plugin, rewardScheduler);
         userLuaEnvironment = new LuaEnvironment(getPlugin(), settings);
 
         luaBindings.add(new LuaTaskBindings());
@@ -132,13 +138,13 @@ public class LockoutContext {
 
     public void reset() {
         Bukkit.getScheduler().cancelTasks(getPlugin());
-        getTeamManager().destroyAllTeams();
-        getTeamManager().unlock();
+        getTeamManager().reset();
         getUiManager().reset();
         getMainTasks().removeAllTasks();
         getTieBreaker().removeAllTasks();
         playerTracker = new PlayerTracker();
-        rewardScheduler = new RewardScheduler(getPlugin());
+        rewardScheduler.cancelAll();
+        plugin.getLogger().info("LockoutContext: reset");
     }
 
     public LockoutSettings settings() {return settings;}

@@ -70,6 +70,10 @@ public class LockoutLogger {
         }
     }
 
+    public static void warning(String message) {
+        log(Bukkit.getConsoleSender(), ChatColor.YELLOW + message);
+    }
+
     public static void evalLog(CommandSender sender, String message) {
         log(sender, ChatColor.AQUA + " => " + message);
     }

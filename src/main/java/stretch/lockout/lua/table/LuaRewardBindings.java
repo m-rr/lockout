@@ -1,8 +1,6 @@
 package stretch.lockout.lua.table;
 
 import org.bukkit.Material;
-import org.bukkit.NamespacedKey;
-import org.bukkit.Registry;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.potion.PotionEffect;
@@ -12,27 +10,25 @@ import org.luaj.vm2.LuaTable;
 import org.luaj.vm2.LuaValue;
 import org.luaj.vm2.Varargs;
 import org.luaj.vm2.lib.ThreeArgFunction;
-import org.luaj.vm2.lib.TwoArgFunction;
 import org.luaj.vm2.lib.VarArgFunction;
 import org.luaj.vm2.lib.jse.CoerceJavaToLua;
 import org.luaj.vm2.lib.jse.CoerceLuaToJava;
 import stretch.lockout.game.state.LockoutSettings;
-import stretch.lockout.lua.consumer.LuaPlayerConsumer;
 import stretch.lockout.lua.LuaPotionEffect;
-import stretch.lockout.lua.Compatability;
-import stretch.lockout.reward.api.RewardComponent;
+import stretch.lockout.lua.bindings.CreateRewardChanceFunction;
+import stretch.lockout.lua.bindings.CreateRewardCompositeFunction;
+import stretch.lockout.lua.consumer.LuaPlayerConsumer;
 import stretch.lockout.reward.api.RewardType;
 import stretch.lockout.reward.impl.RewardAction;
 import stretch.lockout.reward.impl.RewardItem;
 import stretch.lockout.reward.impl.RewardPotion;
 import stretch.lockout.reward.impl.RewardTask;
-import stretch.lockout.reward.pattern.RewardChance;
-import stretch.lockout.reward.pattern.RewardComposite;
-import stretch.lockout.task.api.TaskComponent;
 import stretch.lockout.task.HiddenTask;
+import stretch.lockout.task.api.TaskComponent;
 import stretch.lockout.task.manager.TaskCollection;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
 
 public class LuaRewardBindings implements LuaTableBinding {
 
@@ -60,11 +56,7 @@ public class LuaRewardBindings implements LuaTableBinding {
                     LuaTable enchantmentTable = args.arg(5).checktable();
                     Map<Enchantment, Integer> enchantments = new HashMap<>();
                     for (var keyName : enchantmentTable.keys()) {
-                        //String key = Compatability.ENCHANT.keySet().contains(keyName.tojstring().toLowerCase()) ?
-                            //Compatability.ENCHANT.get(keyName.tojstring().toLowerCase())
-                            //: keyName.tojstring().toLowerCase();
 
-                        //Enchantment enchantment = Registry.ENCHANTMENT.get(NamespacedKey.minecraft(key.toLowerCase()));
                         Enchantment enchantment = (Enchantment) CoerceLuaToJava.coerce(keyName, Enchantment.class);
 
                         int value = (int) CoerceLuaToJava.coerce(enchantmentTable.get(keyName), int.class);
@@ -127,34 +119,8 @@ public class LuaRewardBindings implements LuaTableBinding {
             }
         });
 
-        //rewardChance(description, rewardTable)
-        table.set("_rewardChance", new TwoArgFunction() {
-            @Override
-            public LuaValue call(LuaValue luaValue, LuaValue luaValue1) {
-                String description = (String) CoerceLuaToJava.coerce(luaValue, String.class);
-                LuaTable rewardTable = luaValue1.checktable();
-                List<RewardChance.WeightedReward> weightedRewards = Arrays.stream(rewardTable.keys())
-                        .map(r -> new RewardChance.WeightedReward(
-                                (RewardComponent) CoerceLuaToJava.coerce(r, RewardComponent.class), rewardTable.get(r).checkint()))
-                        .toList();
 
-                return CoerceJavaToLua.coerce(new RewardChance(description, weightedRewards));
-            }
-        });
-
-        //rewards(reward..rewards)
-        table.set("_rewards", new VarArgFunction() {
-            @Override
-            public Varargs invoke(Varargs args) {
-                List<RewardComponent> rewards = new ArrayList<>();
-                for (int i = 1; i <= args.narg(); i++) {
-                    RewardComponent reward = (RewardComponent) CoerceLuaToJava.coerce(args.arg(i), RewardComponent.class);
-                    rewards.add(reward);
-                }
-
-                return CoerceJavaToLua.coerce(new RewardComposite(rewards));
-            }
-        });
-
+        table.set("_rewardChance", new CreateRewardChanceFunction());
+        table.set("_rewards", new CreateRewardCompositeFunction());
     }
 }

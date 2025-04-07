@@ -1,31 +1,31 @@
-get_opt = _require("util")._get_opt
+const = _require("constants")
 
 local factory = {}
 
 function factory._create_task_binding(table_id, task_obj_f)
    return function(args)
       if type(args) ~= "table" then
-	 error(table_id .. " requires a table argument { target=..., description=..., display=... }", 2)
+	 error(table_id .. " requires a table argument { target=..., (optional) description=..., (optional) display=... }", 2)
       end
 
       local target_entity = args.target
-      local description = args.description
-      local display_material = args.display
+      local description = args.description or const.default_description
+      local display_material = args.display or const.default_display
       if not target_entity or type(description) ~= "string" or not display_material then
-	 error(table_id .. " missing required keys: target (entity_type constant), description (string), display (material constant)", 2)
+	 error(table_id .. " missing required keys: target (entity_type constant), (optional) description (string), (optional) display (material constant)", 2)
       end
 
       if type(target_entity) ~= "userdata" and type(target_entity) ~= "table" then error(table_id .." 'target' should be of type constants.entities", 2) end
       if type(display_material) ~= "userdata" then error(table_id .. " 'display' should be of type constants.materials", 2) end
 
-      local value = get_opt(args, "value", 1) -- Default value is 1 point
+      local value = args.value or const.default_value -- Default value is 1 point
       local reward = args.reward -- Defaults to nil if not present
       local p_condition = args.player_condition -- Defaults to nil
       local e_condition = args.entity_condition -- Defaults to nil
 
       -- Create TaskComponent object
       local task_obj = nil
-      if type(target_entity) == "table" then -- If a table is provided for 'target', then assume it is an entity group
+      if type(target_entity) == "table" then -- If a table is provided for 'target', then assume it is a TaskChoice
 	 local task_objs = {}
 	 for i = 1,#target_entity do
 	    table.insert(task_objs, task_obj_f(target_entity[i], value, description, display_material))
@@ -40,6 +40,7 @@ function factory._create_task_binding(table_id, task_obj_f)
       -- Configure task object
       if p_condition then task_obj:addPlayerCondition(p_condition) end
       if e_condition then task_obj:addEntityCondition(e_condition) end
+      if b_condition then task_obj:addBlockCondition(b_condition) end
       if reward then task_obj:setReward(reward) end
 
       return task_obj

@@ -1,49 +1,80 @@
 package stretch.lockout.task;
 
+import io.papermc.paper.threadedregions.scheduler.ScheduledTask;
+import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.entity.HumanEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.plugin.Plugin;
 import org.luaj.vm2.LuaValue;
 import stretch.lockout.event.executor.LockoutWrappedEvent;
 import stretch.lockout.reward.api.RewardComponent;
 import stretch.lockout.task.api.TaskComponent;
 import stretch.lockout.team.player.PlayerStat;
 
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 
 public class HiddenTask implements TaskComponent {
-    final private TaskComponent taskComponent;
-    //final private Set<HumanEntity> whitelistPlayers = new HashSet<>();
-    // includes time of subscription
-    final private ConcurrentMap<HumanEntity, Long> whitelistPlayers = new ConcurrentHashMap<>();
+    private final TaskComponent taskComponent;
+    private final Set<UUID> whitelistPlayers = ConcurrentHashMap.newKeySet();
+    private final Map<UUID, ScheduledTask> scheduledUnsubscribeTasks = new ConcurrentHashMap<>();
+    private long activeSubscriptionTimeSeconds = 0L;
 
     public HiddenTask(TaskComponent taskComponent) {
         this.taskComponent = taskComponent;
     }
 
-    public HiddenTask(TaskComponent taskComponent, Collection<HumanEntity> whitelistPlayers) {
-        this.taskComponent = taskComponent;
-        whitelistPlayers.forEach(this::subscribe);
+    /**
+     * If no activeSubscriptionTimeSeconds has been set, then players are subscribed indefinitely.
+     * Otherwise, they are unsubscribed after the desired time.
+     * Note that any player subscribed before activeSubscriptionTimeSeconds has been set will
+     * be subscribed indefinitely.
+     * */
+
+    public HiddenTask subscribe(UUID uuid) {
+        whitelistPlayers.add(uuid);
+        removeUnsubscribeTasks(uuid);
+        if (activeSubscriptionTimeSeconds > 0L) {
+            unsubscribeAfter(uuid, activeSubscriptionTimeSeconds);
+        }
+        return this;
     }
 
-    public void subscribe(HumanEntity player) {
-        whitelistPlayers.put(player, player.getWorld().getGameTime());
+    private void unsubscribeAfter(UUID uuid, long seconds) {
+        if (whitelistPlayers.contains(uuid)) {
+            Plugin plugin = Bukkit.getPluginManager().getPlugin("Lockout");
+            assert plugin != null;
+
+            ScheduledTask unsubTask = Bukkit.getAsyncScheduler().runDelayed(plugin,
+                    scheduledTask -> this.unsubscribe(uuid), seconds, TimeUnit.SECONDS);
+
+            scheduledUnsubscribeTasks.put(uuid, unsubTask);
+        }
     }
 
-    public void unsubscribe(HumanEntity player) {
-        whitelistPlayers.remove(player);
+    public void unsubscribe(UUID uuid) {
+        whitelistPlayers.remove(uuid);
+        // Make sure that we do not try to unsubscribe them twice
+        removeUnsubscribeTasks(uuid);
     }
 
-    // Removes all players in the whitelist who have been in it longer than 'time'
-    public void unsubscribeAfterTime(long time) {
-        whitelistPlayers.entrySet().removeIf(entry -> entry.getKey().getWorld().getGameTime() + 1L >= entry.getValue() + time);
+    private void removeUnsubscribeTasks(UUID uuid) {
+        if (scheduledUnsubscribeTasks.containsKey(uuid)) {
+            ScheduledTask unsubTask = scheduledUnsubscribeTasks.remove(uuid);
+            unsubTask.cancel();
+        }
+    }
+
+    public long getActiveSubscriptionTimeSeconds() {return this.activeSubscriptionTimeSeconds;}
+
+    public HiddenTask setActiveSubscriptionTimeSeconds(long seconds) {
+        this.activeSubscriptionTimeSeconds = seconds;
+        return this;
     }
 
     @Override
@@ -98,9 +129,12 @@ public class HiddenTask implements TaskComponent {
         return taskComponent.getDescription();
     }
 
+    /**
+     * Description is delegated to the internal TaskComponent
+     * */
     @Override
     public TaskComponent setDescription(String description) {
-        description = description;
+        taskComponent.setDescription(description);
         return this;
     }
 
@@ -141,7 +175,7 @@ public class HiddenTask implements TaskComponent {
         }
         Player player = optionalPlayer.get();
 
-        return whitelistPlayers.containsKey(player)
+        return whitelistPlayers.contains(player.getUniqueId())
                 && taskComponent.doesAccomplish(lockoutEvent);
     }
 

@@ -23,9 +23,6 @@ public class TeamManager {
     private LockoutSettings settings;
 
     private TeamSelectionView teamSelectionView;
-    //private int defaultTeams = 0;
-    //private int teamSize = 16;
-    //private int maxTeams = 8;
 
     public TeamManager(LockoutSettings settings) {
         this.lockoutTeams = new HashSet<>();
@@ -143,6 +140,14 @@ public class TeamManager {
                 .collect(Collectors.toSet());
     }
 
+    public PlayerStat getPlayerStat(Player player) {
+        return getMappedPlayerStats().get(player);
+    }
+
+    public PlayerStat getPlayerStat(UUID uuid) {
+        return getUUIDMappedPlayerStats().get(uuid);
+    }
+
     public Set<UUID> getPlayerUUIDs() {
         return isValidUUIDCache() ? uuidCache : getPlayerStats().stream()
                 .map(playerStat -> playerStat.getPlayer().getUniqueId())
@@ -237,5 +242,12 @@ public class TeamManager {
     public void destroyAllTeams() {
         this.lockoutTeams = new HashSet<>();
         this.teamSelectionView = new TeamSelectionView();
+    }
+
+    public void reset() {
+        destroyAllTeams();
+        playerStatCache.clear();
+        uuidCache.clear();
+        unlock();
     }
 }

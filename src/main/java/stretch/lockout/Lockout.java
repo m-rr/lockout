@@ -6,12 +6,12 @@ import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.plugin.java.JavaPluginLoader;
 import stretch.lockout.board.BoardManager;
 import stretch.lockout.board.FileBasedBoardManager;
-import stretch.lockout.game.LockoutGameRule;
-import stretch.lockout.game.state.LockoutSettings;
-import stretch.lockout.platform.Metrics;
-import stretch.lockout.game.state.GameState;
 import stretch.lockout.game.LockoutCommand;
 import stretch.lockout.game.LockoutContext;
+import stretch.lockout.game.LockoutGameRule;
+import stretch.lockout.game.state.GameState;
+import stretch.lockout.game.state.LockoutSettings;
+import stretch.lockout.platform.Metrics;
 import stretch.lockout.util.LockoutLogger;
 
 import java.io.File;
@@ -103,7 +103,7 @@ public class Lockout extends JavaPlugin {
                 .toList();
     }
 
-    public LockoutContext getLockout() {
+    public LockoutContext getLockoutContext() {
         return lockout;
     }
 

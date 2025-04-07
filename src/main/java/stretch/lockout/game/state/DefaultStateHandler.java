@@ -7,10 +7,10 @@ import stretch.lockout.event.ReadyGameEvent;
 import stretch.lockout.event.StartGameEvent;
 import stretch.lockout.event.TieBreakerEvent;
 import stretch.lockout.event.state.PlayerStateChangeTask;
-import stretch.lockout.game.LockoutGameRule;
 import stretch.lockout.game.LockoutContext;
-import stretch.lockout.ui.bar.LockoutTimer;
+import stretch.lockout.game.LockoutGameRule;
 import stretch.lockout.team.TeamManager;
+import stretch.lockout.ui.bar.LockoutTimer;
 import stretch.lockout.util.LockoutLogger;
 
 import java.time.Duration;
@@ -149,8 +149,6 @@ public class DefaultStateHandler extends GameStateHandler {
         }
 
         lockout.getEventExecutor().unregister();
-        //lockout.getLuaEnvironment().resetTables();
-        //lockout.getLuaEnvironment().resetRequiredFiles();
 
         LockoutLogger.sendAllChat("Game ending.");
         setGameState(GameState.PRE);

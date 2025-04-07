@@ -20,7 +20,7 @@ public class RewardTask extends Reward {
 
     @Override
     protected void giveReward(Player player) {
-        hiddenTask.subscribe(player);
+        hiddenTask.subscribe(player.getUniqueId());
     }
 
     public HiddenTask getDelegate() {return hiddenTask;}

@@ -53,7 +53,7 @@ public class TestLockout extends Lockout {
 
     // Override getter to return the context created in this test onEnable
     @Override
-    public LockoutContext getLockout() {
+    public LockoutContext getLockoutContext() {
         return testLockoutContext;
     }
 
