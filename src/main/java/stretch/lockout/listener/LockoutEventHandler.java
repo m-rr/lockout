@@ -4,12 +4,14 @@ import com.google.gson.JsonObject;
 import org.bukkit.Bukkit;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
-import stretch.lockout.event.*;
+import stretch.lockout.event.GameOverEvent;
+import stretch.lockout.event.ResetGameEvent;
+import stretch.lockout.event.StartGameEvent;
+import stretch.lockout.event.TaskCompletedEvent;
+import stretch.lockout.game.LockoutContext;
 import stretch.lockout.game.LockoutGameRule;
 import stretch.lockout.game.state.GameState;
-import stretch.lockout.game.LockoutContext;
 import stretch.lockout.platform.Platform;
-import stretch.lockout.task.HiddenTask;
 import stretch.lockout.team.LockoutTeam;
 import stretch.lockout.team.TeamManager;
 import stretch.lockout.util.JsonUtil;
@@ -51,7 +53,6 @@ public class LockoutEventHandler implements Listener {
 
         if (isGameOver.test(lockout)) {
           Bukkit.getPluginManager().callEvent(new GameOverEvent(winningTeam));
-          return;
         }
 
     }

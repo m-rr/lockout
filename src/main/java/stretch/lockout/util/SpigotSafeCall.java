@@ -2,6 +2,7 @@ package stretch.lockout.util;
 
 
 import org.bukkit.Bukkit;
+
 import java.util.function.Supplier;
 import java.util.logging.Level;
 import java.util.logging.Logger;

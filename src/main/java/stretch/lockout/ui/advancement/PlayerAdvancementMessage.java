@@ -6,10 +6,9 @@
 package stretch.lockout.ui.advancement;
 
 import org.bukkit.Bukkit;
+import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.entity.Player;
-import org.bukkit.Material;
-
 import stretch.lockout.Lockout;
 import stretch.lockout.task.api.TaskComponent;
 

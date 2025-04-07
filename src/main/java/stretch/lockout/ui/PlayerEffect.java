@@ -1,7 +1,7 @@
 package stretch.lockout.ui;
 
-import org.bukkit.entity.Player;
 import org.bukkit.Sound;
+import org.bukkit.entity.Player;
 
 import java.util.function.Consumer;
 

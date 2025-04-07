@@ -16,7 +16,6 @@ import org.luaj.vm2.lib.OneArgFunction;
 import org.luaj.vm2.lib.TwoArgFunction;
 import org.luaj.vm2.lib.jse.CoerceJavaToLua;
 import org.luaj.vm2.lib.jse.CoerceLuaToJava;
-
 import stretch.lockout.lua.LuaPotionEffect;
 
 import java.util.Arrays;

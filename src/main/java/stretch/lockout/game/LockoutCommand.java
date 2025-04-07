@@ -1,15 +1,11 @@
 package stretch.lockout.game;
 
 import com.google.common.collect.ImmutableList;
-import io.papermc.paper.registry.RegistryAccess;
-import io.papermc.paper.registry.RegistryKey;
 import org.bukkit.ChatColor;
-import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabExecutor;
-import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.checkerframework.checker.nullness.qual.NonNull;
@@ -17,14 +13,10 @@ import org.luaj.vm2.LuaValue;
 import stretch.lockout.game.state.GameState;
 import stretch.lockout.game.state.LockoutSettings;
 import stretch.lockout.kit.CompassKit;
-import stretch.lockout.lua.provider.EnchantmentProvider;
 import stretch.lockout.team.LockoutTeam;
 import stretch.lockout.team.TeamManager;
 import stretch.lockout.util.LockoutLogger;
-import stretch.lockout.world.AsyncChunkSearcher;
 
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 public class LockoutCommand implements TabExecutor {

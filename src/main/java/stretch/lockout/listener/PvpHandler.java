@@ -5,8 +5,8 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.PlayerDeathEvent;
-import stretch.lockout.game.state.GameState;
 import stretch.lockout.game.LockoutContext;
+import stretch.lockout.game.state.GameState;
 
 public class PvpHandler implements Listener {
     private final LockoutContext lockout;
@@ -32,7 +32,6 @@ public class PvpHandler implements Listener {
 
         var playerStats = lockout.getTeamManager().getMappedPlayerStats();
         if (playerStats.get(deadPlayer).getTeam() == playerStats.get(killer).getTeam()) {
-            return;
         }
 
         //lockout.checkTask(killer, playerDeathEvent);

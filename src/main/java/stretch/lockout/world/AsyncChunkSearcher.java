@@ -1,13 +1,16 @@
 package stretch.lockout.world; // Or your appropriate package
 
 // Import the correct Paper API scheduler interface
-import io.papermc.paper.threadedregions.scheduler.AsyncScheduler;
 
+import io.papermc.paper.threadedregions.scheduler.AsyncScheduler;
 import org.bukkit.*;
 import org.bukkit.block.data.BlockData;
-import org.bukkit.plugin.Plugin; // Required for Paper schedulers
+import org.bukkit.plugin.Plugin;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 

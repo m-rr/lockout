@@ -17,7 +17,6 @@ public class PlayerStateChangeHandler implements Listener {
     public void onPlayerStateChange(PlayerStateChangeEvent playerStateChangeEvent) {
         Player player = playerStateChangeEvent.getPlayer();
         if (!player.isOnline()) {
-            return;
         }
         // Store movement data here
         //PlayerStat playerStat = playerStateChangeEvent.getPlayerStat();

@@ -13,9 +13,9 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class ScoreboardHandler {
-    private Set<LockoutTeam> teams = new HashSet<>();
-    private Scoreboard board;
-    private Objective boardObjective;
+    private final Set<LockoutTeam> teams = new HashSet<>();
+    private final Scoreboard board;
+    private final Objective boardObjective;
     private final String TITLE = ChatColor.BLUE + "LOCKOUT";
 
     public ScoreboardHandler() {

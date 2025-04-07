@@ -59,6 +59,6 @@ public enum LuaPotionEffect {
             case null, default -> this.name().toLowerCase();
         };
 
-        return (PotionEffectType) Registry.EFFECT.get(NamespacedKey.minecraft(key.toLowerCase()));
+        return Registry.EFFECT.get(NamespacedKey.minecraft(key.toLowerCase()));
     }
 }

@@ -2,7 +2,7 @@ package stretch.lockout.task.impl.player;
 
 import io.papermc.paper.advancement.AdvancementDisplay;
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer; // Use the serializer
+import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.bukkit.event.player.PlayerAdvancementDoneEvent;
 import stretch.lockout.event.executor.LockoutWrappedEvent;
 import stretch.lockout.task.base.Task;

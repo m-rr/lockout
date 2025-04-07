@@ -2,9 +2,12 @@ package stretch.lockout.event.executor;
 
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
-import org.bukkit.event.*;
-import org.bukkit.plugin.EventExecutor;
 import org.bukkit.entity.Player;
+import org.bukkit.event.Event;
+import org.bukkit.event.EventPriority;
+import org.bukkit.event.HandlerList;
+import org.bukkit.event.Listener;
+import org.bukkit.plugin.EventExecutor;
 import stretch.lockout.event.TaskCompletedEvent;
 import stretch.lockout.game.LockoutContext;
 import stretch.lockout.game.state.GameState;

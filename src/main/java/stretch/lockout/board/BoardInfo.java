@@ -1,6 +1,5 @@
 package stretch.lockout.board;
 
-import java.nio.file.Path;
 import java.util.Map;
 
 public record BoardInfo(String name,

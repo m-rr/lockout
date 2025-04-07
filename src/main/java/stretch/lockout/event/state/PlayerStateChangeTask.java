@@ -2,7 +2,6 @@ package stretch.lockout.event.state;
 
 import org.bukkit.Bukkit;
 import org.bukkit.scheduler.BukkitRunnable;
-import stretch.lockout.event.state.PlayerStateChangeEvent;
 import stretch.lockout.game.LockoutContext;
 
 public class PlayerStateChangeTask extends BukkitRunnable {

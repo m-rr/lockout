@@ -12,8 +12,8 @@ import stretch.lockout.lua.predicate.LuaBlockPredicate;
 import stretch.lockout.lua.predicate.LuaMobPredicate;
 import stretch.lockout.task.api.BlockTask;
 import stretch.lockout.task.api.EntityTask;
-import stretch.lockout.task.base.Task;
 import stretch.lockout.task.api.TaskComponent;
+import stretch.lockout.task.base.Task;
 
 import java.util.Optional;
 import java.util.function.Predicate;

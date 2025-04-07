@@ -4,14 +4,13 @@ import com.google.common.collect.ImmutableSet;
 import org.bukkit.Material;
 import org.bukkit.entity.EntityType;
 import org.bukkit.inventory.ItemStack;
-import org.luaj.vm2.LuaTable;
 import org.luaj.vm2.LuaValue;
 import org.luaj.vm2.Varargs;
 import org.luaj.vm2.lib.jse.CoerceLuaToJava;
 import stretch.lockout.task.api.TaskComponent;
-import stretch.lockout.task.composite.TaskSet;
 import stretch.lockout.task.composite.TaskChoice;
 import stretch.lockout.task.composite.TaskSequence;
+import stretch.lockout.task.composite.TaskSet;
 import stretch.lockout.task.impl.block.TaskMaterial;
 import stretch.lockout.task.impl.entity.TaskMob;
 

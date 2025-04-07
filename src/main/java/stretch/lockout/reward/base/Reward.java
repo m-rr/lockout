@@ -6,7 +6,8 @@ import stretch.lockout.reward.api.RewardComponent;
 import stretch.lockout.reward.api.RewardType;
 import stretch.lockout.team.player.PlayerStat;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.function.Consumer;
 
 public abstract class Reward implements RewardComponent {

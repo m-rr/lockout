@@ -7,13 +7,13 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
 import stretch.lockout.event.StartGameEvent;
+import stretch.lockout.game.LockoutContext;
 import stretch.lockout.game.LockoutGameRule;
 import stretch.lockout.game.state.GameState;
-import stretch.lockout.game.LockoutContext;
 
-import java.util.Map;
-import java.util.HashMap;
 import java.time.Duration;
+import java.util.HashMap;
+import java.util.Map;
 
 public class KitHandler implements Listener {
     private final LockoutContext lockout;

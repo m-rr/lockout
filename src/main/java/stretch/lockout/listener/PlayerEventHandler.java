@@ -5,13 +5,14 @@ import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
-import org.bukkit.event.player.*;
+import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
+import stretch.lockout.game.LockoutContext;
 import stretch.lockout.game.LockoutGameRule;
 import stretch.lockout.game.state.GameState;
-import stretch.lockout.game.LockoutContext;
 import stretch.lockout.platform.Platform;
-import stretch.lockout.team.player.PlayerStat;
 import stretch.lockout.team.TeamManager;
+import stretch.lockout.team.player.PlayerStat;
 import stretch.lockout.util.LockoutLogger;
 
 import java.util.Map;

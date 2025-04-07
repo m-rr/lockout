@@ -1,8 +1,8 @@
 package stretch.lockout.task.manager;
 
 import org.bukkit.event.Event;
-import stretch.lockout.task.api.TaskComponent;
 import stretch.lockout.task.HiddenTask;
+import stretch.lockout.task.api.TaskComponent;
 import stretch.lockout.task.api.TimeCompletableTask;
 import stretch.lockout.team.player.PlayerStat;
 
