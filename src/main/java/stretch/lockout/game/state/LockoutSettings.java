@@ -149,7 +149,7 @@ public void showDiff(final LockoutSettings other) {
         displaySettingDiff("COUNTDOWN_DURATION", countdownTime, other.getCountdownTime());
         displaySettingDiff("RESPAWN_KIT_TIME", respawnKitTime, other.getRespawnKitTime());
         displaySettingDiff("RESPAWN_INVULNERABILITY_TIME", respawnInvulnerabilityTime, other.getRespawnInvulnerabilityTime());
-        displaySettingDiff("RespawnKitCooldown", respawnCooldownTime, other.getRespawnCooldownTime());
+        displaySettingDiff("RESPAWN_KIT_COOLDOWN", respawnCooldownTime, other.getRespawnCooldownTime());
         displaySettingDiff("DEFAULT_TEAMS", defaultTeams, other.getDefaultTeams());
         displaySettingDiff("TEAM_SIZE", teamSize, other.getTeamSize());
         displaySettingDiff("MAX_TEAMS", maxTeams, other.getMaxTeams());

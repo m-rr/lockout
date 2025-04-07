@@ -17,11 +17,11 @@ import stretch.lockout.util.LockoutLogger;
 
 import java.util.function.Predicate;
 
-public class TaskRaceEventHandler implements Listener {
+public class LockoutEventHandler implements Listener {
     private final LockoutContext lockout;
-    public TaskRaceEventHandler(final LockoutContext taskRaceContext) {
-        this.lockout = taskRaceContext;
-        Bukkit.getPluginManager().registerEvents(this, taskRaceContext.getPlugin());
+    public LockoutEventHandler(final LockoutContext lockoutContext) {
+        this.lockout = lockoutContext;
+        Bukkit.getPluginManager().registerEvents(this, lockoutContext.getPlugin());
     }
 
     @EventHandler
@@ -37,22 +37,13 @@ public class TaskRaceEventHandler implements Listener {
 
         // apply rewards
         if (task.hasReward() && lockout.settings().hasRule(LockoutGameRule.ALLOW_REWARD)) {
-            var reward = task.getReward();
-            reward.applyReward(scoredPlayerStat);
-            if (!(task instanceof HiddenTask)) {
-                var rewardEvent = new RewardApplyEvent(scoredPlayerStat, reward);
-                Bukkit.getPluginManager().callEvent(rewardEvent);
-            }
-
-            var actions = reward.getActions();
-            if (!actions.isEmpty()) {
-                lockout.getRewardScheduler().scheduleRewardActions(scoredPlayerStat, reward);
-            }
+            lockout.getRewardScheduler()
+                    .scheduleReward(scoredPlayerStat, task);
         }
 
         LockoutTeam winningTeam = teamManager.getWinningTeam();
 
-        // TODO Add maxscore setting properly.
+        // TODO Add max score setting properly.
         Predicate<LockoutContext> isGameOver = lockout.settings().hasRule(LockoutGameRule.MAX_SCORE) ?
                 (game) -> game.settings().getMaxScore() > 0 && team.getScore() >= game.settings().getMaxScore() :
                 (game) -> (long) game.getTeamManager().getTeams().size() > 1 && teamManager.getOpposingTeams(winningTeam).stream()

@@ -13,6 +13,7 @@ import stretch.lockout.game.LockoutGameRule;
 import stretch.lockout.game.state.GameState;
 import stretch.lockout.lua.LuaPotionEffect;
 import stretch.lockout.reward.api.RewardType;
+import stretch.lockout.task.api.TaskComponent;
 import stretch.lockout.util.LockoutLogger;
 import stretch.lockout.util.types.BiomeTypes;
 import stretch.lockout.util.types.MaterialTypes;

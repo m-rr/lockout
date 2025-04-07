@@ -16,4 +16,6 @@ public interface RewardComponent {
     void addAction(LuaValue luaRunnable);
     void addAction(Consumer<Player> rewardRunnable, long delay);
     void addAction(LuaValue luaRunnable, long delay);
+    long getDelay();
+    RewardComponent setDelay(long delay);
 }

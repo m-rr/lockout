@@ -15,8 +15,8 @@ public class RewardChance implements RewardComponent {
     private final List<WeightedReward> weightedRewards = new ArrayList<>();
     private RewardComponent selectedReward;
     private final Random random = new Random(System.currentTimeMillis());
-    //private final List<Runnable> rewardRunnables = new ArrayList<>();
     private final Map<Consumer<Player>, Long> rewardRunnables = new HashMap<>();
+    private long delay = 0L;
 
     public RewardChance(String description) {
         this.description = description;
@@ -116,6 +116,17 @@ public class RewardChance implements RewardComponent {
     @Override
     public void addAction(LuaValue luaRunnable, long delay) {
         rewardRunnables.put((player) -> luaRunnable.checkfunction().call(), delay);
+    }
+
+    @Override
+    public long getDelay() {
+        return this.delay;
+    }
+
+    @Override
+    public RewardComponent setDelay(long delay) {
+        this.delay = delay;
+        return this;
     }
 
     public record WeightedReward(RewardComponent rewardComponent, int weight) {}

@@ -12,6 +12,7 @@ import java.util.function.Consumer;
 public abstract class Reward implements RewardComponent {
     final protected RewardType rewardType;
     final protected String description;
+    protected long delay = 0L;
     private final Map<Consumer<Player>, Long> actions = new HashMap<>();
     public Reward(String description) {
         this.description = description;
@@ -62,4 +63,11 @@ public abstract class Reward implements RewardComponent {
     public RewardType getRewardType() {return rewardType;}
     @Override
     public String getDescription() {return description;}
+    @Override
+    public long getDelay() {return delay;}
+    @Override
+    public RewardComponent setDelay(long delay) {
+        this.delay = delay;
+        return this;
+    }
 }

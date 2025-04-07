@@ -15,6 +15,7 @@ import java.util.function.Consumer;
 public class RewardComposite implements RewardComponent {
     private final List<RewardComponent> rewardComponents;
     private final Map<Consumer<Player>, Long> rewardRunnables = new HashMap<>();
+    private long delay = 0L;
 
     public RewardComposite() {
         this.rewardComponents = new ArrayList<>();
@@ -55,6 +56,17 @@ public class RewardComposite implements RewardComponent {
     @Override
     public void addAction(LuaValue luaRunnable, long delay) {
         rewardRunnables.put((player) -> luaRunnable.checkfunction().call(), delay);
+    }
+
+    @Override
+    public long getDelay() {
+        return this.delay;
+    }
+
+    @Override
+    public RewardComponent setDelay(long delay) {
+        this.delay = delay;
+        return this;
     }
 
     @Override

@@ -110,20 +110,22 @@ local function map_enum_array_to_lowercase(target_key, java_enum_class_userdata)
    end
 end
 
-local function create_mappings()
+
    ----------------------------------------------------
 -- Perform the Mapping for Required Enums
 ----------------------------------------------------
 -- Ensure the globals like Material, EntityType etc. are loaded by Java bindings first!
-   map_enum_array_to_lowercase("materials", Material)
-   map_enum_array_to_lowercase("entities", Entity)
-   map_enum_array_to_lowercase("biomes", Biome)
-   map_enum_array_to_lowercase("effects", Effect) -- Assuming PotionEffectType is exposed as array
+map_enum_array_to_lowercase("materials", Material)
+map_enum_array_to_lowercase("entities", Entity)
+map_enum_array_to_lowercase("biomes", Biome)
+map_enum_array_to_lowercase("effects", Effect) -- Assuming PotionEffectType is exposed as array
    --   map_enum_array_to_lowercase("enchantments", Enchantment) -- Assuming Enchantment is exposed as array
-   map_enum_array_to_lowercase("damage_causes", DamageCause) -- Assuming DamageCause is exposed as array
-   map_enum_array_to_lowercase("reward_types", RewardType) -- Assuming RewardType is exposed as array
+map_enum_array_to_lowercase("damage_causes", DamageCause) -- Assuming DamageCause is exposed as array
+map_enum_array_to_lowercase("reward_types", RewardType) -- Assuming RewardType is exposed as array
 
-   constants.enchantments = Enchantment -- Should already be a table exposed by java
+constants.enchantments = Enchantment -- Should already be a table exposed by java
+
+constants.default_potion_ticks = 20 * 60 * 60 * 24 -- 24 hours -> Just needs to be a long time. Should probably do this differently but oh well.
 ----------------------------------------------------
 -- Manually Add Custom Groups (Optional - Same as before)
    ----------------------------------------------------
@@ -135,9 +137,8 @@ constants.materials.Logs = {
   constants.materials.mangrove_log, constants.materials.cherry_log,
   constants.materials.crimson_stem, constants.materials.warped_stem
 }
-end
+
 -- Add more groups...
-create_mappings()
 
 --util.log_info("Constants library initialization complete (array mode).")
 

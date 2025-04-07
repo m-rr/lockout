@@ -48,7 +48,7 @@ public class LockoutContext {
         this.boardManager = boardManager;
 
         new PlayerEventHandler(this);
-        new TaskRaceEventHandler(this);
+        new LockoutEventHandler(this);
         new InventoryInputHandler(this);
         new PvpHandler(this);
         new IndirectTaskListener(this, 20);

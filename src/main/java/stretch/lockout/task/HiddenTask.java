@@ -41,6 +41,7 @@ public class HiddenTask implements TaskComponent {
         whitelistPlayers.remove(player);
     }
 
+    // Removes all players in the whitelist who have been in it longer than 'time'
     public void unsubscribeAfterTime(long time) {
         whitelistPlayers.entrySet().removeIf(entry -> entry.getKey().getWorld().getGameTime() + 1L >= entry.getValue() + time);
     }

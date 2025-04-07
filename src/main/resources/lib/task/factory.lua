@@ -1,8 +1,6 @@
-local factory = {}
+get_opt = _require("util")._get_opt
 
-local function get_opt(tbl, key, default_value)
-  return tbl[key] ~= nil and tbl[key] or default_value
-end
+local factory = {}
 
 function factory._create_task_binding(table_id, task_obj_f)
    return function(args)

@@ -60,13 +60,14 @@ public class LuaRewardBindings implements LuaTableBinding {
                     LuaTable enchantmentTable = args.arg(5).checktable();
                     Map<Enchantment, Integer> enchantments = new HashMap<>();
                     for (var keyName : enchantmentTable.keys()) {
-                        String key = Compatability.ENCHANT.keySet().contains(keyName.tojstring().toLowerCase()) ?
-                            Compatability.ENCHANT.get(keyName.tojstring().toLowerCase())
-                            : keyName.tojstring().toLowerCase();
+                        //String key = Compatability.ENCHANT.keySet().contains(keyName.tojstring().toLowerCase()) ?
+                            //Compatability.ENCHANT.get(keyName.tojstring().toLowerCase())
+                            //: keyName.tojstring().toLowerCase();
 
-                        Enchantment enchantment = Registry.ENCHANTMENT.get(NamespacedKey.minecraft(key.toLowerCase()));
+                        //Enchantment enchantment = Registry.ENCHANTMENT.get(NamespacedKey.minecraft(key.toLowerCase()));
+                        Enchantment enchantment = (Enchantment) CoerceLuaToJava.coerce(keyName, Enchantment.class);
 
-                        int value = (int) CoerceLuaToJava.coerce(enchantmentTable.get(keyName.tojstring().toLowerCase()), int.class);
+                        int value = (int) CoerceLuaToJava.coerce(enchantmentTable.get(keyName), int.class);
                         enchantments.put(enchantment, value);
                     }
                     item.addUnsafeEnchantments(enchantments);
@@ -94,7 +95,7 @@ public class LuaRewardBindings implements LuaTableBinding {
                 int potionTime = args.arg(5).isint()
                         ? args.arg(5).checkint()
                         : (int) settings.getRewardPotionTicks();
-
+                
                 PotionEffect potionEffect = new PotionEffect(potionEffectType, potionTime, amplifier - 1);
                 return CoerceJavaToLua.coerce(new RewardPotion(potionEffect, rewardType, description));
             }
