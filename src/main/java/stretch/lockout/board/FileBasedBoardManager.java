@@ -2,6 +2,7 @@ package stretch.lockout.board;
 
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.Plugin;
+import org.checkerframework.checker.nullness.qual.NonNull;
 import stretch.lockout.game.state.LockoutSettings;
 import stretch.lockout.lua.LuaEnvironment;
 import stretch.lockout.util.LockoutLogger;
@@ -17,6 +18,18 @@ import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+/**
+ * {@link BoardManager} which operates on the local filesystem.
+ * Responsible for the {@link LuaEnvironment} lifecycle associated with a loaded board.
+ *
+ * @author m-rr
+ * @version @projectVersion@
+ * @see LuaEnvironment
+ * @see BoardInfo
+ * @see BoardManager
+ * @see InvalidBoardPropertiesException
+ * @since 2.5.1
+ * */
 public class FileBasedBoardManager implements BoardManager {
     private final Path BOARD_PATH = Paths.get("plugins/Lockout/");
     LuaEnvironment luaEnvironment;
@@ -24,29 +37,58 @@ public class FileBasedBoardManager implements BoardManager {
     private final Plugin plugin;
     private final List<BoardInfo> boards = new ArrayList<>();
 
-    public FileBasedBoardManager(Plugin plugin, LockoutSettings settings) {
-        this.plugin = plugin;
-        this.settings = settings;
+    public FileBasedBoardManager(@NonNull Plugin plugin, @NonNull LockoutSettings settings) {
+        this.plugin = Objects.requireNonNull(plugin, "Plugin cannot be null");
+        this.settings = Objects.requireNonNull(settings, "Settings cannot be null");
         this.luaEnvironment = new LuaEnvironment(plugin, settings);
     }
 
+    /**
+     * @author m-rr
+     * @return All board metadata found on search path.
+     * @since 2.5.1
+     * */
     public List<BoardInfo> getBoards() {
         return boards;
     }
 
+    /**
+     * Finds the first board in object memory where info.name == name.
+     *
+     * @author m-rr
+     * @param name info.name key in board.properties used as the main identifier.
+     * @return An {@link Optional} BoardInfo specified by name
+     * @since 2.5.1
+     * */
     public Optional<BoardInfo> getBoard(final String name) {
         return getBoards().stream()
                 .filter(board -> board.name().equalsIgnoreCase(name))
                 .findFirst();
     }
 
-    public void loadBoard(final String boardName) {
+    /**
+     * Attempts to load lua files using a {@link LuaEnvironment}.
+     * Only searches for boards which were found by this object
+     * using ({@code RegisterBoardsAsync}). If the board is found,
+     * then all keys in the board.properties file are injected into
+     * the {@link LuaEnvironment}, allowing boards to have parameters
+     * which can be passed to them as a config file.The relative path
+     * of the {@link LuaEnvironment} is set to the root directory of
+     * the board.properties file, disallowing imports from other board modules.
+     *
+     * @author m-rr
+     * @param name of board specified by info.name key in board.properties.
+     * @throws NoSuchElementException if name does not match a board.
+     * @since 2.5.1
+     * */
+    public void loadBoard(final String name) {
+        // Make sure we have a clean lua environment
         luaEnvironment.resetTables();
-        LockoutLogger.debugLog("Loading board " + boardName);
+        LockoutLogger.debugLog("Loading board " + name);
 
-        Optional<BoardInfo> boardInfo = getBoard(boardName);
+        Optional<BoardInfo> boardInfo = getBoard(name);
         if (boardInfo.isEmpty()) {
-            throw new InvalidBoardPropertiesException("Board " + boardName + " not found");
+            throw new NoSuchElementException("Board " + name + " not found");
         }
 
         // set lua working directory to the parent folder of the init file.
@@ -64,21 +106,20 @@ public class FileBasedBoardManager implements BoardManager {
 
 
         LockoutLogger.debugLog("Injecting variables");
-        // inject variables
         Set<String> initTables = new HashSet<>();
         boardInfo.get().variables()
                 .forEach((key, value) -> {
-                    String[] tables = getStrings(key);
+                    String[] tables = getTableKeys(key);
 
-                    // make sure all tables are initialized before assigning values
+                    // make sure all tables are initialized before assigning values to them
                     String currentTable = tables[0];
                     for (int i = 1; i < tables.length; i++) {
                         if (!initTables.contains(currentTable)) {
                             LockoutLogger.debugLog(String.format("Initializing table '%s'", currentTable));
 
                             initTables.add(currentTable);
-                            evalVariable.accept(currentTable, "{}");
-                            currentTable = String.join(".", tables[i]);
+                            evalVariable.accept(currentTable, "{}"); // set binding to empty table
+                            currentTable = String.join(".", tables[i]); // join with the next key
                         }
                     }
 
@@ -90,10 +131,10 @@ public class FileBasedBoardManager implements BoardManager {
                 .relativize(Path.of(boardInfo.get().entryPoint())).toString();
 
         luaEnvironment.requireFile(relativeInitPath);
-        LockoutLogger.debugLog(String.format("Board %s loaded", boardName));
+        LockoutLogger.debugLog(String.format("Board %s loaded", name));
     }
 
-    private String[] getStrings(String key) {
+    private String[] getTableKeys(String key) {
         String[] tables = key.split("\\.");
 
         if (tables.length == 1) {
@@ -154,6 +195,14 @@ public class FileBasedBoardManager implements BoardManager {
         }
     }
 
+    /**
+     * Asynchronously searches plugin data folder for directories containing a board.properties file
+     * and caches their metadata.
+     *
+     * @author m-rr
+     * @see BoardInfo
+     * @since 2.5.1
+     * */
     public void registerBoardsAsync() {
         Bukkit.getAsyncScheduler().runNow(plugin, task -> {
             LockoutLogger.debugLog("Registering boards.");
@@ -165,15 +214,21 @@ public class FileBasedBoardManager implements BoardManager {
                 dirs.filter(Files::isDirectory)
                         .forEach(this::findAndRegisterBoard);
             } catch (IOException e) {
-                throw new RuntimeException(e);
+                LockoutLogger.warning(String.format("Error reading boards directory: %s", e.getMessage()));
             }
         });
     }
 
+    /**
+     * Clears {@link BoardInfo} cache and resets {@link LuaEnvironment} for next board execution.
+     *
+     * @author m-rr
+     * @since 2.5.1*/
     public void reset() {
         boards.clear();
         luaEnvironment.resetTables();
     }
+
 
     @Override
     public LuaEnvironment getLuaEnvironment() {

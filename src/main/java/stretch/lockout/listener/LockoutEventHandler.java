@@ -4,6 +4,7 @@ import com.google.gson.JsonObject;
 import org.bukkit.Bukkit;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.checkerframework.checker.nullness.qual.NonNull;
 import stretch.lockout.event.GameOverEvent;
 import stretch.lockout.event.ResetGameEvent;
 import stretch.lockout.event.StartGameEvent;
@@ -17,12 +18,20 @@ import stretch.lockout.team.TeamManager;
 import stretch.lockout.util.JsonUtil;
 import stretch.lockout.util.LockoutLogger;
 
+import java.util.Objects;
 import java.util.function.Predicate;
 
+/**
+ * Handles {@link TaskCompletedEvent}, {@link GameOverEvent}, {@link ResetGameEvent} and {@link StartGameEvent}.
+ *
+ * @author m-rr
+ * @version @projectVersion@
+ * @since 2.5.1
+ * */
 public class LockoutEventHandler implements Listener {
     private final LockoutContext lockout;
-    public LockoutEventHandler(final LockoutContext lockoutContext) {
-        this.lockout = lockoutContext;
+    public LockoutEventHandler(@NonNull final LockoutContext lockoutContext) {
+        this.lockout = Objects.requireNonNull(lockoutContext, "LockoutContext cannot be null");
         Bukkit.getPluginManager().registerEvents(this, lockoutContext.getPlugin());
     }
 

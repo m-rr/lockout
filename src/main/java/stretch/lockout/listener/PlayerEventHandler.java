@@ -19,6 +19,13 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
+/**
+ * Ensures proper plugin function when players join and leave in the general case.
+ *
+ * @author m-rr
+ * @version @projectVersion@
+ * @since 2.5.1
+ * */
 public class PlayerEventHandler implements Listener {
     private final LockoutContext lockout;
     public PlayerEventHandler(LockoutContext taskRaceContext) {
@@ -43,7 +50,7 @@ public class PlayerEventHandler implements Listener {
             }
         }
 
-        // If op, check for update
+        // If op, check for plugin update
         if (player.isOp() && lockout.settings().hasRule(LockoutGameRule.CHECK_UPDATE)) {
             Bukkit.getAsyncScheduler().runNow(lockout.getPlugin(), task -> {
                 String version = lockout.getPlugin().getDescription().getVersion();

@@ -8,6 +8,13 @@ import org.bukkit.event.entity.PlayerDeathEvent;
 import stretch.lockout.game.LockoutContext;
 import stretch.lockout.game.state.GameState;
 
+/**
+ * Handles pvp interactions between players.
+ *
+ * @author m-rr
+ * @version @projectVersion@
+ * @since 2.5.1
+ * */
 public class PvpHandler implements Listener {
     private final LockoutContext lockout;
 

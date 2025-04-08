@@ -4,22 +4,31 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
+import org.checkerframework.checker.nullness.qual.NonNull;
 import stretch.lockout.Lockout;
 import stretch.lockout.reward.scheduler.RewardScheduler;
 
 import java.util.Objects;
 
+/**
+ * Listens for {@link PlayerJoinEvent} and ensures that any pending rewards are applied to
+ * the player that they may have missed while disconnected.
+ *
+ * @author m-rr
+ * @version @projectVersion@
+ * @see RewardScheduler
+ * @see stretch.lockout.reward.scheduler.PendingReward
+ * @see stretch.lockout.reward.api.RewardComponent
+ * @since 2.5.1
+ * */
 public class OfflineRewardListener implements Listener {
 
     private final Lockout plugin;
     private final RewardScheduler rewardScheduler;
 
-    public OfflineRewardListener(Lockout plugin, RewardScheduler rewardScheduler) {
+    public OfflineRewardListener(@NonNull Lockout plugin, @NonNull RewardScheduler rewardScheduler) {
         this.plugin = Objects.requireNonNull(plugin, "Plugin cannot be null");
-        // Get the RewardScheduler instance from your main plugin or context
         this.rewardScheduler = Objects.requireNonNull(rewardScheduler, "RewardScheduler cannot be null");
-
-        // Register this listener
         plugin.getServer().getPluginManager().registerEvents(this, plugin);
     }
 
