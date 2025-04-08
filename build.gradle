@@ -1,3 +1,5 @@
+import org.apache.tools.ant.filters.ReplaceTokens;
+
 plugins {
     id 'com.github.johnrengelman.shadow' version '7.1.2'
     id 'java'
@@ -29,13 +31,11 @@ repositories {
 }
 
 dependencies {
-    // Test dependencies - Scopes look correct
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.1'
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.8.1'
     testImplementation 'org.mockbukkit.mockbukkit:mockbukkit-v1.21:4.0.0'
-    testImplementation 'org.mockito:mockito-core:5.16.1' // Updated to 5.12.0 as 5.16.1 might not exist, adjust if needed
+    testImplementation 'org.mockito:mockito-core:5.16.1'
 
-    // Plugin dependencies
     compileOnly 'io.papermc.paper:paper-api:1.21.4-R0.1-SNAPSHOT'
     implementation 'com.google.code.gson:gson:2.10.1'
     implementation 'org.luaj:luaj-jse:3.0.1'
@@ -50,8 +50,6 @@ test {
 def targetJavaVersion = 21
 java {
     def javaVersion = JavaVersion.toVersion(targetJavaVersion)
-    //sourceCompatibility = javaVersion
-    //targetCompatibility = javaVersion
     toolchain {
         languageVersion = JavaLanguageVersion.of(targetJavaVersion)
     }
@@ -65,6 +63,17 @@ processResources {
         expand props
     }
 }
+
+tasks.register('processSourcesWithVersion', Copy) {
+    description = "Copies sources to a build directory, replacing version tokens."
+    from sourceSets.main.java
+    into "$buildDir/generated-sources/java/main"
+    filter(ReplaceTokens, tokens: [projectVersion: project.version.toString()])
+}
+
+compileJava.dependsOn processSourcesWithVersion
+
+sourceSets.main.java.srcDirs += file("$buildDir/generated-sources/java/main")
 
 // This ensures 'test' runs and succeeds before 'shadowJar' starts building the fat JAR.
 tasks.named('shadowJar') {
