@@ -1,5 +1,6 @@
 package stretch.lockout.task.manager;
 
+import org.checkerframework.checker.nullness.qual.NonNull;
 import stretch.lockout.game.state.StateResettable;
 import stretch.lockout.task.api.TaskComponent;
 import stretch.lockout.task.hidden.HiddenCounterTask;
@@ -29,17 +30,17 @@ public class TaskManager implements StateResettable {
 
     }
 
-    public void addTask(TaskComponent task) {
+    public void addTask(@NonNull TaskComponent task) {
         mainTaskCollection.addTask(task);
     }
 
-    public void addTieBreakCounter(TaskComponent task) {
+    public void addTieBreakCounter(@NonNull TaskComponent task) {
         // These should have no reward
         HiddenCounterTask counterTask = new HiddenCounterTask(task);
         counterTaskCollection.addTask(counterTask);
     }
 
-    public void addMutator(TaskComponent task) {
+    public void addMutator(@NonNull TaskComponent task) {
         // These should always be completable
         HiddenTask mutatorTask = new HiddenTask(task);
         mutatorTaskCollection.addTask(mutatorTask);

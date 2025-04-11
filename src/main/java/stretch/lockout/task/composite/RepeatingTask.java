@@ -15,8 +15,8 @@ import stretch.lockout.team.player.PlayerStat;
 
 import java.time.Duration;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Predicate;
 
 public class RepeatingTask implements TimeCompletableTask {
@@ -46,7 +46,7 @@ public class RepeatingTask implements TimeCompletableTask {
     }
 
     @Override
-    public HashSet<Class<? extends Event>> getEventClasses() {
+    public Set<Class<? extends Event>> getEventClasses() {
         return taskComponent.getEventClasses();
     }
 

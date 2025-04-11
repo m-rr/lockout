@@ -7,10 +7,10 @@ import stretch.lockout.event.executor.LockoutWrappedEvent;
 import stretch.lockout.reward.api.RewardComponent;
 import stretch.lockout.team.player.PlayerStat;
 
-import java.util.HashSet;
+import java.util.Set;
 
 public interface TaskComponent extends PlayerTask {
-    HashSet<Class<? extends Event>> getEventClasses();
+    Set<Class<? extends Event>> getEventClasses();
 
     PlayerStat getScoredPlayer();
 

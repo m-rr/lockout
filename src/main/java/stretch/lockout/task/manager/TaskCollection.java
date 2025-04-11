@@ -45,7 +45,7 @@ public class TaskCollection {
         var eventClasses = taskComponent.getEventClasses();
         for (var eventClass : eventClasses) {
             if (!tasks.containsKey(eventClass)) {
-                tasks.put(eventClass, new HashSet<TaskComponent>(Set.of(taskComponent)));
+                tasks.put(eventClass, new HashSet<>(Set.of(taskComponent)));
             } else {
                 Set<TaskComponent> taskSet = tasks.get(eventClass);
                 taskSet.add(taskComponent);

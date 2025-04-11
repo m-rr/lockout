@@ -78,7 +78,7 @@ public class HiddenTask implements TaskComponent {
     }
 
     @Override
-    public HashSet<Class<? extends Event>> getEventClasses() {
+    public Set<Class<? extends Event>> getEventClasses() {
         return taskComponent.getEventClasses();
     }
 

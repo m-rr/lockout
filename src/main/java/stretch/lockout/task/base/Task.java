@@ -18,6 +18,7 @@ import javax.annotation.Nullable;
 import java.time.Duration;
 import java.util.HashSet;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Predicate;
 
 public class Task implements TimeCompletableTask {
@@ -122,8 +123,8 @@ public class Task implements TimeCompletableTask {
         return this;
     }
 
-    public HashSet<Class<? extends Event>> getEventClasses() {
-        HashSet<Class<? extends Event>> result = new HashSet<>();
+    public Set<Class<? extends Event>> getEventClasses() {
+        Set<Class<? extends Event>> result = new HashSet<>();
         result.add(eventClass);
         return result;
     }

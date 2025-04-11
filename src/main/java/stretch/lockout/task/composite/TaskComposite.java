@@ -106,7 +106,7 @@ public sealed abstract class TaskComposite implements TimeCompletableTask permit
     }
 
     @Override
-    public HashSet<Class<? extends Event>> getEventClasses() {
+    public Set<Class<? extends Event>> getEventClasses() {
         return eventClassSet;
     }
 
