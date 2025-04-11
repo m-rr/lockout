@@ -37,6 +37,7 @@ public class LockoutContext {
     private final TeamManager teamManager;
     private final TaskCollection mainTasks = new TaskCollection();
     private final TaskCollection tieBreaker = new TaskCollection();
+    private final TaskCollection mutators = new TaskCollection();
     private PlayerTracker playerTracker = new PlayerTracker();
     private RewardScheduler rewardScheduler;
     private GameStateHandler gameStateHandler;
@@ -66,7 +67,7 @@ public class LockoutContext {
         teamManager = new TeamManager(settings);
         rewardScheduler = new RewardScheduler(getPlugin());
         new OfflineRewardListener(plugin, rewardScheduler);
-        userLuaEnvironment = new LuaEnvironment(getPlugin(), settings);
+        userLuaEnvironment = new LuaEnvironment(getPlugin(), settings, false);
 
         luaBindings.add(new LuaTaskBindings());
         luaBindings.add(new LuaRewardBindings(settings(), getMainTasks()));
@@ -76,13 +77,12 @@ public class LockoutContext {
 
         if (settings.hasRule(LockoutGameRule.DEV)) {
             // Eval init.lua in Lockout directory. Useful for development.
+            getUserLuaEnvironment().reset();
             getUserLuaEnvironment().addLuaTableBindings(luaBindings);
-            getUserLuaEnvironment().resetTables();
-            getUserLuaEnvironment().initUserChunk();
+            getUserLuaEnvironment().loadUserInitScript();
         }
 
         // Make sure that our lua environments have proper bindings available
-        getUserLuaEnvironment().addLuaTableBindings(luaBindings);
         boardManager.getLuaEnvironment().addLuaTableBindings(luaBindings);
 
         gameStateHandler = new DefaultStateHandler(this);

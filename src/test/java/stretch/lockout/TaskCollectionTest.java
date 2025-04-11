@@ -14,7 +14,7 @@ import org.mockbukkit.mockbukkit.entity.PlayerMock;
 import org.mockito.Mockito;
 import stretch.lockout.task.base.Task;
 import stretch.lockout.task.api.TaskComponent;
-import stretch.lockout.task.HiddenTask;
+import stretch.lockout.task.hidden.HiddenTask;
 import stretch.lockout.task.composite.TaskChoice; // Example composite
 import stretch.lockout.task.api.TimeCompletableTask;
 import stretch.lockout.task.manager.TaskCollection;

@@ -6,7 +6,7 @@ import org.bukkit.entity.Player;
 import stretch.lockout.Lockout;
 import stretch.lockout.event.RewardApplyEvent;
 import stretch.lockout.reward.api.RewardComponent;
-import stretch.lockout.task.HiddenTask;
+import stretch.lockout.task.hidden.HiddenTask;
 import stretch.lockout.task.api.TaskComponent;
 import stretch.lockout.team.player.PlayerStat;
 

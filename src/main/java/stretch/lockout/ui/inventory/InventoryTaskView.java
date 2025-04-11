@@ -10,7 +10,7 @@ import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import stretch.lockout.reward.api.RewardComponent;
-import stretch.lockout.task.HiddenTask;
+import stretch.lockout.task.hidden.HiddenTask;
 import stretch.lockout.task.api.TaskComponent;
 
 import java.util.ArrayList;

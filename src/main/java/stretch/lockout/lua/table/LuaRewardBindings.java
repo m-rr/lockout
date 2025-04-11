@@ -23,7 +23,7 @@ import stretch.lockout.reward.impl.RewardAction;
 import stretch.lockout.reward.impl.RewardItem;
 import stretch.lockout.reward.impl.RewardPotion;
 import stretch.lockout.reward.impl.RewardTask;
-import stretch.lockout.task.HiddenTask;
+import stretch.lockout.task.hidden.HiddenTask;
 import stretch.lockout.task.api.TaskComponent;
 import stretch.lockout.task.manager.TaskCollection;
 

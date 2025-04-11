@@ -12,6 +12,7 @@ import stretch.lockout.game.LockoutGameRule;
 import stretch.lockout.game.state.GameState;
 import stretch.lockout.game.state.LockoutSettings;
 import stretch.lockout.platform.Metrics;
+import stretch.lockout.task.manager.TaskManager;
 import stretch.lockout.util.LockoutLogger;
 
 import java.io.File;
@@ -61,7 +62,8 @@ public class Lockout extends JavaPlugin {
         updateDevModeFlag(gameSettings);
         LockoutLogger.debugLog(ChatColor.RED + "Lockout initialized in debug mode");
 
-        BoardManager boardManager = new FileBasedBoardManager(this, gameSettings);
+        TaskManager taskManager = new TaskManager();
+        BoardManager boardManager = new FileBasedBoardManager(this, gameSettings, taskManager);
 
         this.lockout = new LockoutContext(this, gameSettings, boardManager);
         LockoutLogger.debugLog("Created lockoutContext object");

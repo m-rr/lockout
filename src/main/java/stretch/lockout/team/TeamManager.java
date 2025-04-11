@@ -8,6 +8,7 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.potion.PotionEffect;
 import stretch.lockout.event.PlayerJoinTeamEvent;
 import stretch.lockout.game.state.LockoutSettings;
+import stretch.lockout.game.state.StateResettable;
 import stretch.lockout.team.player.PlayerStat;
 import stretch.lockout.ui.inventory.TeamSelectionView;
 
@@ -15,7 +16,7 @@ import java.util.*;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
-public class TeamManager {
+public class TeamManager implements StateResettable {
     private Set<LockoutTeam> lockoutTeams;
     private Set<PlayerStat> playerStatCache;
     private Set<UUID> uuidCache;
@@ -189,13 +190,6 @@ public class TeamManager {
         }
     }
 
-    /*public void setDefaultTeams(final int defaultTeams) {this.defaultTeams = defaultTeams;}
-    public void setTeamSize(final int teamSize) {this.teamSize = teamSize;}
-    public void setMaxTeams(final int maxTeams) {this.maxTeams = maxTeams;}
-    public int getMaxTeams() {return this.maxTeams;}
-    public int getTeamSize() {return this.teamSize;}
-    public int getDefaultTeams() {return this.defaultTeams;}*/
-
     public boolean addTeam(LockoutTeam team) {
         if (getTeams().size() >= settings.getMaxTeams()) {
             return false;
@@ -244,6 +238,7 @@ public class TeamManager {
         this.teamSelectionView = new TeamSelectionView();
     }
 
+    @Override
     public void reset() {
         destroyAllTeams();
         playerStatCache.clear();

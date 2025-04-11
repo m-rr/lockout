@@ -1,10 +1,17 @@
 package stretch.lockout.board;
 
 import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
 import org.bukkit.plugin.Plugin;
 import org.checkerframework.checker.nullness.qual.NonNull;
+import org.luaj.vm2.LuaError;
+import org.luaj.vm2.LuaTable;
+import org.luaj.vm2.LuaValue;
+import org.luaj.vm2.lib.jse.CoerceLuaToJava;
 import stretch.lockout.game.state.LockoutSettings;
 import stretch.lockout.lua.LuaEnvironment;
+import stretch.lockout.task.api.TaskComponent;
+import stretch.lockout.task.manager.TaskManager;
 import stretch.lockout.util.LockoutLogger;
 
 import java.io.FileInputStream;
@@ -36,11 +43,15 @@ public class FileBasedBoardManager implements BoardManager {
     private final LockoutSettings settings;
     private final Plugin plugin;
     private final List<BoardInfo> boards = new ArrayList<>();
+    private boolean hasBoardDefinition = false;
+    private BoardDefinition boardDefinition = null;
+    private final TaskManager taskManager;
 
-    public FileBasedBoardManager(@NonNull Plugin plugin, @NonNull LockoutSettings settings) {
+    public FileBasedBoardManager(@NonNull Plugin plugin, @NonNull LockoutSettings settings, @NonNull TaskManager taskManager) {
         this.plugin = Objects.requireNonNull(plugin, "Plugin cannot be null");
         this.settings = Objects.requireNonNull(settings, "Settings cannot be null");
-        this.luaEnvironment = new LuaEnvironment(plugin, settings);
+        this.taskManager = Objects.requireNonNull(taskManager, "TaskManager cannot be null");
+        this.luaEnvironment = new LuaEnvironment(plugin, settings, true);
     }
 
     /**
@@ -83,8 +94,8 @@ public class FileBasedBoardManager implements BoardManager {
      * */
     public void loadBoard(final String name) {
         // Make sure we have a clean lua environment
-        luaEnvironment.resetTables();
-        LockoutLogger.debugLog("Loading board " + name);
+        luaEnvironment.reset();
+        LockoutLogger.debugLog(ChatColor.YELLOW + "Loading board: " + name);
 
         Optional<BoardInfo> boardInfo = getBoard(name);
         if (boardInfo.isEmpty()) {
@@ -100,7 +111,7 @@ public class FileBasedBoardManager implements BoardManager {
             if (identifiers.length > 1 && "info".equals(identifiers[0])) {
                 value = "\"" + value + "\"";
             }
-            LockoutLogger.debugLog(variable + " = " + value);
+            //LockoutLogger.debugLog(variable + " = " + value);
             luaEnvironment.loadString(plugin.getServer().getConsoleSender(), variable + " = " + value);
         };
 
@@ -127,11 +138,93 @@ public class FileBasedBoardManager implements BoardManager {
                 });
 
 
+        // initialize 'LockoutBoard' table
+        luaEnvironment.loadString(plugin.getServer().getConsoleSender(), "LockoutBoard = {}");
+
         String relativeInitPath = Path.of(luaEnvironment.getEnvironmentPath())
                 .relativize(Path.of(boardInfo.get().entryPoint())).toString();
 
+        // Load board files
         luaEnvironment.requireFile(relativeInitPath);
-        LockoutLogger.debugLog(String.format("Board %s loaded", name));
+
+        // Get resulting board definition
+        Optional<BoardDefinition> boardDefinition = createBoardDefinition(luaEnvironment.getBoardDefinitionTable());
+        boardDefinition.ifPresentOrElse(this::applyBoardDefinition,
+                () -> LockoutLogger.warning(String.format("Missing required table 'LockoutBoard' in board '%s'. You cannot add tasks without it!", name)));
+
+
+    }
+
+    private void applyBoardDefinition(BoardDefinition boardDefinition) {
+
+        // TODO needs several TaskCollections
+
+        // Insert board definitions
+        boardDefinition.tasks().forEach(taskManager::addTask);
+        boardDefinition.tieBreakCounters().forEach(taskManager::addTieBreakCounter);
+        boardDefinition.mutators().forEach(taskManager::addMutator);
+
+        //LockoutLogger.debugLog(ChatColor.GREEN + "Loaded board: " + name);
+    }
+
+    @Override
+    public Optional<BoardDefinition> getCurrentBoardDefinition() {
+        return Optional.empty();
+    }
+
+    @Override
+    public boolean hasCurrentBoardDefinition() {
+        return hasBoardDefinition;
+    }
+
+    private Optional<BoardDefinition> createBoardDefinition(LuaTable boardTable) {
+        LuaValue luaTasks = boardTable.get("Tasks");
+        if (!luaTasks.istable()) {
+            LockoutLogger.error("Tasks table does not exist");
+            return Optional.empty();
+        }
+
+        List<TaskComponent> tasks = new ArrayList<>();
+        LuaTable taskTable = luaTasks.checktable();
+        for (int i = 0; i < taskTable.length(); i++) {
+            try {
+                TaskComponent task = (TaskComponent) CoerceLuaToJava.coerce(taskTable.get(i), TaskComponent.class);
+                tasks.add(task);
+            } catch (LuaError error) {
+                LockoutLogger.error("Error while creating task in 'Task' table at index " + i + ": " + error.getMessage());
+            }
+        }
+
+        List<TaskComponent> tieBreakCounters = new ArrayList<>();
+        LuaValue luaTieBreakers = boardTable.get("TieBreakers");
+        if (luaTieBreakers.istable()) {
+            LuaTable tieBreakerTable = luaTieBreakers.checktable();
+            for (int i = 0; i < tieBreakerTable.length(); i++) {
+                try {
+                    TaskComponent task = (TaskComponent) CoerceLuaToJava.coerce(tieBreakerTable.get(i), TaskComponent.class);
+                    tieBreakCounters.add(task);
+                } catch (LuaError error) {
+                    LockoutLogger.error("Error while adding tie breaker from 'TieBreakers' table at index " + i + ": " + error.getMessage());
+                }
+            }
+        }
+
+        List<TaskComponent> mutators = new ArrayList<>();
+        LuaValue luaMutators = boardTable.get("Mutators");
+        if (luaMutators.istable()) {
+            LuaTable mutatorTable = luaMutators.checktable();
+            for (int i = 0; i < mutatorTable.length(); i++) {
+                try {
+                    TaskComponent task = (TaskComponent) CoerceLuaToJava.coerce(mutatorTable.get(i), TaskComponent.class);
+                    mutators.add(task);
+                } catch (LuaError error) {
+                    LockoutLogger.error("Error while adding mutator from 'Mutators' table at index " + i + ": " + error.getMessage());
+                }
+            }
+        }
+
+        // TODO add settings table
+        return Optional.of(new BoardDefinition(tasks, tieBreakCounters, mutators, null));
     }
 
     private String[] getTableKeys(String key) {
@@ -146,7 +239,7 @@ public class FileBasedBoardManager implements BoardManager {
                     )
             );
         }
-        LockoutLogger.debugLog("Found tables: " + Arrays.toString(tables));
+        //LockoutLogger.debugLog("Found tables: " + Arrays.toString(tables));
         return tables;
     }
 
@@ -226,7 +319,7 @@ public class FileBasedBoardManager implements BoardManager {
      * @since 2.5.1*/
     public void reset() {
         boards.clear();
-        luaEnvironment.resetTables();
+        luaEnvironment.reset();
     }
 
 

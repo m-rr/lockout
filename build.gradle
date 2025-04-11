@@ -6,7 +6,7 @@ plugins {
 }
 
 group = 'stretch'
-version = '2.5.1-TESTING'
+version = '2.6.0-TESTING'
 
 repositories {
     mavenCentral()
@@ -73,7 +73,11 @@ tasks.register('processSourcesWithVersion', Copy) {
 
 compileJava.dependsOn processSourcesWithVersion
 
-sourceSets.main.java.srcDirs += file("$buildDir/generated-sources/java/main")
+compileJava.source = fileTree(dir: processSourcesWithVersion.destinationDir, include: '**/*.java')
+
+javadoc.source = compileJava.source
+
+//sourceSets.main.java.srcDirs += file("$buildDir/generated-sources/java/main")
 
 // This ensures 'test' runs and succeeds before 'shadowJar' starts building the fat JAR.
 tasks.named('shadowJar') {

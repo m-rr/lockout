@@ -1,4 +1,4 @@
-package stretch.lockout.task;
+package stretch.lockout.task.hidden;
 
 import io.papermc.paper.threadedregions.scheduler.ScheduledTask;
 import org.bukkit.Bukkit;

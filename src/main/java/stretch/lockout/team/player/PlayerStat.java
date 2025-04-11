@@ -6,10 +6,13 @@ import stretch.lockout.task.api.TaskComponent;
 import stretch.lockout.team.LockoutTeam;
 
 import java.util.HashSet;
+import java.util.Objects;
+import java.util.Set;
+import java.util.UUID;
 
 public class PlayerStat {
     private Player player;
-    final private HashSet<TaskComponent> completedTasks = new HashSet<>();
+    final private Set<TaskComponent> completedTasks = new HashSet<>();
 
     private LockoutTeam lockoutTeam;
     private Scoreboard board;
@@ -24,8 +27,12 @@ public class PlayerStat {
         completedTask.setCompletedBy(this);
     }
 
-    public void enqueueState() {
+    public int getSecondaryTasksCount() {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
 
+    public void enqueueState() {
+        throw new UnsupportedOperationException("Not supported yet.");
     }
 
     public Player getPlayer() {return this.player;}
@@ -45,5 +52,32 @@ public class PlayerStat {
     }
     public void updateScoreboard() {
         player.setScoreboard(this.board);
+    }
+
+    /** Uses team name and player uuid */
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+
+        if (o == null || getClass() != o.getClass()) return false;
+
+        PlayerStat that = (PlayerStat) o;
+
+        UUID thisUuid = player.getUniqueId();
+        UUID thatUuid = that.getPlayer().getUniqueId();
+        String thisTeamName = lockoutTeam.getName();
+        String thatTeamName = that.getTeam().getName();
+
+        return Objects.equals(thisUuid, thatUuid) &&
+                Objects.equals(thisTeamName, thatTeamName);
+    }
+
+    /** Uses team name and player uuid */
+    @Override
+    public int hashCode() {
+        UUID uuid = player.getUniqueId();
+        String teamName = getTeam().getName();
+
+        return Objects.hash(uuid, teamName);
     }
 }

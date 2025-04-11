@@ -142,8 +142,8 @@ public class LockoutCommand implements TabExecutor {
                     lockout.updateSettings(lockout.getPlugin().generateConfig(true));
                     lockout.settings().showDiff(oldSettings);
 
-                    lockout.getUserLuaEnvironment().resetTables();
-                    lockout.getUserLuaEnvironment().initUserChunk();
+                    lockout.getUserLuaEnvironment().reset();
+                    lockout.getUserLuaEnvironment().loadUserInitScript();
 
                     lockout.getBoardManager().reset();
                     lockout.getBoardManager().registerBoardsAsync();
@@ -211,8 +211,8 @@ public class LockoutCommand implements TabExecutor {
                     lockout.updateSettings(lockout.getPlugin().generateConfig(true));
                     lockout.settings().showDiff(oldSettings);
 
-                    lockout.getUserLuaEnvironment().resetTables();
-                    lockout.getUserLuaEnvironment().initUserChunk();
+                    lockout.getUserLuaEnvironment().reset();
+                    lockout.getUserLuaEnvironment().loadUserInitScript();
 
                     lockout.getBoardManager().reset();
                     lockout.getBoardManager().registerBoardsAsync();

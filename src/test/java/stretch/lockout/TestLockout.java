@@ -32,7 +32,7 @@ public class TestLockout extends Lockout {
         this.testSettings = new LockoutSettings(new YamlConfiguration());
         // Customize testSettings if needed, e.g., disable rules that interfere
 
-        testLuaEnvironment = new LuaEnvironment(this, testSettings);
+        testLuaEnvironment = new LuaEnvironment(this, testSettings, true);
 
         this.mockBoardManager = Mockito.mock(BoardManager.class); // Create a mock BoardManager
         Mockito.when(mockBoardManager.getLuaEnvironment()).thenReturn(testLuaEnvironment);

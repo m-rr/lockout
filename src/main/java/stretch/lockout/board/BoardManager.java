@@ -1,5 +1,6 @@
 package stretch.lockout.board;
 
+import stretch.lockout.game.state.StateResettable;
 import stretch.lockout.lua.LuaEnvironment;
 
 import java.util.List;
@@ -15,11 +16,13 @@ import java.util.Optional;
  * @see InvalidBoardPropertiesException
  * @since 2.5.1
  * */
-public interface BoardManager {
+public interface BoardManager extends StateResettable {
     List<BoardInfo> getBoards();
     Optional<BoardInfo> getBoard(String id);
     void loadBoard(String boardName);
+    Optional<BoardDefinition> getCurrentBoardDefinition();
+    boolean hasCurrentBoardDefinition();
     void registerBoardsAsync();
-    void reset();
+    //void reset();
     LuaEnvironment getLuaEnvironment();
 }
