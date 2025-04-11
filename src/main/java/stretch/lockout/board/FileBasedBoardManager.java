@@ -186,9 +186,10 @@ public class FileBasedBoardManager implements BoardManager {
 
         List<TaskComponent> tasks = new ArrayList<>();
         LuaTable taskTable = luaTasks.checktable();
+        // Lua tables are '1 indexed'
         for (int i = 0; i < taskTable.length(); i++) {
             try {
-                TaskComponent task = (TaskComponent) CoerceLuaToJava.coerce(taskTable.get(i), TaskComponent.class);
+                TaskComponent task = (TaskComponent) CoerceLuaToJava.coerce(taskTable.get(i + 1), TaskComponent.class);
                 tasks.add(task);
             } catch (LuaError error) {
                 LockoutLogger.error("Error while creating task in 'Task' table at index " + i + ": " + error.getMessage());
