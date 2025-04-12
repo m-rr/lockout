@@ -5,8 +5,14 @@ import org.bukkit.DyeColor;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.plugin.Plugin;
 import org.bukkit.potion.PotionEffect;
+import org.checkerframework.checker.nullness.qual.NonNull;
+import stretch.lockout.event.GameOverEvent;
 import stretch.lockout.event.PlayerJoinTeamEvent;
+import stretch.lockout.event.ReadyGameEvent;
+import stretch.lockout.event.ResetGameEvent;
+import stretch.lockout.game.state.GameStateManaged;
 import stretch.lockout.game.state.LockoutSettings;
 import stretch.lockout.game.state.StateResettable;
 import stretch.lockout.team.player.PlayerStat;
@@ -16,7 +22,7 @@ import java.util.*;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
-public class TeamManager implements StateResettable {
+public class TeamManager extends GameStateManaged {
     private Set<LockoutTeam> lockoutTeams;
     private Set<PlayerStat> playerStatCache;
     private Set<UUID> uuidCache;
@@ -25,7 +31,8 @@ public class TeamManager implements StateResettable {
 
     private TeamSelectionView teamSelectionView;
 
-    public TeamManager(LockoutSettings settings) {
+    public TeamManager(@NonNull Plugin plugin, @NonNull LockoutSettings settings) {
+        super(plugin);
         this.lockoutTeams = new HashSet<>();
         this.playerStatCache = new HashSet<>();
         this.uuidCache = new HashSet<>();
@@ -238,7 +245,17 @@ public class TeamManager implements StateResettable {
         this.teamSelectionView = new TeamSelectionView();
     }
 
+
     @Override
+    public void onReset(ResetGameEvent event) {
+        reset();
+    }
+
+    @Override
+    public void onGameOver(GameOverEvent event) {
+        reset();
+    }
+
     public void reset() {
         destroyAllTeams();
         playerStatCache.clear();

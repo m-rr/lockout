@@ -42,7 +42,7 @@ public record InventoryInputHandler(LockoutContext lockout) implements Listener 
             ItemStack clickedItem = clickEvent.getCurrentItem();
             if (clickedItem.getType() == Material.PAPER) {
                 player.closeInventory();
-                if (lockout.getCurrentTaskCollection().isTasksLoaded()) {
+                if (lockout.getTaskManager().getTasks().isTasksLoaded()) {
                     player.sendMessage(ChatColor.RED + "Tasks already loaded");
                     return;
                 }

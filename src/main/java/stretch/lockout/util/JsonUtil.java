@@ -71,7 +71,7 @@ public class JsonUtil {
         result.add("team", generateTeamInfo(lockout, teamObfuscation.toString()));
 
         JsonArray tasksArr = new JsonArray();
-        var tasks = lockout.getMainTasks().getTasks();
+        var tasks = lockout.getTaskManager().getTasks().getTasks();
         for (var t : tasks) {
             if (t instanceof TimeCompletableTask completableTask) {
                 tasksArr.add(JsonUtil.fromTask(completableTask, playerMapping));
@@ -79,7 +79,7 @@ public class JsonUtil {
         }
 
         JsonArray tieArr = new JsonArray();
-        var tieTasks = lockout.getTieBreaker().getTasks();
+        var tieTasks = lockout.getTaskManager().getCounterTasks().getTasks();
         for (var t : tieTasks) {
             if (t instanceof TimeCompletableTask completableTask) {
                 tieArr.add(JsonUtil.fromTask(completableTask, playerMapping));

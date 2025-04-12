@@ -78,7 +78,7 @@ public class UIManager implements Listener {
     @EventHandler
     public void onTieBreaker(TieBreakerEvent tieBreakerEvent) {
         barManager.getTimer().deactivate();
-        if (!lockout.settings().hasRule(LockoutGameRule.TIE_BREAK) || !lockout.getTieBreaker().isTasksLoaded()) {
+        if (!lockout.settings().hasRule(LockoutGameRule.TIE_BREAK) || !lockout.getTaskManager().getCounterTasks().isTasksLoaded()) {
             String message = ChatColor.YELLOW + "Draw!";
             LockoutLogger.sendAllTitle(message, "", 10, 20, 10);
             LockoutLogger.sendAllChat("The game was a " + message);
@@ -235,10 +235,10 @@ public class UIManager implements Listener {
                     GameState gameState = lockout.getGameStateHandler().getGameState();
                     if ((!lockout.settings().hasRule(LockoutGameRule.OP_COMMANDS)
                             || player.hasPermission("lockout.select"))
-                            && !lockout.getCurrentTaskCollection().isTasksLoaded()) {
+                            && !lockout.getTaskManager().getTasks().isTasksLoaded()) {
                         player.openInventory(lockout.getTaskSelectionView().getInventory());
                     }
-                    else if (lockout.getCurrentTaskCollection().isTasksLoaded()
+                    else if (lockout.getTaskManager().getTasks().isTasksLoaded()
                             && lockout.getTeamManager().isPlayerOnTeam(player)
                             && gameState != GameState.READY) {
                         player.openInventory(lockout.getInventoryTaskView().getInventory());

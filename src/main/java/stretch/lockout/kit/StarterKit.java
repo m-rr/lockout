@@ -30,5 +30,7 @@ public class StarterKit implements Kit {
                 new ItemStack(Material.DIRT, 32),
                 new ItemStack(Material.BREAD, 10)
         );
+
+
     }
 }

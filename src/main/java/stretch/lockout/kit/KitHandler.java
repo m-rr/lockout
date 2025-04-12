@@ -6,11 +6,16 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
+import org.bukkit.plugin.Plugin;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import stretch.lockout.event.StartGameEvent;
 import stretch.lockout.game.LockoutContext;
 import stretch.lockout.game.LockoutGameRule;
 import stretch.lockout.game.state.GameState;
+import stretch.lockout.game.state.GameStateHandler;
+import stretch.lockout.game.state.LockoutSettings;
+import stretch.lockout.team.TeamManager;
+import stretch.lockout.ui.bar.LockoutTimer;
 
 import java.time.Duration;
 import java.util.HashMap;
@@ -38,9 +43,13 @@ import java.util.Objects;
  * @since 2.5.1
  * */
 public class KitHandler implements Listener {
-    private final LockoutContext lockout;
-    private final StarterKit starterKit = new StarterKit();
-    private final CompassKit compassKit = new CompassKit();
+    private final Plugin plugin;
+    private final StarterKit starterKit;
+    private final CompassKit compassKit;
+    private final LockoutSettings settings;
+    private final LockoutTimer timer;
+    private final TeamManager teamManager;
+    private final GameStateHandler stateHandler;
     /** Tracks the System.currentTimeMillis() when a player last respawned, used for kit cooldowns. */
     private final Map<Player, Long> lastRespawn = new HashMap<Player, Long>();
 
@@ -49,13 +58,19 @@ public class KitHandler implements Listener {
      * Registers this class as an event listener.
      *
      * @author m-rr
-     * @param lockout The main Lockout game context, providing access to settings and other managers.
+     * @param plugin The main Lockout game context, providing access to settings and other managers.
      * @since 2.5.1
      *
      * */
-    public KitHandler(@NonNull LockoutContext lockout) {
-        this.lockout = Objects.requireNonNull(lockout, "LockoutContext cannot be null");
-        Bukkit.getPluginManager().registerEvents(this, lockout.getPlugin());
+    public KitHandler(@NonNull Plugin plugin, @NonNull TeamManager teamManager, @NonNull GameStateHandler stateHandler, @NonNull LockoutTimer timer, @NonNull LockoutSettings settings) {
+        this.plugin = Objects.requireNonNull(plugin, "plugin cannot be null");
+        this.teamManager = Objects.requireNonNull(teamManager, "teamManager cannot be null");
+        this.stateHandler = Objects.requireNonNull(stateHandler, "stateHandler cannot be null");
+        this.settings = Objects.requireNonNull(settings, "settings cannot be null");
+        this.timer = Objects.requireNonNull(timer, "timer cannot be null");
+        this.starterKit = new StarterKit();
+        this.compassKit = new CompassKit(plugin);
+        Bukkit.getPluginManager().registerEvents(this, plugin);
     }
 
     /**
@@ -80,8 +95,8 @@ public class KitHandler implements Listener {
      * */
     @EventHandler
     public void onStarting(StartGameEvent startGameEvent) {
-        lockout.getTeamManager().doToAllPlayers(compassKit::apply);
-        lockout.getTeamManager().doToAllPlayers(player -> {
+        teamManager.doToAllPlayers(compassKit::apply);
+        teamManager.doToAllPlayers(player -> {
                 compassKit.apply(player);
                 lastRespawn.put(player, System.currentTimeMillis());
             });
@@ -122,27 +137,32 @@ public class KitHandler implements Listener {
      * */
     @EventHandler
     public void onRespawn(PlayerRespawnEvent playerRespawnEvent) {
-        if (lockout.getGameStateHandler().getGameState() != GameState.RUNNING) {
+        if (stateHandler.getGameState() != GameState.RUNNING) {
             return;
         }
 
         Player player = playerRespawnEvent.getPlayer();
-        if (lockout.getTeamManager().getMappedPlayerStats().containsKey(player)) {
+        if (teamManager.getMappedPlayerStats().containsKey(player)) {
             compassKit.apply(player);
 
-            if (lockout.settings().hasRule(LockoutGameRule.RESPAWN_INVULNERABLE)) {
-                lockout.gracePeriod(player);
+            if (settings.hasRule(LockoutGameRule.RESPAWN_INVULNERABLE)) {
+                respawnInvulnerable(player);
             }
 
-            if (lockout.settings().hasRule(LockoutGameRule.RESPAWN_KIT)
+            if (settings.hasRule(LockoutGameRule.RESPAWN_KIT)
                     && System.currentTimeMillis() - lastRespawn.get(player)
-                        > lockout.settings().getRespawnCooldownTime()
-                    && lockout.getUiManager().getTimer()
-                .hasTimeElapsed(Duration.ofSeconds(lockout.settings().getRespawnKitTime() / 20))) {
+                        > settings.getRespawnCooldownTime()
+                    && timer.hasTimeElapsed(Duration.ofSeconds(settings.getRespawnKitTime() / 20))) {
                 starterKit.apply(player);
             }
 
             lastRespawn.put(player, System.currentTimeMillis());
         }
+    }
+
+    private void respawnInvulnerable(Player player) {
+        player.setInvulnerable(true);
+
+        player.getScheduler().runDelayed(plugin, scheduledTask -> player.setInvulnerable(false), () -> {}, settings.getRespawnInvulnerabilityTime());
     }
 }

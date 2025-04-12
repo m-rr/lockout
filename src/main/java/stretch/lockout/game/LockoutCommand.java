@@ -1,6 +1,7 @@
 package stretch.lockout.game;
 
 import com.google.common.collect.ImmutableList;
+import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.command.Command;
@@ -8,23 +9,43 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabExecutor;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.plugin.Plugin;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.luaj.vm2.LuaValue;
+import stretch.lockout.Lockout;
 import stretch.lockout.game.state.GameState;
+import stretch.lockout.game.state.GameStateHandler;
 import stretch.lockout.game.state.LockoutSettings;
 import stretch.lockout.kit.CompassKit;
+import stretch.lockout.lua.LuaEnvironment;
 import stretch.lockout.team.LockoutTeam;
 import stretch.lockout.team.TeamManager;
 import stretch.lockout.util.LockoutLogger;
 
 import java.util.List;
+import java.util.Objects;
 
 public class LockoutCommand implements TabExecutor {
-    private final LockoutContext lockout;
-    private final CompassKit compassKit = new CompassKit();
 
-    public LockoutCommand(final LockoutContext lockout) {
-        this.lockout = lockout;
+    private final Plugin plugin;
+    private final CompassKit compassKit;
+    private LockoutSettings settings;
+    private final GameStateHandler stateHandler;;
+    private final TeamManager teamManager;
+    private final LuaEnvironment userLuaEnvironment;
+
+    public LockoutCommand(@NonNull Plugin plugin,
+                          @NonNull CompassKit compassKit,
+                          @NonNull LockoutSettings settings,
+                          @NonNull GameStateHandler stateHandler,
+                          @NonNull TeamManager teamManager,
+                          @NonNull LuaEnvironment userLuaEnvironment) {
+        this.plugin = Objects.requireNonNull(plugin, "plugin cannot be null");
+        this.compassKit = Objects.requireNonNull(compassKit, "compassKit cannot be null");
+        this.settings = Objects.requireNonNull(settings, "settings cannot be null");
+        this.stateHandler = Objects.requireNonNull(stateHandler, "stateHandler cannot be null");
+        this.teamManager = Objects.requireNonNull(teamManager, "teamManager cannot be null");
+        this.userLuaEnvironment = Objects.requireNonNull(userLuaEnvironment, "userLuaEnvironment cannot be null");
     }
     private void noPermissionMessage(CommandSender sender) {
         LockoutLogger.log(sender, ChatColor.RED + "You do not have permission to use that.");
@@ -40,22 +61,21 @@ public class LockoutCommand implements TabExecutor {
             if (sender instanceof Player player) {
                 switch (command) {
                     case "team" -> {
-                        if (lockout.settings().hasRule(LockoutGameRule.OP_COMMANDS) && !player.hasPermission("lockout.team")) {
+                        if (settings.hasRule(LockoutGameRule.OP_COMMANDS) && !player.hasPermission("lockout.team")) {
                             noPermissionMessage(player);
                             return true;
                         }
 
-                        if (lockout.getGameStateHandler().getGameState() != GameState.READY) {
+                        if (stateHandler.getGameState() != GameState.READY) {
                             LockoutLogger.sendChat(player, "Cannot create team; Lockout has already started.");
                             return true;
                         }
 
                         if (args.length == 2) {
                             String teamName = args[1];
-                            TeamManager teamManager = lockout.getTeamManager();
 
                             if (!teamManager.isTeam(teamName)) {
-                                LockoutTeam team = new LockoutTeam(teamName, lockout.settings().getTeamSize());
+                                LockoutTeam team = new LockoutTeam(teamName, settings.getTeamSize());
 
                                 ItemStack handItem = player.getEquipment().getItemInMainHand();
 
@@ -67,7 +87,7 @@ public class LockoutCommand implements TabExecutor {
                                     LockoutLogger.sendAllChat(player.getName() + " created team " + ChatColor.GOLD + teamName);
                                 }
                                 else {
-                                    LockoutLogger.sendChat(player, "Cannot create anymore teams. Max is " + lockout.settings().getMaxTeams());
+                                    LockoutLogger.sendChat(player, "Cannot create anymore teams. Max is " + settings.getMaxTeams());
                                 }
                             }
                             else {
@@ -83,46 +103,46 @@ public class LockoutCommand implements TabExecutor {
                         compassKit.apply(player);
                     }
                     case "dev" -> {
-                        if (!lockout.settings().hasRule(LockoutGameRule.DEV)) {
+                        if (settings.hasRule(LockoutGameRule.DEV)) {
                             return false;
                         }
 
 
                     }
                     case "start" -> {
-                    if (lockout.settings().hasRule(LockoutGameRule.OP_COMMANDS)
+                    if (settings.hasRule(LockoutGameRule.OP_COMMANDS)
                         && !player.hasPermission("lockout.start")) {
                         noPermissionMessage(player);
                         return true;
                     }
 
-                    if (lockout.getGameStateHandler().getGameState() != GameState.READY) {
+                    if (stateHandler.getGameState() != GameState.READY) {
                         LockoutLogger.log(sender, "The game is already started!");
                     }
                     else {
-                        lockout.getGameStateHandler().setGameState(GameState.STARTING);
+                        stateHandler.setGameState(GameState.STARTING);
                     }
                 }
                 case "end" -> {
-                    if (lockout.settings().hasRule(LockoutGameRule.OP_COMMANDS)
+                    if (settings.hasRule(LockoutGameRule.OP_COMMANDS)
                         && !player.hasPermission("lockout.end")) {
                         noPermissionMessage(player);
                         return true;
                     }
-                    lockout.getGameStateHandler().setGameState(GameState.END);
+                    stateHandler.setGameState(GameState.END);
                 }
                 case "version" -> {
-                    LockoutLogger.log(sender, lockout.getPlugin().getDescription().getVersion());
+                    LockoutLogger.log(sender, plugin.getPluginMeta().getVersion());
                 }
                 case "eval" -> {
-                    if (lockout.settings().hasRule(LockoutGameRule.DEV)) {
+                    if (settings.hasRule(LockoutGameRule.DEV)) {
                         final int length = args.length;
                         StringBuilder stringBuilder = new StringBuilder();
                         for (int i = 1; i < length; i++) {
                             stringBuilder.append(args[i]).append(" ");
                         }
                         String chunk = stringBuilder.toString();
-                        LuaValue rt = lockout.getUserLuaEnvironment().loadString(sender, chunk);
+                        LuaValue rt = userLuaEnvironment.loadString(sender, chunk);
                         LockoutLogger.evalLog(sender, ChatColor.GREEN + chunk);
                         LockoutLogger.evalLog(sender, rt.toString());
                     }
@@ -131,19 +151,27 @@ public class LockoutCommand implements TabExecutor {
                     }
                 }
                 case "reload" -> {
-                    if (lockout.settings().hasRule(LockoutGameRule.OP_COMMANDS)
+                    if (settings.hasRule(LockoutGameRule.OP_COMMANDS)
                         && !player.hasPermission("lockout.reload")) {
                         noPermissionMessage(player);
                         return true;
                     }
                     LockoutLogger.debugLog(ChatColor.RED + "Reload request from " + sender.getName());
-                    lockout.getGameStateHandler().setGameState(GameState.PAUSED);
-                    LockoutSettings oldSettings = lockout.settings();
-                    lockout.updateSettings(lockout.getPlugin().generateConfig(true));
-                    lockout.settings().showDiff(oldSettings);
+                    stateHandler.setGameState(GameState.PAUSED);
+                    LockoutSettings oldSettings = settings;
+                    //lockout.updateSettings(lockout.getPlugin().generateConfig(true));
+                    Lockout plugin = (Lockout) Bukkit.getPluginManager().getPlugin("Lockout");
+                    assert plugin != null;
+                    LockoutContext lockout = plugin.getLockoutContext();
+                    LockoutSettings newSettings = plugin.generateConfig(true);
+                    this.settings = newSettings;
+                    lockout.updateSettings(newSettings);
+                    newSettings.showDiff(oldSettings);
 
-                    lockout.getUserLuaEnvironment().reset();
-                    lockout.getUserLuaEnvironment().loadUserInitScript();
+                    userLuaEnvironment.reset();
+                    if (settings.hasRule(LockoutGameRule.DEV)) {
+                        userLuaEnvironment.loadUserInitScript();
+                    }
 
                     lockout.getBoardManager().reset();
                     lockout.getBoardManager().registerBoardsAsync();
@@ -156,41 +184,41 @@ public class LockoutCommand implements TabExecutor {
             } else {
                 switch (command) {
                 case "start" -> {
-                    if (lockout.settings().hasRule(LockoutGameRule.OP_COMMANDS)
+                    if (settings.hasRule(LockoutGameRule.OP_COMMANDS)
                         && sender instanceof Player player
                         && !player.hasPermission("lockout.start")) {
                         noPermissionMessage(player);
                         return true;
                     }
 
-                    if (lockout.getGameStateHandler().getGameState() != GameState.READY) {
+                    if (stateHandler.getGameState() != GameState.READY) {
                         LockoutLogger.log(sender, "The game is already started!");
                     }
                     else {
-                        lockout.getGameStateHandler().setGameState(GameState.STARTING);
+                        stateHandler.setGameState(GameState.STARTING);
                     }
                 }
                 case "end" -> {
-                    if (lockout.settings().hasRule(LockoutGameRule.OP_COMMANDS)
+                    if (settings.hasRule(LockoutGameRule.OP_COMMANDS)
                         && sender instanceof Player player
                         && !player.hasPermission("lockout.end")) {
                         noPermissionMessage(player);
                         return true;
                     }
-                    lockout.getGameStateHandler().setGameState(GameState.END);
+                    stateHandler.setGameState(GameState.END);
                 }
                 case "version" -> {
-                    LockoutLogger.log(sender, lockout.getPlugin().getDescription().getVersion());
+                    LockoutLogger.log(sender, plugin.getDescription().getVersion());
                 }
                 case "eval" -> {
-                    if (lockout.settings().hasRule(LockoutGameRule.DEV)) {
+                    if (settings.hasRule(LockoutGameRule.DEV)) {
                         final int length = args.length;
                         StringBuilder stringBuilder = new StringBuilder();
                         for (int i = 1; i < length; i++) {
                             stringBuilder.append(args[i]).append(" ");
                         }
                         String chunk = stringBuilder.toString();
-                        LuaValue rt = lockout.getUserLuaEnvironment().loadString(sender, chunk);
+                        LuaValue rt = userLuaEnvironment.loadString(sender, chunk);
                         LockoutLogger.evalLog(sender, rt.toString());
                     }
                     else {
@@ -198,7 +226,7 @@ public class LockoutCommand implements TabExecutor {
                     }
                 }
                 case "reload" -> {
-                    if (lockout.settings().hasRule(LockoutGameRule.OP_COMMANDS)
+                    if (settings.hasRule(LockoutGameRule.OP_COMMANDS)
                         && sender instanceof Player player
                         && !player.hasPermission("lockout.reload")) {
                         noPermissionMessage(player);
@@ -206,18 +234,23 @@ public class LockoutCommand implements TabExecutor {
                     }
 
                     LockoutLogger.debugLog(ChatColor.RED + "Reload request from " + sender.getName());
-                    lockout.getGameStateHandler().setGameState(GameState.PAUSED);
-                    LockoutSettings oldSettings = lockout.settings();
-                    lockout.updateSettings(lockout.getPlugin().generateConfig(true));
+                    stateHandler.setGameState(GameState.PAUSED);
+                    LockoutSettings oldSettings = settings;
+                    //lockout.updateSettings(lockout.getPlugin().generateConfig(true));
+                    Lockout plugin = (Lockout) Bukkit.getPluginManager().getPlugin("Lockout");
+                    assert plugin != null;
+                    LockoutContext lockout = plugin.getLockoutContext();
+                    LockoutSettings newSettings = plugin.generateConfig(true);
+                    lockout.updateSettings(plugin.generateConfig(true));
                     lockout.settings().showDiff(oldSettings);
 
-                    lockout.getUserLuaEnvironment().reset();
-                    lockout.getUserLuaEnvironment().loadUserInitScript();
+                    userLuaEnvironment.reset();
+                    userLuaEnvironment.loadUserInitScript();
 
                     lockout.getBoardManager().reset();
                     lockout.getBoardManager().registerBoardsAsync();
 
-                    lockout.getGameStateHandler().setGameState(GameState.END);
+                    stateHandler.setGameState(GameState.END);
                     LockoutLogger.debugLog(ChatColor.GREEN + "Reload complete");
                 }
                 default -> {return false;}

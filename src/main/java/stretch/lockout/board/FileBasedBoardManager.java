@@ -202,7 +202,7 @@ public class FileBasedBoardManager implements BoardManager {
             LuaTable tieBreakerTable = luaTieBreakers.checktable();
             for (int i = 0; i < tieBreakerTable.length(); i++) {
                 try {
-                    TaskComponent task = (TaskComponent) CoerceLuaToJava.coerce(tieBreakerTable.get(i), TaskComponent.class);
+                    TaskComponent task = (TaskComponent) CoerceLuaToJava.coerce(tieBreakerTable.get(i + 1), TaskComponent.class);
                     tieBreakCounters.add(task);
                 } catch (LuaError error) {
                     LockoutLogger.error("Error while adding tie breaker from 'TieBreakers' table at index " + i + ": " + error.getMessage());
@@ -216,7 +216,7 @@ public class FileBasedBoardManager implements BoardManager {
             LuaTable mutatorTable = luaMutators.checktable();
             for (int i = 0; i < mutatorTable.length(); i++) {
                 try {
-                    TaskComponent task = (TaskComponent) CoerceLuaToJava.coerce(mutatorTable.get(i), TaskComponent.class);
+                    TaskComponent task = (TaskComponent) CoerceLuaToJava.coerce(mutatorTable.get(i + 1), TaskComponent.class);
                     mutators.add(task);
                 } catch (LuaError error) {
                     LockoutLogger.error("Error while adding mutator from 'Mutators' table at index " + i + ": " + error.getMessage());

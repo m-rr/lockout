@@ -3,11 +3,14 @@ package stretch.lockout.reward.scheduler;
 import io.papermc.paper.threadedregions.scheduler.ScheduledTask;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
+import org.bukkit.plugin.Plugin;
+import org.checkerframework.checker.nullness.qual.NonNull;
 import stretch.lockout.Lockout;
 import stretch.lockout.event.RewardApplyEvent;
 import stretch.lockout.reward.api.RewardComponent;
 import stretch.lockout.task.hidden.HiddenTask;
 import stretch.lockout.task.api.TaskComponent;
+import stretch.lockout.team.TeamManager;
 import stretch.lockout.team.player.PlayerStat;
 
 import java.util.*;
@@ -15,14 +18,16 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 
 public class RewardScheduler {
-    private final Lockout plugin; // Keep Lockout if settings/context needed, else just Plugin
+    private final Plugin plugin; // Keep Lockout if settings/context needed, else just Plugin
+    private final TeamManager teamManager;
     // Map to track scheduled tasks for cancellation (if needed for actions)
     private final Map<RewardComponent, Queue<ScheduledTask>> scheduledActions = new HashMap<>();
     // Map to store rewards for offline players: UUID -> List of rewards to apply on login
     private final Map<UUID, List<PendingReward>> pendingOfflineRewards = new ConcurrentHashMap<>();
 
-    public RewardScheduler(Lockout plugin) {
+    public RewardScheduler(@NonNull Plugin plugin, @NonNull TeamManager teamManager) {
         this.plugin = Objects.requireNonNull(plugin, "plugin cannot be null");
+        this.teamManager = Objects.requireNonNull(teamManager, "teamManager cannot be null");
         // TODO: Load pendingOfflineRewards from storage here (e.g., onEnable)
     }
 
@@ -63,7 +68,7 @@ public class RewardScheduler {
         Runnable coreRewardAction = () -> {
             // Double-check player is valid before applying reward
             Player currentPlayer = Bukkit.getPlayer(playerUuid); // Get potentially new Player object
-            PlayerStat currentStat = plugin.getLockoutContext().getTeamManager().getPlayerStat(playerUuid); // Get potentially updated PlayerStat
+            PlayerStat currentStat = teamManager.getPlayerStat(playerUuid); // Get potentially updated PlayerStat
 
             if (currentPlayer != null && currentPlayer.isOnline() && currentStat != null) {
                 try {
@@ -174,7 +179,7 @@ public class RewardScheduler {
 
         if (pendingList != null && !pendingList.isEmpty()) {
             plugin.getLogger().info("Applying " + pendingList.size() + " pending rewards for player " + player.getName());
-            PlayerStat currentStat = plugin.getLockoutContext().getTeamManager().getPlayerStat(playerUuid);
+            PlayerStat currentStat = teamManager.getPlayerStat(playerUuid);
 
             if (currentStat == null) {
                 plugin.getLogger().warning("Cannot apply pending rewards for " + player.getName() + ": PlayerStat not found (maybe left team?).");

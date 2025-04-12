@@ -2,10 +2,7 @@ package stretch.lockout.game.state;
 
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
-import stretch.lockout.event.GameOverEvent;
-import stretch.lockout.event.ReadyGameEvent;
-import stretch.lockout.event.StartGameEvent;
-import stretch.lockout.event.TieBreakerEvent;
+import stretch.lockout.event.*;
 import stretch.lockout.event.state.PlayerStateChangeTask;
 import stretch.lockout.game.LockoutContext;
 import stretch.lockout.game.LockoutGameRule;
@@ -52,7 +49,7 @@ public class DefaultStateHandler extends GameStateHandler {
     @Override
     protected void starting() {
 
-        if (!lockout.getCurrentTaskCollection().isTasksLoaded()) {
+        if (!lockout.getTaskManager().getTasks().isTasksLoaded()) {
             String message = ChatColor.RED + "You can not start without loading tasks!";
             LockoutLogger.consoleLog(message);
             LockoutLogger.sendAllChat(message);
@@ -137,7 +134,7 @@ public class DefaultStateHandler extends GameStateHandler {
     @Override
     protected void tiebreaker() {
         Bukkit.getPluginManager().callEvent(new TieBreakerEvent());
-        if (!lockout.settings().hasRule(LockoutGameRule.TIE_BREAK) || !lockout.getTieBreaker().isTasksLoaded()) {
+        if (!lockout.settings().hasRule(LockoutGameRule.TIE_BREAK) || !lockout.getTaskManager().getCounterTasks().isTasksLoaded()) {
             setGameState(GameState.END);
         }
     }
@@ -151,6 +148,7 @@ public class DefaultStateHandler extends GameStateHandler {
         lockout.getEventExecutor().unregister();
 
         LockoutLogger.sendAllChat("Game ending.");
+        //Bukkit.getPluginManager().callEvent(new ResetGameEvent());
         setGameState(GameState.PRE);
     }
 

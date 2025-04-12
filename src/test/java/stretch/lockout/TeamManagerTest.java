@@ -44,7 +44,7 @@ class TeamManagerTest {
         settings.setDefaultTeams(0); // Don't create default teams automatically
 
         // Initialize TeamManager with our test settings
-        teamManager = new TeamManager(settings);
+        teamManager = new TeamManager(testPlugin, settings);
     }
 
     @AfterEach

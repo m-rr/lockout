@@ -8,12 +8,16 @@ import stretch.lockout.board.BoardManager;
 import stretch.lockout.game.LockoutContext;
 import stretch.lockout.game.state.LockoutSettings;
 import stretch.lockout.lua.LuaEnvironment;
+import stretch.lockout.task.manager.TaskManager;
+import stretch.lockout.team.TeamManager;
 
 // Extend your main plugin class
 public class TestLockout extends Lockout {
 
     // Fields to hold mocks and the context instance for tests to access
     public BoardManager mockBoardManager;
+    public TaskManager mockTaskManager;
+    public TeamManager mockTeamManager;
     public LockoutSettings testSettings;
     public LockoutContext testLockoutContext;
     public LuaEnvironment testLuaEnvironment;
@@ -36,10 +40,12 @@ public class TestLockout extends Lockout {
 
         this.mockBoardManager = Mockito.mock(BoardManager.class); // Create a mock BoardManager
         Mockito.when(mockBoardManager.getLuaEnvironment()).thenReturn(testLuaEnvironment);
+        this.mockTaskManager = Mockito.mock(TaskManager.class);
+        this.mockTeamManager = Mockito.mock(TeamManager.class);
 
         // --- Create LockoutContext with Mocks ---
         // Inject the mock BoardManager and test settings
-        this.testLockoutContext = new LockoutContext(this, testSettings, mockBoardManager /*, other mocks */);
+        this.testLockoutContext = new LockoutContext(this, testSettings, mockBoardManager, mockTaskManager, mockTeamManager);
 
         // --- Minimal Required Setup ---
         // You might need to set up the command executor if your test interacts with commands,

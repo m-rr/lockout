@@ -58,7 +58,7 @@ public class LockoutEventHandler implements Listener {
         Predicate<LockoutContext> isGameOver = lockout.settings().hasRule(LockoutGameRule.MAX_SCORE) ?
                 (game) -> game.settings().getMaxScore() > 0 && team.getScore() >= game.settings().getMaxScore() :
                 (game) -> (long) game.getTeamManager().getTeams().size() > 1 && teamManager.getOpposingTeams(winningTeam).stream()
-                        .noneMatch(teams -> game.getCurrentTaskCollection().remainingPoints() + teams.getScore() >= winningTeam.getScore());
+                        .noneMatch(teams -> game.getTaskManager().getRemainingPoints() + teams.getScore() >= winningTeam.getScore());
 
         if (isGameOver.test(lockout)) {
           Bukkit.getPluginManager().callEvent(new GameOverEvent(winningTeam));

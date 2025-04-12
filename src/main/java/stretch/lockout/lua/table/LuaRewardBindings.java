@@ -5,6 +5,7 @@ import org.bukkit.enchantments.Enchantment;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
+import org.checkerframework.checker.nullness.qual.NonNull;
 import org.luaj.vm2.LuaFunction;
 import org.luaj.vm2.LuaTable;
 import org.luaj.vm2.LuaValue;
@@ -26,17 +27,19 @@ import stretch.lockout.reward.impl.RewardTask;
 import stretch.lockout.task.hidden.HiddenTask;
 import stretch.lockout.task.api.TaskComponent;
 import stretch.lockout.task.manager.TaskCollection;
+import stretch.lockout.task.manager.TaskManager;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 public class LuaRewardBindings implements LuaTableBinding {
 
-    private final TaskCollection tasks;
+    private final TaskManager taskManager;
     private final LockoutSettings settings;
-    public LuaRewardBindings(final LockoutSettings settings, final TaskCollection tasks) {
-        this.tasks = tasks;
-        this.settings = settings;
+    public LuaRewardBindings(@NonNull final LockoutSettings settings, @NonNull final TaskManager taskManager) {
+        this.taskManager = Objects.requireNonNull(taskManager, "taskManager cannot be null");
+        this.settings = Objects.requireNonNull(settings, "settings cannot be null");
     }
 
     @Override
@@ -112,10 +115,11 @@ public class LuaRewardBindings implements LuaTableBinding {
                 String description = (String) CoerceLuaToJava.coerce(luaValue1, String.class);
                 TaskComponent taskComponent = (TaskComponent) CoerceLuaToJava.coerce(luaValue2, TaskComponent.class);
 
-                HiddenTask taskInvisible = new HiddenTask(taskComponent);
-                tasks.addTask(taskInvisible);
+                //taskManager.addHiddenTask(taskComponent);
+                HiddenTask hiddenTask = new HiddenTask(taskComponent);
+                taskManager.addTask(hiddenTask);
 
-                return CoerceJavaToLua.coerce(new RewardTask(taskInvisible, rewardType, description));
+                return CoerceJavaToLua.coerce(new RewardTask(hiddenTask, rewardType, description));
             }
         });
 

@@ -1,65 +1,172 @@
 package stretch.lockout.task.manager;
 
+import org.bukkit.event.Event;
+import org.bukkit.plugin.Plugin;
 import org.checkerframework.checker.nullness.qual.NonNull;
+import stretch.lockout.event.GameOverEvent;
+import stretch.lockout.event.ResetGameEvent;
+import stretch.lockout.game.state.GameStateManaged;
 import stretch.lockout.game.state.StateResettable;
 import stretch.lockout.task.api.TaskComponent;
+import stretch.lockout.task.api.TimeCompletableTask;
 import stretch.lockout.task.hidden.HiddenCounterTask;
 import stretch.lockout.task.hidden.HiddenTask;
+import stretch.lockout.team.TeamManager;
+import stretch.lockout.team.player.PlayerStat;
+import stretch.lockout.util.LockoutLogger;
 
-import java.util.Optional;
+import java.util.*;
+import java.util.function.BinaryOperator;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
-// TODO make this have TaskCollections -> main, mutator, tiebreak
-public class TaskManager implements StateResettable {
+/**
+ * Handles {@link TaskCollection} of regular tasks, counter tasks, and mutator tasks.
+ *
+ * @author m-rr
+ * @version @projectVersion@
+ * @since 2.6.0*/
+public class TaskManager extends GameStateManaged {
     private final TaskCollection mainTaskCollection = new TaskCollection();
     private final TaskCollection counterTaskCollection = new TaskCollection();
     private final TaskCollection mutatorTaskCollection = new TaskCollection();
+    private final TaskCollection hiddenTaskCollection = new TaskCollection();
+    private final TeamManager teamManager;
+    //private final Set<Class<? extends Event>> cachedEventClasses = new HashSet<>();
+    private Map<Class <? extends Event>, Set<TaskComponent>> cachedTasks = new HashMap<>();
+    private final Queue<TimeCompletableTask> completedTasks = new LinkedList<>();
+    private int cacheVersion = 0;
+    private int taskAdditions = 0;
 
-    public TaskManager() {
-        // Most boards will have regular tasks plus a tiebreaker
-        //taskTiers = new TaskCollection[2];
+    public TaskManager(@NonNull Plugin plugin, final TeamManager teamManager) {
+        super(plugin);
+        this.teamManager = teamManager;
     }
 
-    public void addTask(final int tier, TaskComponent task) {
-        throw new UnsupportedOperationException("Not supported yet.");
-        /*try {
-            taskTiers[tier].addTask(task);
-        } catch (IndexOutOfBoundsException e) {
-            LockoutLogger.consoleLog("Could not add task: [" + task.getDescription() + "] to task tier: "
-                    + tier + " Because the tier does not exist.");
-        }*/
+    public boolean containsEventClass(final @NonNull Class <? extends Event> eventClass) {
+        ensureValidCache();
+        return cachedTasks.containsKey(eventClass);
+    }
 
+    public Set<TaskComponent> getTasks(final @NonNull Class <? extends Event> eventClass) {
+        ensureValidCache();
+        return cachedTasks.get(eventClass);
+    }
+
+    public Set<Class <? extends Event>> getEventClasses() {
+        ensureValidCache();
+        return cachedTasks.keySet();
+    }
+
+    private void ensureValidCache() {
+        if (!isCacheValid()) {
+            cacheVersion = taskAdditions;
+            buildTaskEventCache();
+        }
+    }
+
+    private void buildTaskEventCache() {
+        cachedTasks.clear();
+
+        BinaryOperator<Map<Class <? extends Event>, Set<TaskComponent>>> mapAccumulator = (acc, m) -> {
+            m.forEach((k, vSet) -> {
+                acc.merge(k,
+                        new HashSet<>(vSet),
+                        (existingSet, newSet) -> {
+                            existingSet.addAll(newSet);
+                            return existingSet;
+                        });
+            });
+            return acc;
+        };
+
+        cachedTasks = Stream.of(mainTaskCollection.getMappedTasks(),
+                counterTaskCollection.getMappedTasks(),
+                mutatorTaskCollection.getMappedTasks(),
+                hiddenTaskCollection.getMappedTasks())
+                .reduce(new HashMap<>(), mapAccumulator);
+    }
+
+    private boolean isCacheValid() {
+        return cacheVersion == taskAdditions;
+    }
+
+    public TaskCollection getTasks() {
+        return mainTaskCollection;
+    }
+
+    public TaskCollection getCounterTasks() {
+        return counterTaskCollection;
+    }
+
+    public TaskCollection getMutatorTasks() {
+        return mutatorTaskCollection;
     }
 
     public void addTask(@NonNull TaskComponent task) {
         mainTaskCollection.addTask(task);
+        taskAdditions++;
     }
 
     public void addTieBreakCounter(@NonNull TaskComponent task) {
         // These should have no reward
         HiddenCounterTask counterTask = new HiddenCounterTask(task);
         counterTaskCollection.addTask(counterTask);
+        taskAdditions++;
     }
 
+    // TODO all players need to be subscribed on game start
     public void addMutator(@NonNull TaskComponent task) {
-        // These should always be completable
+        // These should always have a reward
+        if (!task.hasReward()) {
+            LockoutLogger.warning(String.format("Mutator '%s' has no reward, so it is useless!", task.getDescription()));
+        }
+
         HiddenTask mutatorTask = new HiddenTask(task);
         mutatorTaskCollection.addTask(mutatorTask);
+        taskAdditions++;
     }
 
-    public void tierExpand(final int distance) {
-        throw new UnsupportedOperationException("Not supported yet.");
-        /*TaskCollection[] newTiers = new TaskCollection[taskTiers.length + distance];
-        System.arraycopy(taskTiers, 0, newTiers, 0, taskTiers.length);
-        taskTiers = newTiers;*/
+    // TODO call this somewhere
+    public void addHiddenTask(@NonNull TaskComponent task) {
+        // These should also always have a reward
+        if (!task.hasReward()) {
+            LockoutLogger.warning(String.format("TaskReward '%s' has no reward, so it is useless!", task.getDescription()));
+        }
+
+        HiddenTask hiddenTask = new HiddenTask(task);
+        hiddenTaskCollection.addTask(hiddenTask);
+        taskAdditions++;
     }
 
-    public Optional<TaskCollection> getTier(final int tier) {
-        throw new UnsupportedOperationException("Not supported yet.");
-        //return Optional.ofNullable(taskTiers[tier]);
+    public void setTaskCompleted(@NonNull PlayerStat playerStat, @NonNull TaskComponent task) {
+        playerStat.setCompletedTask(task);
+        if (task instanceof TimeCompletableTask timeCompletableTask) {
+            completedTasks.offer(timeCompletableTask);
+        }
+    }
+
+    public int getRemainingPoints() {
+        return mainTaskCollection.remainingPoints();
     }
 
     @Override
+    public void onGameOver(GameOverEvent event) {
+        reset();
+    }
+
+    @Override
+    public void onReset(ResetGameEvent event) {
+        reset();
+    }
+
     public void reset() {
-        throw new UnsupportedOperationException("Not supported yet.");
+        LockoutLogger.debugLog("TaskManager resetting");
+        mainTaskCollection.removeAllTasks();
+        counterTaskCollection.removeAllTasks();
+        mutatorTaskCollection.removeAllTasks();
+        cachedTasks.clear();
+        cacheVersion = 0;
+        taskAdditions = 0;
     }
 }

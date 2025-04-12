@@ -11,13 +11,13 @@ import stretch.lockout.game.LockoutContext;
 import stretch.lockout.game.LockoutGameRule;
 import stretch.lockout.game.state.GameState;
 import stretch.lockout.game.state.LockoutSettings;
+import stretch.lockout.kit.CompassKit;
 import stretch.lockout.platform.Metrics;
 import stretch.lockout.task.manager.TaskManager;
+import stretch.lockout.team.TeamManager;
 import stretch.lockout.util.LockoutLogger;
 
 import java.io.File;
-import java.util.List;
-import java.util.stream.Stream;
 
 public class Lockout extends JavaPlugin {
     private final int pluginId = 19299;
@@ -62,15 +62,16 @@ public class Lockout extends JavaPlugin {
         updateDevModeFlag(gameSettings);
         LockoutLogger.debugLog(ChatColor.RED + "Lockout initialized in debug mode");
 
-        TaskManager taskManager = new TaskManager();
+        TeamManager teamManager = new TeamManager(this, gameSettings);
+        TaskManager taskManager = new TaskManager(this, teamManager);
         BoardManager boardManager = new FileBasedBoardManager(this, gameSettings, taskManager);
 
-        this.lockout = new LockoutContext(this, gameSettings, boardManager);
+        this.lockout = new LockoutContext(this, gameSettings, boardManager, taskManager, teamManager);
         LockoutLogger.debugLog("Created lockoutContext object");
 
         lockout.getBoardManager().registerBoardsAsync();
 
-        getCommand("lockout").setExecutor(new LockoutCommand(lockout));
+        getCommand("lockout").setExecutor(new LockoutCommand(this, new CompassKit(this), gameSettings, lockout.getGameStateHandler(), teamManager, lockout.getUserLuaEnvironment()));
 
         Metrics metrics = new Metrics(this, pluginId);
 
@@ -94,16 +95,6 @@ public class Lockout extends JavaPlugin {
         return new LockoutSettings(getConfig());
     }
 
-
-    // Should instead return config file which lists boards
-    public List<String> getTaskLists() {
-        return Stream.of(new File(getDataFolder().getAbsolutePath()).listFiles())
-                .filter(file -> file.getName().contains(".lua"))
-                .map(file ->
-                        file.getName()
-                                .substring(0, file.getName().lastIndexOf(".")))
-                .toList();
-    }
 
     public LockoutContext getLockoutContext() {
         return lockout;

@@ -4,6 +4,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.plugin.Plugin;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import stretch.lockout.Lockout;
 import stretch.lockout.reward.scheduler.RewardScheduler;
@@ -23,10 +24,10 @@ import java.util.Objects;
  * */
 public class OfflineRewardListener implements Listener {
 
-    private final Lockout plugin;
+    private final Plugin plugin;
     private final RewardScheduler rewardScheduler;
 
-    public OfflineRewardListener(@NonNull Lockout plugin, @NonNull RewardScheduler rewardScheduler) {
+    public OfflineRewardListener(@NonNull Plugin plugin, @NonNull RewardScheduler rewardScheduler) {
         this.plugin = Objects.requireNonNull(plugin, "Plugin cannot be null");
         this.rewardScheduler = Objects.requireNonNull(rewardScheduler, "RewardScheduler cannot be null");
         plugin.getServer().getPluginManager().registerEvents(this, plugin);

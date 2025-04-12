@@ -8,34 +8,44 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.HandlerList;
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.EventExecutor;
+import org.bukkit.plugin.Plugin;
+import org.jetbrains.annotations.NotNull;
 import stretch.lockout.event.TaskCompletedEvent;
 import stretch.lockout.game.LockoutContext;
 import stretch.lockout.game.state.GameState;
+import stretch.lockout.game.state.GameStateHandler;
 import stretch.lockout.task.api.TaskComponent;
 import stretch.lockout.task.api.TimeCompletableTask;
+import stretch.lockout.task.manager.TaskManager;
+import stretch.lockout.team.TeamManager;
 import stretch.lockout.team.player.PlayerStat;
+import stretch.lockout.ui.bar.LockoutTimer;
 import stretch.lockout.util.LockoutLogger;
 
 import java.util.Optional;
 
 public class LockoutEventExecutor implements EventExecutor {
     private static final Listener LOCKOUT_NULL_LISTENER = new Listener() {};
-    private final LockoutContext lockout;
+    private final TaskManager taskManager;
+    private final TeamManager teamManager;
+    private final LockoutTimer timer;
+    private final Plugin plugin;
+    private final GameStateHandler gameStateHandler;
 
-    public LockoutEventExecutor(final LockoutContext lockout) {
-        this.lockout = lockout;
+    public LockoutEventExecutor(final Plugin plugin, final TaskManager taskManager, final TeamManager teamManager, final LockoutTimer lockoutTimer, final GameStateHandler gameStateHandler) {
+        this.taskManager = taskManager;
+        this.teamManager = teamManager;
+        this.timer = lockoutTimer;
+        this.plugin = plugin;
+        this.gameStateHandler = gameStateHandler;
     }
 
-    // TODO support tiebreaker
     public void register() {
-        lockout.getMainTasks().getEventClasses()
-                .forEach(clazz -> Bukkit.getPluginManager()
-                        .registerEvent(clazz,
-                                LOCKOUT_NULL_LISTENER,
-                                EventPriority.NORMAL,
-                                this,
-                                lockout.getPlugin()));
-        LockoutLogger.debugLog("Registered tasks");
+        taskManager.getEventClasses()
+                .forEach(clazz
+                        -> Bukkit
+                        .getPluginManager()
+                        .registerEvent(clazz, LOCKOUT_NULL_LISTENER, EventPriority.NORMAL, this, plugin));
     }
 
     public void unregister() {
@@ -44,15 +54,17 @@ public class LockoutEventExecutor implements EventExecutor {
     }
 
     @Override
-    public void execute(Listener listener, Event event) {
-        if (lockout.getGameStateHandler().getGameState() != GameState.RUNNING
-                || !lockout.getCurrentTaskCollection().getMappedTasks().containsKey(event.getClass())) {
+    public void execute(@NotNull Listener listener, @NotNull Event event) {
+        // Ensure this event is relevant to a TaskComponent
+        if (gameStateHandler.getGameState() != GameState.RUNNING
+                || !taskManager.containsEventClass(event.getClass())) {
             return;
         }
 
         checkEvent(LockoutEventBuilder.build(event));
     }
 
+    // TODO write tests for this
     public void checkEvent(final LockoutWrappedEvent lockoutEvent) {
         Optional<Player> optionalPlayer = lockoutEvent.getPlayer();
         if (optionalPlayer.isEmpty()) {
@@ -60,25 +72,28 @@ public class LockoutEventExecutor implements EventExecutor {
         }
         Player player = optionalPlayer.get();
 
-        GameState gamestate = lockout.getGameStateHandler().getGameState();
+        // Ensure that both the game and player are in the proper state to complete a task
+        GameState gamestate = gameStateHandler.getGameState();
         if ((gamestate != GameState.RUNNING && gamestate != GameState.TIEBREAKER)
                 || player.getGameMode() == GameMode.SPECTATOR
-                || !lockout.getTeamManager().isPlayerOnTeam(player)) {
+                || !teamManager.isPlayerOnTeam(player)) {
             return;
         }
 
-        var currentTasks = lockout.getCurrentTaskCollection().getMappedTasks();
-        if (!currentTasks.containsKey(lockoutEvent.getEventClass())) {
-            return;
-        }
+        //var currentTasks = lockout.getCurrentTaskCollection().getMappedTasks();
+        //if (!currentTasks.containsKey(lockoutEvent.getEventClass())) {
+        //    return;
+        //}
 
-        var potentialTasks = currentTasks.get(lockoutEvent.getEventClass());
+        //var potentialTasks = currentTasks.get(lockoutEvent.getEventClass());
+        var potentialTasks = taskManager.getTasks(lockoutEvent.getEventClass());
         for (TaskComponent task : potentialTasks) {
             if (!task.isCompleted() && task.doesAccomplish(lockoutEvent)) {
-                PlayerStat playerStat = lockout.getTeamManager().getMappedPlayerStats().get(player);
-                lockout.getCurrentTaskCollection().setTaskCompleted(playerStat, task);
+                PlayerStat playerStat = teamManager.getPlayerStat(player);
+                //lockout.getCurrentTaskCollection().setTaskCompleted(playerStat, task);
+                taskManager.setTaskCompleted(playerStat, task);
                 if (task instanceof TimeCompletableTask timeTask) {
-                    timeTask.setTimeCompleted(lockout.getUiManager().getTimer().elapsedTime());
+                    timeTask.setTimeCompleted(timer.elapsedTime());
                     timeTask.setLocation(player.getLocation());
                 }
                 TaskCompletedEvent taskCompletedEvent = new TaskCompletedEvent(task);

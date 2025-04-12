@@ -8,7 +8,12 @@ import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.plugin.Plugin;
 import org.checkerframework.checker.nullness.qual.NonNull;
+import stretch.lockout.game.state.GameStateManaged;
+import stretch.lockout.util.LockoutLogger;
+
+import java.util.Objects;
 
 /**
  * Provides the essential Lockout compass, the primary
@@ -27,8 +32,13 @@ import org.checkerframework.checker.nullness.qual.NonNull;
  * @see KitHandler
  * @since 2.5.1
  */
-public class CompassKit implements Kit {
+public class CompassKit extends GameStateManaged implements Kit {
+    private final Plugin plugin;
 
+    public CompassKit(@NonNull Plugin plugin) {
+        super(plugin);
+        this.plugin = Objects.requireNonNull(plugin, "plugin cannot be null");
+    }
     /**
      * Equips the specified player with the essential Lockout compass, ensuring
      * they have the necessary tool to interact with the game's UI.
@@ -59,5 +69,6 @@ public class CompassKit implements Kit {
         if (!inv.contains(compass)) {
             inv.addItem(compass);
         }
+
     }
 }

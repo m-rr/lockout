@@ -2,14 +2,12 @@ package stretch.lockout.game;
 
 import org.bukkit.Bukkit;
 import org.bukkit.entity.HumanEntity;
+import org.bukkit.plugin.Plugin;
 import stretch.lockout.Lockout;
 import stretch.lockout.board.BoardManager;
 import stretch.lockout.event.executor.LockoutEventExecutor;
 import stretch.lockout.event.state.PlayerStateChangeHandler;
-import stretch.lockout.game.state.DefaultStateHandler;
-import stretch.lockout.game.state.GameState;
-import stretch.lockout.game.state.GameStateHandler;
-import stretch.lockout.game.state.LockoutSettings;
+import stretch.lockout.game.state.*;
 import stretch.lockout.kit.KitHandler;
 import stretch.lockout.listener.LockoutEventHandler;
 import stretch.lockout.listener.OfflineRewardListener;
@@ -21,23 +19,25 @@ import stretch.lockout.reward.scheduler.RewardScheduler;
 import stretch.lockout.task.api.TaskComponent;
 import stretch.lockout.task.event.IndirectTaskListener;
 import stretch.lockout.task.manager.TaskCollection;
+import stretch.lockout.task.manager.TaskManager;
 import stretch.lockout.team.TeamManager;
 import stretch.lockout.tracker.PlayerTracker;
 import stretch.lockout.ui.UIManager;
 import stretch.lockout.ui.inventory.InventoryInputHandler;
 import stretch.lockout.ui.inventory.InventoryTaskView;
 import stretch.lockout.ui.inventory.TaskSelectionView;
+import stretch.lockout.util.LockoutLogger;
 
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 
-public class LockoutContext {
-    final private Lockout plugin;
+public class LockoutContext extends GameStateManaged {
     private final TeamManager teamManager;
     private final TaskCollection mainTasks = new TaskCollection();
     private final TaskCollection tieBreaker = new TaskCollection();
     private final TaskCollection mutators = new TaskCollection();
+    private final TaskManager taskManager;
     private PlayerTracker playerTracker = new PlayerTracker();
     private RewardScheduler rewardScheduler;
     private GameStateHandler gameStateHandler;
@@ -48,30 +48,35 @@ public class LockoutContext {
     private LockoutSettings settings;
     private final List<LuaTableBinding> luaBindings = new ArrayList<>();
     
-    public LockoutContext(final Lockout injectedPlugin, LockoutSettings settings, BoardManager boardManager) {
-        this.plugin = injectedPlugin;
+    public LockoutContext(final Plugin injectedPlugin, LockoutSettings settings, BoardManager boardManager, TaskManager taskManager, TeamManager teamManager) {
+        super(injectedPlugin);
         this.settings = settings;
         this.boardManager = boardManager;
+        this.taskManager = taskManager;
+        this.teamManager = teamManager;
 
         new PlayerEventHandler(this);
         new LockoutEventHandler(this);
         new InventoryInputHandler(this);
         new PvpHandler(this);
         new IndirectTaskListener(this, 20);
-        new KitHandler(this);
         new PlayerStateChangeHandler(this);
         new GameRuleEnforcer(this);
 
         uiManager = new UIManager(this);
-        eventExecutor = new LockoutEventExecutor(this);
-        teamManager = new TeamManager(settings);
-        rewardScheduler = new RewardScheduler(getPlugin());
+        //teamManager = new TeamManager(settings);
+        gameStateHandler = new DefaultStateHandler(this);
+        eventExecutor = new LockoutEventExecutor(plugin, taskManager, teamManager, uiManager.getTimer(), gameStateHandler);
+
+        rewardScheduler = new RewardScheduler(plugin, teamManager);
         new OfflineRewardListener(plugin, rewardScheduler);
         userLuaEnvironment = new LuaEnvironment(getPlugin(), settings, false);
 
+        new KitHandler(injectedPlugin, teamManager, gameStateHandler, uiManager.getTimer(), settings);
+
         luaBindings.add(new LuaTaskBindings());
-        luaBindings.add(new LuaRewardBindings(settings(), getMainTasks()));
-        luaBindings.add(new LuaHelperBindings(plugin, settings(), getMainTasks(), getUiManager().getTimer(), getPlayerTracker()));
+        luaBindings.add(new LuaRewardBindings(settings(), taskManager));
+        luaBindings.add(new LuaHelperBindings(plugin, settings(), taskManager.getTasks(), getUiManager().getTimer(), getPlayerTracker()));
         luaBindings.add(new LuaClassBindings());
         luaBindings.add(new LuaPredicateBindings());
 
@@ -85,17 +90,11 @@ public class LockoutContext {
         // Make sure that our lua environments have proper bindings available
         boardManager.getLuaEnvironment().addLuaTableBindings(luaBindings);
 
-        gameStateHandler = new DefaultStateHandler(this);
+
     }
 
     public UIManager getUiManager() {return uiManager;}
-    public TaskCollection getMainTasks() {return mainTasks;}
-    public TaskCollection getTieBreaker() {return tieBreaker;}
     public GameStateHandler getGameStateHandler() {return gameStateHandler;}
-
-    public TaskCollection getCurrentTaskCollection() {
-        return getGameStateHandler().getGameState() == GameState.TIEBREAKER ? tieBreaker : mainTasks;
-    }
 
     public TeamManager getTeamManager() {return teamManager;}
     public PlayerTracker getPlayerTracker() {return playerTracker;}
@@ -103,6 +102,7 @@ public class LockoutContext {
     public LuaEnvironment getUserLuaEnvironment() {return userLuaEnvironment;}
     public BoardManager getBoardManager() {return boardManager;}
     public LockoutEventExecutor getEventExecutor() {return eventExecutor;}
+    public TaskManager getTaskManager() {return taskManager;}
 
     public void setSettings(LockoutSettings settings) {
         this.settings = settings;
@@ -140,11 +140,10 @@ public class LockoutContext {
         Bukkit.getScheduler().cancelTasks(getPlugin());
         getTeamManager().reset();
         getUiManager().reset();
-        getMainTasks().removeAllTasks();
-        getTieBreaker().removeAllTasks();
+        taskManager.reset();
         playerTracker = new PlayerTracker();
         rewardScheduler.cancelAll();
-        plugin.getLogger().info("LockoutContext: reset");
+        LockoutLogger.debugLog("Reset lockout context");
     }
 
     public LockoutSettings settings() {return settings;}
@@ -152,7 +151,8 @@ public class LockoutContext {
 
     public InventoryTaskView getInventoryTaskView() {
         InventoryTaskView inventoryTaskView = new InventoryTaskView(settings.hasRule(LockoutGameRule.ALLOW_REWARD));
-        HashSet<TaskComponent> guiTaskComponents = new HashSet<>(getCurrentTaskCollection().getTasks());
+        //HashSet<TaskComponent> guiTaskComponents = new HashSet<>(getCurrentTaskCollection().getTasks());
+        HashSet<TaskComponent> guiTaskComponents = new HashSet<>(taskManager.getTasks().getTasks());
         guiTaskComponents.forEach(inventoryTaskView::addTaskEntry);
 
         return inventoryTaskView;
@@ -160,10 +160,11 @@ public class LockoutContext {
 
     public TaskSelectionView getTaskSelectionView() {
         TaskSelectionView taskSelectionView = new TaskSelectionView();
-        List<String> guiTaskLists = getPlugin().getTaskLists();
-        guiTaskLists.forEach(taskSelectionView::addTaskListEntry);
+        //List<String> guiTaskLists = getPlugin().getTaskLists();
+        //guiTaskLists.forEach(taskSelectionView::addTaskListEntry);
 
-        return taskSelectionView;
+        //return taskSelectionView;
+        throw new UnsupportedOperationException("Refactor");
     }
 
     public void gracePeriod(HumanEntity player) {
@@ -172,7 +173,7 @@ public class LockoutContext {
                 () -> player.setInvulnerable(false), settings.getRespawnInvulnerabilityTime());
     }
 
-    public Lockout getPlugin() {
+    public Plugin getPlugin() {
         return this.plugin;
     }
 
