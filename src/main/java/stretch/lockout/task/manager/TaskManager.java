@@ -5,6 +5,7 @@ import org.bukkit.plugin.Plugin;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import stretch.lockout.event.GameOverEvent;
 import stretch.lockout.event.ResetGameEvent;
+import stretch.lockout.event.StartGameEvent;
 import stretch.lockout.game.state.GameStateManaged;
 import stretch.lockout.game.state.StateResettable;
 import stretch.lockout.task.api.TaskComponent;
@@ -151,6 +152,19 @@ public class TaskManager extends GameStateManaged {
     }
 
     @Override
+    public void onStart(StartGameEvent event) {
+        LockoutLogger.debugLog("Searching for mutator tasks");
+        teamManager.doToAllPlayers(player -> {
+            for (var task : mutatorTaskCollection.getTasks()) {
+                if (task instanceof HiddenTask hiddenTask) {
+                    LockoutLogger.debugLog(String.format("Subscribing '%s' to hidden task '%s'", player.getName(), hiddenTask.getDescription()));
+                    hiddenTask.subscribe(player.getUniqueId());
+                }
+            }
+        });
+    }
+
+    @Override
     public void onGameOver(GameOverEvent event) {
         reset();
     }
@@ -165,6 +179,7 @@ public class TaskManager extends GameStateManaged {
         mainTaskCollection.removeAllTasks();
         counterTaskCollection.removeAllTasks();
         mutatorTaskCollection.removeAllTasks();
+        hiddenTaskCollection.removeAllTasks();
         cachedTasks.clear();
         cacheVersion = 0;
         taskAdditions = 0;

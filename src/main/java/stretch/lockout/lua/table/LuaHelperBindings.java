@@ -8,6 +8,7 @@ import org.bukkit.block.Biome;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.Plugin;
+import org.luaj.vm2.LuaError;
 import org.luaj.vm2.LuaTable;
 import org.luaj.vm2.LuaValue;
 import org.luaj.vm2.Varargs;
@@ -117,6 +118,14 @@ public class LuaHelperBindings implements LuaTableBinding {
             }
         });
 
+        table.set("_getTimer", new ZeroArgFunction() {
+
+            @Override
+            public LuaValue call() {
+                return CoerceJavaToLua.coerce(timer);
+            }
+        });
+
         table.set("_trackedPlayer", new OneArgFunction() {
             @Override
             public LuaValue call(LuaValue luaValue) {
@@ -135,6 +144,20 @@ public class LuaHelperBindings implements LuaTableBinding {
                 Set<Biome> result = new HashSet<>(biomeType);
                 result.retainAll(biomes);
                 return CoerceJavaToLua.coerce(!result.isEmpty());
+            }
+        });
+
+        table.set("_getWorld", new OneArgFunction() {
+
+            @Override
+            public LuaValue call(LuaValue arg) {
+                String worldName = (String) CoerceLuaToJava.coerce(arg, String.class);
+                World world = Bukkit.getWorld(worldName);
+                if (world == null) {
+                    throw new LuaError(String.format("World %s not found", worldName));
+                }
+
+                return CoerceJavaToLua.coerce(world);
             }
         });
 

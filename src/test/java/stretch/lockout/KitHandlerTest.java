@@ -79,7 +79,7 @@ class KitHandlerTest {
         // Example: lockoutContext.setGameStateHandler(mockGameStateHandler); // Requires setter or modification in TestLockout
 
         // --- Instantiate the class under test ---
-        kitHandler = new KitHandler(lockoutContext);
+        kitHandler = new KitHandler(plugin, mockTeamManager, mockGameStateHandler, mockTimer, settings);
         
         // Default mock behavior
         when(mockGameStateHandler.getGameState()).thenReturn(GameState.READY); // Default state

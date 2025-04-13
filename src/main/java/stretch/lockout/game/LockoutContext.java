@@ -151,7 +151,6 @@ public class LockoutContext extends GameStateManaged {
 
     public InventoryTaskView getInventoryTaskView() {
         InventoryTaskView inventoryTaskView = new InventoryTaskView(settings.hasRule(LockoutGameRule.ALLOW_REWARD));
-        //HashSet<TaskComponent> guiTaskComponents = new HashSet<>(getCurrentTaskCollection().getTasks());
         HashSet<TaskComponent> guiTaskComponents = new HashSet<>(taskManager.getTasks().getTasks());
         guiTaskComponents.forEach(inventoryTaskView::addTaskEntry);
 
